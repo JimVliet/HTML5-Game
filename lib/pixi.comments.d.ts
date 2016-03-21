@@ -1,4 +1,4 @@
-// Type definitions for PIXI with Phaser Deviations. 
+// Type definitions for PIXI with Phaser Deviations.
 
 declare module PIXI {
 

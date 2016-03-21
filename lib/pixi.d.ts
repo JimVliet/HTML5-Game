@@ -1,4 +1,5 @@
-// Type definitions for PIXI with Phaser Deviations. 
+// Type definitions for PIXI with Phaser Deviations.
+/// <reference path="phaser.d.ts" />
 
 declare module PIXI {
 

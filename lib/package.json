@@ -1,0 +1,29 @@
+{
+  "name": "gulp-phaser-tiled-pack",
+  "version": "1.1.0",
+  "description": "Creates a phaser asset pack file based on tiled maps",
+  "author": "Chad Engler <chad@pantherdev.com>",
+  "license": "MIT",
+  "main": "index.js",
+  "homepage": "https://github.com/englercj/gulp-phaser-tiled-pack",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/englercj/gulp-phaser-tiled-pack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/englercj/gulp-phaser-tiled-pack/issues"
+  },
+  "keywords": [
+    "phaser",
+    "tiled",
+    "asset",
+    "pack"
+  ],
+  "dependencies": {
+    "gulp-util": "^3.0.1",
+    "phaser-tiled": "^1.2.1",
+    "through2": "^0.6.2",
+    "vinyl": "^0.4.3",
+    "xml2js": "^0.4.4"
+  }
+}
