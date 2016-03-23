@@ -1,3 +1,21 @@
+/// <reference path="../lib/phaser.d.ts"/>
+/// <reference path="../lib/phaser-tiled.d.ts"/>
+var MapLoader = (function () {
+    function MapLoader(game, url, filename) {
+        this.game = game;
+        this.url = url;
+        this.fileName = filename;
+        this.game.load.tiledmap(Phaser.Plugin.Tiled.utils.cacheKey('test_01', 'tiledmap'), 'maps/test_01.json', null, Phaser.Tilemap.TILED_JSON);
+    }
+    MapLoader.prototype.generateMap = function () {
+        //test
+    };
+    MapLoader.prototype.getData = function () {
+        var cacheKey = Phaser.Plugin.Tiled.utils.cacheKey;
+        return this.game.cache.getTilemapData(cacheKey('test_01', 'tiledmap'));
+    };
+    return MapLoader;
+})();
 /// <reference path="lib/phaser.d.ts"/>
 /// <reference path="lib/phaser-tiled.d.ts"/>
 /// <reference path="scripts/MapLoader.ts"/>
@@ -23,4 +41,4 @@ var RPGame = (function () {
 window.onload = function () {
     var game = new RPGame();
 };
-//# sourceMappingURL=app.js.map
+//# sourceMappingURL=generated.js.map

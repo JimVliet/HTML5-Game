@@ -17,12 +17,13 @@ class MapLoader
 
     generateMap()
     {
+        //test
 
     }
 
     getData()
     {
         var cacheKey = Phaser.Plugin.Tiled.utils.cacheKey;
-        return Phaser.Cache.prototype.getTilemapData(cacheKey(this.fileName, 'tiledmap'));
+        return this.game.cache.getTilemapData(cacheKey('test_01', 'tiledmap'));
     }
 }
