@@ -1,3 +1,4 @@
+/// <reference path="../app.ts"/>
 /// <reference path="../lib/phaser.d.ts"/>
 /// <reference path="../lib/phaser-tiled.d.ts"/>
 var MapLoader = (function () {
@@ -5,14 +6,14 @@ var MapLoader = (function () {
         this.game = game;
         this.url = url;
         this.fileName = filename;
-        this.game.load.tiledmap(Phaser.Plugin.Tiled.utils.cacheKey('test_01', 'tiledmap'), 'maps/test_01.json', null, Phaser.Tilemap.TILED_JSON);
+        this.mapKey = Phaser.Plugin.Tiled.utils.cacheKey(filename, 'tiledmap');
+        this.game.load.tiledmap(this.mapKey, url, null, Phaser.Tilemap.TILED_JSON);
     }
-    MapLoader.prototype.generateMap = function () {
-        //test
+    MapLoader.prototype.addMap = function () {
+        this.game.add.tiledmap(this.fileName);
     };
     MapLoader.prototype.getData = function () {
-        var cacheKey = Phaser.Plugin.Tiled.utils.cacheKey;
-        return this.game.cache.getTilemapData(cacheKey('test_01', 'tiledmap'));
+        return this.game.cache.getTilemapData(this.mapKey);
     };
     return MapLoader;
 })();
@@ -20,25 +21,38 @@ var MapLoader = (function () {
 /// <reference path="lib/phaser-tiled.d.ts"/>
 /// <reference path="scripts/MapLoader.ts"/>
 var Tiled = Phaser.Plugin.Tiled;
+var game;
 var RPGame = (function () {
     function RPGame() {
-        this.game = new Phaser.Game(800, 600, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
+        this.game = new Phaser.Game(1280, 720, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
     }
     RPGame.prototype.preload = function () {
+        this.game.load.onFileComplete.add(fileCompleted, this);
         this.game.add.plugin(new Tiled(this.game, this.game.stage));
         var cacheKey = Phaser.Plugin.Tiled.utils.cacheKey;
-        var map = new MapLoader(this.game, 'test_01', 'maps/test_01.json');
-        console.log(map.getData());
-        //(<any>this.game.load).tiledmap(cacheKey('test_01', 'tiledmap'), 'maps/test_01.json', null, Phaser.Tilemap.TILED_JSON);
-        //this.game.load.image(cacheKey('test_01', 'tileset', 'Grass shadow'), 'images/tilesets/002-G_Shadow01.png');
-        //this.game.load.image(cacheKey('test_01', 'tileset', '066-CF_Ground03'), 'images/tilesets/066-CF_Ground03.png');
+        this.map = new MapLoader(this.game, 'maps/mijn2.json', 'mijn2');
+    };
+    RPGame.prototype.fileCompleted = function (progress, cacheKey, totalLoaded, totalFiles) {
+        console.log('Progress: ' + progress + " cacheKey: " + cacheKey);
+        if (cacheKey.indexOf('_tiledmap') > 0) {
+            var cacheKeyFunc = Phaser.Plugin.Tiled.utils.cacheKey;
+            var tileSets = this.game.cache.getTilemapData(cacheKey).data.tilesets;
+            for (var n = 0; n < tileSets.length; n++) {
+                var currentSet = tileSets[n];
+                console.log(currentSet);
+                this.game.load.image(cacheKeyFunc(cacheKey.slice(0, -9), 'tileset', currentSet.name), 'maps/' + currentSet.image);
+            }
+        }
     };
     RPGame.prototype.create = function () {
-        //var map = (<any>this.game.add).tiledmap('test_01');
+        this.map.addMap();
     };
     return RPGame;
 })();
+function fileCompleted(progress, cacheKey, totalLoaded, totalFiles) {
+    game.fileCompleted(progress, cacheKey, totalLoaded, totalFiles);
+}
 window.onload = function () {
-    var game = new RPGame();
+    game = new RPGame();
 };
 //# sourceMappingURL=generated.js.map

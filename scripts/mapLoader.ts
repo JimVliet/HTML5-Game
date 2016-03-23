@@ -1,3 +1,4 @@
+/// <reference path="../app.ts"/>
 /// <reference path="../lib/phaser.d.ts"/>
 /// <reference path="../lib/phaser-tiled.d.ts"/>
 
@@ -6,24 +7,24 @@ class MapLoader
     game: Phaser.Game;
     url: string;
     fileName: string;
+    mapKey: string;
 
     constructor(game: Phaser.Game, url: string, filename: string)
     {
         this.game = game;
         this.url = url;
         this.fileName = filename;
-        (<any>this.game.load).tiledmap(Phaser.Plugin.Tiled.utils.cacheKey('test_01', 'tiledmap'), 'maps/test_01.json', null, Phaser.Tilemap.TILED_JSON);
+        this.mapKey = Phaser.Plugin.Tiled.utils.cacheKey(filename, 'tiledmap');
+        (<any>this.game.load).tiledmap(this.mapKey, url, null, Phaser.Tilemap.TILED_JSON);
     }
 
-    generateMap()
+    addMap()
     {
-        //test
-
+        (<any>this.game.add).tiledmap(this.fileName);
     }
 
     getData()
     {
-        var cacheKey = Phaser.Plugin.Tiled.utils.cacheKey;
-        return this.game.cache.getTilemapData(cacheKey('test_01', 'tiledmap'));
+        return this.game.cache.getTilemapData(this.mapKey);
     }
 }

@@ -3,33 +3,53 @@
 /// <reference path="scripts/MapLoader.ts"/>
 
 import Tiled = Phaser.Plugin.Tiled;
+var game;
 class RPGame {
 
     constructor() {
-        this.game = new Phaser.Game(800, 600, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
+        this.game = new Phaser.Game(1280, 720, Phaser.AUTO, 'content', { preload: this.preload, create: this.create});
     }
 
     game: Phaser.Game;
+    map: MapLoader;
 
     preload() {
+        this.game.load.onFileComplete.add(fileCompleted, this);
         this.game.add.plugin(new Tiled(this.game, this.game.stage));
         var cacheKey = Phaser.Plugin.Tiled.utils.cacheKey;
-        var map = new MapLoader(this.game, 'test_01', 'maps/test_01.json');
-
-        console.log(map.getData());
-        //(<any>this.game.load).tiledmap(cacheKey('test_01', 'tiledmap'), 'maps/test_01.json', null, Phaser.Tilemap.TILED_JSON);
-        //this.game.load.image(cacheKey('test_01', 'tileset', 'Grass shadow'), 'images/tilesets/002-G_Shadow01.png');
-        //this.game.load.image(cacheKey('test_01', 'tileset', '066-CF_Ground03'), 'images/tilesets/066-CF_Ground03.png');
+        this.map = new MapLoader(this.game, 'maps/mijn2.json', 'mijn2');
     }
 
+    fileCompleted(progress: number, cacheKey: string, totalLoaded: number, totalFiles: number)
+    {
+        console.log('Progress: ' + progress + " cacheKey: " + cacheKey);
+        if (cacheKey.indexOf('_tiledmap') > 0)
+        {
+            var cacheKeyFunc = Phaser.Plugin.Tiled.utils.cacheKey;
+            var tileSets =  this.game.cache.getTilemapData(cacheKey).data.tilesets;
+            for (var n = 0; n < tileSets.length; n++)
+            {
+                var currentSet = tileSets[n];
+                console.log(currentSet);
+                this.game.load.image(cacheKeyFunc(cacheKey.slice(0, -9),'tileset', currentSet.name), 'maps/' + currentSet.image);
+            }
+        }
+    }
+
+
     create() {
-        //var map = (<any>this.game.add).tiledmap('test_01');
+        this.map.addMap();
     }
 
 }
 
+function fileCompleted(progress: number, cacheKey: string, totalLoaded: number, totalFiles: number): void
+{
+    game.fileCompleted(progress, cacheKey, totalLoaded, totalFiles);
+}
+
 window.onload = () => {
 
-    var game = new RPGame();
+    game = new RPGame();
 
 };
