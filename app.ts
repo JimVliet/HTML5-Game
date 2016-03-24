@@ -1,55 +1,45 @@
 /// <reference path="lib/phaser.d.ts"/>
 /// <reference path="lib/phaser-tiled.d.ts"/>
-/// <reference path="scripts/MapLoader.ts"/>
-
+/// <reference path="scripts/GameStates.ts"/>
 import Tiled = Phaser.Plugin.Tiled;
 var game;
 class RPGame {
 
-    constructor() {
-        this.game = new Phaser.Game(1280, 720, Phaser.AUTO, 'content', { preload: this.preload, create: this.create});
+    constructor(width: number, height: number) {
+        this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create});
+        this.mapName = 'mijn2';
+        this.mapURL = 'maps/mijn2.json';
     }
 
+    mapURL: string;
+    mapName: string;
     game: Phaser.Game;
-    map: MapLoader;
+
+    loadMap(url: string, filename: string)
+    {
+        (<any>this.game.load).tiledmap(Phaser.Plugin.Tiled.utils.cacheKey(filename, 'tiledmap'), url, null, Phaser.Tilemap.TILED_JSON);
+    }
 
     preload() {
-        this.game.load.onFileComplete.add(fileCompleted, this);
         this.game.add.plugin(new Tiled(this.game, this.game.stage));
-        var cacheKey = Phaser.Plugin.Tiled.utils.cacheKey;
-        this.map = new MapLoader(this.game, 'maps/mijn2.json', 'mijn2');
+        game.loadMap(game.mapURL, game.mapName);
     }
-
-    fileCompleted(progress: number, cacheKey: string, totalLoaded: number, totalFiles: number)
-    {
-        console.log('Progress: ' + progress + " cacheKey: " + cacheKey);
-        if (cacheKey.indexOf('_tiledmap') > 0)
-        {
-            var cacheKeyFunc = Phaser.Plugin.Tiled.utils.cacheKey;
-            var tileSets =  this.game.cache.getTilemapData(cacheKey).data.tilesets;
-            for (var n = 0; n < tileSets.length; n++)
-            {
-                var currentSet = tileSets[n];
-                console.log(currentSet);
-                this.game.load.image(cacheKeyFunc(cacheKey.slice(0, -9),'tileset', currentSet.name), 'maps/' + currentSet.image);
-            }
-        }
-    }
-
 
     create() {
-        this.map.addMap();
+        this.game.state.add('TiledMapLoader', GameStates.TiledMapLoader, true);
     }
 
-}
-
-function fileCompleted(progress: number, cacheKey: string, totalLoaded: number, totalFiles: number): void
-{
-    game.fileCompleted(progress, cacheKey, totalLoaded, totalFiles);
 }
 
 window.onload = () => {
+    var winW = window.innerWidth;
+    var winH = window.innerHeight;
 
-    game = new RPGame();
+    var widthAspectRatio = 16;
+    var heightAspectRatio = 9;
+
+    var aspectMultiplier = Math.min(winW/widthAspectRatio, winH/heightAspectRatio);
+
+    game = new RPGame(aspectMultiplier*widthAspectRatio, aspectMultiplier*heightAspectRatio);
 
 };
