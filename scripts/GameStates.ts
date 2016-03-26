@@ -74,14 +74,16 @@ module GameStates
         StateToStart: GameLevel & Phaser.State;
         MainText: Phaser.Text;
         SubText: Phaser.Text;
+        mapCacheKey: string;
 
-        constructor(game: Phaser.Game, mapName: string, mapURL: string, state: GameLevel & Phaser.State)
+        constructor(game: Phaser.Game, state: GameLevel & Phaser.State)
         {
             super();
             this.game = game;
-            this.mapName = mapName;
-            this.mapURL = mapURL;
+            this.mapName = state.mapName;
+            this.mapURL = state.mapURL;
             this.StateToStart = state;
+            this.mapCacheKey = Phaser.Plugin.Tiled.utils.cacheKey(this.mapName, 'tiledmap');
         }
 
         preload()
@@ -91,36 +93,34 @@ module GameStates
             this.SubText = this.game.add.text(this.game.width/2, this.game.height/2 + 80, 'Completed loading: ', {fill: '#ffffff'});
             this.SubText.anchor.x = 0.5;
 
-            this.game.state.add(this.StateToStart.mapName, this.StateToStart, false);
-            (<any>this.game.load).tiledmap(Phaser.Plugin.Tiled.utils.cacheKey(this.StateToStart.mapName, 'tiledmap'), this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
+            (<any>this.game.load).tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
+            this.game.load.onFileComplete.add(this.fileCompleted, this);
         }
 
         create()
         {
-            this.game.load.onFileComplete.add(this.fileCompleted, this);
-            var cacheKeyFunc = Phaser.Plugin.Tiled.utils.cacheKey;
-            var cacheKey = cacheKeyFunc(this.mapName, 'tiledmap');
-
-            var tileSets = this.game.cache.getTilemapData(cacheKey).data.tilesets;
-            for (var n = 0; n < tileSets.length; n++)
-            {
-                var currentSet = tileSets[n];
-                this.game.load.image(cacheKeyFunc(cacheKey.slice(0, -9),'tileset', currentSet.name), 'maps/' + currentSet.image);
-            }
-
-            this.game.load.onLoadComplete.addOnce(this.loadCompleted, this);
-            this.game.load.start();
+            this.game.state.add(this.StateToStart.mapName, this.StateToStart, false);
+            this.game.state.start(this.StateToStart.mapName, true, false);
+            console.log('LoadCompleted');
         }
 
         fileCompleted(progress: number, cacheKey: string)
         {
             this.MainText.setText('Loading ' + this.mapName + ' ' + progress + "%");
             this.SubText.setText('Completed loading: ' + cacheKey);
-        }
 
-        loadCompleted()
-        {
-            this.game.state.start(this.StateToStart.mapName, true, false);
+            if (cacheKey == this.mapCacheKey)
+            {
+                var cacheKeyFunc = Phaser.Plugin.Tiled.utils.cacheKey;
+                var cacheKey = this.mapCacheKey;
+
+                var tileSets = this.game.cache.getTilemapData(cacheKey).data.tilesets;
+                for (var n = 0; n < tileSets.length; n++)
+                {
+                    var currentSet = tileSets[n];
+                    this.game.load.image(cacheKeyFunc(cacheKey.slice(0, -9),'tileset', currentSet.name), 'maps/' + currentSet.image);
+                }
+            }
         }
 
         shutdown()

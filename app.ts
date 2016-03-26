@@ -9,6 +9,7 @@ module MyGame
         constructor(width: number, height: number) {
             this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create});
         }
+
         game: Phaser.Game;
 
         preload()
@@ -24,7 +25,7 @@ module MyGame
 }
 function loadGameLevel(game: Phaser.Game, levelToLoad: GameStates.GameLevel & Phaser.State)
 {
-    game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad.mapName, levelToLoad.mapURL, levelToLoad), false);
+    game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
     game.state.start('TiledMapLoader', true, true);
 }
 
