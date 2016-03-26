@@ -1,34 +1,31 @@
 /// <reference path="lib/phaser.d.ts"/>
 /// <reference path="lib/phaser-tiled.d.ts"/>
 /// <reference path="scripts/GameStates.ts"/>
-import Tiled = Phaser.Plugin.Tiled;
-var game;
-class RPGame {
 
-    constructor(width: number, height: number) {
-        this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create});
-        this.mapName = 'mijn2';
-        this.mapURL = 'maps/mijn2.json';
+module MyGame
+{
+    export class RPGame {
+
+        constructor(width: number, height: number) {
+            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create});
+        }
+        game: Phaser.Game;
+
+        preload()
+        {
+            this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
+        }
+
+        create()
+        {
+            loadGameLevel(this.game, new GameStates.BeginMap2());
+        }
     }
-
-    mapURL: string;
-    mapName: string;
-    game: Phaser.Game;
-
-    loadMap(url: string, filename: string)
-    {
-        (<any>this.game.load).tiledmap(Phaser.Plugin.Tiled.utils.cacheKey(filename, 'tiledmap'), url, null, Phaser.Tilemap.TILED_JSON);
-    }
-
-    preload() {
-        this.game.add.plugin(new Tiled(this.game, this.game.stage));
-        game.loadMap(game.mapURL, game.mapName);
-    }
-
-    create() {
-        this.game.state.add('TiledMapLoader', GameStates.TiledMapLoader, true);
-    }
-
+}
+function loadGameLevel(game: Phaser.Game, levelToLoad: GameStates.GameLevel & Phaser.State)
+{
+    game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad.mapName, levelToLoad.mapURL, levelToLoad), false);
+    game.state.start('TiledMapLoader', true, true);
 }
 
 window.onload = () => {
@@ -40,6 +37,5 @@ window.onload = () => {
 
     var aspectMultiplier = Math.min(winW/widthAspectRatio, winH/heightAspectRatio);
 
-    game = new RPGame(aspectMultiplier*widthAspectRatio, aspectMultiplier*heightAspectRatio);
-
+    var gameVar = new MyGame.RPGame(aspectMultiplier*widthAspectRatio, aspectMultiplier*heightAspectRatio);
 };

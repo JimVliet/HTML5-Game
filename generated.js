@@ -8,22 +8,89 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var GameStates;
 (function (GameStates) {
+    var MineLevel = (function (_super) {
+        __extends(MineLevel, _super);
+        function MineLevel() {
+            _super.call(this);
+            this.counter = 0;
+            this.mapName = 'mijn2';
+            this.mapURL = 'maps/mijn2.json';
+        }
+        MineLevel.prototype.create = function () {
+            this.game.add.tiledmap(this.mapName);
+            this.game.time.events.loop(Phaser.Timer.SECOND, this.updateCounter, this);
+        };
+        MineLevel.prototype.updateCounter = function () {
+            this.counter++;
+            if (this.counter == 6) {
+                loadGameLevel(this.game, new BeginMap2());
+            }
+        };
+        return MineLevel;
+    })(Phaser.State);
+    GameStates.MineLevel = MineLevel;
+    var BeginMap2 = (function (_super) {
+        __extends(BeginMap2, _super);
+        function BeginMap2() {
+            _super.call(this);
+            this.counter = 0;
+            this.mapName = 'BEGINMAP2';
+            this.mapURL = 'maps/BEGINMAP2.json';
+        }
+        BeginMap2.prototype.create = function () {
+            this.game.add.tiledmap(this.mapName);
+            this.game.time.events.loop(Phaser.Timer.SECOND, this.updateCounter, this);
+        };
+        BeginMap2.prototype.updateCounter = function () {
+            this.counter++;
+            if (this.counter == 6) {
+                loadGameLevel(this.game, new MineLevel());
+            }
+        };
+        return BeginMap2;
+    })(Phaser.State);
+    GameStates.BeginMap2 = BeginMap2;
     var TiledMapLoader = (function (_super) {
         __extends(TiledMapLoader, _super);
-        function TiledMapLoader() {
-            _super.apply(this, arguments);
+        function TiledMapLoader(game, mapName, mapURL, state) {
+            _super.call(this);
+            this.game = game;
+            this.mapName = mapName;
+            this.mapURL = mapURL;
+            this.StateToStart = state;
         }
         TiledMapLoader.prototype.preload = function () {
+            this.MainText = this.game.add.text(this.game.width / 2, this.game.height / 2 - 80, 'Loading ' + this.mapName + " 0%", { fill: '#ffffff' });
+            this.MainText.anchor.x = 0.5;
+            this.SubText = this.game.add.text(this.game.width / 2, this.game.height / 2 + 80, 'Completed loading: ', { fill: '#ffffff' });
+            this.SubText.anchor.x = 0.5;
+            this.game.state.add(this.StateToStart.mapName, this.StateToStart, false);
+            this.game.load.tiledmap(Phaser.Plugin.Tiled.utils.cacheKey(this.StateToStart.mapName, 'tiledmap'), this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
+        };
+        TiledMapLoader.prototype.create = function () {
+            this.game.load.onFileComplete.add(this.fileCompleted, this);
             var cacheKeyFunc = Phaser.Plugin.Tiled.utils.cacheKey;
-            var cacheKey = cacheKeyFunc(game.mapName, 'tiledmap');
+            var cacheKey = cacheKeyFunc(this.mapName, 'tiledmap');
             var tileSets = this.game.cache.getTilemapData(cacheKey).data.tilesets;
             for (var n = 0; n < tileSets.length; n++) {
                 var currentSet = tileSets[n];
                 this.game.load.image(cacheKeyFunc(cacheKey.slice(0, -9), 'tileset', currentSet.name), 'maps/' + currentSet.image);
             }
+            this.game.load.onLoadComplete.addOnce(this.loadCompleted, this);
+            this.game.load.start();
         };
-        TiledMapLoader.prototype.create = function () {
-            this.game.add.tiledmap(game.mapName);
+        TiledMapLoader.prototype.fileCompleted = function (progress, cacheKey) {
+            this.MainText.setText('Loading ' + this.mapName + ' ' + progress + "%");
+            this.SubText.setText('Completed loading: ' + cacheKey);
+        };
+        TiledMapLoader.prototype.loadCompleted = function () {
+            this.game.state.start(this.StateToStart.mapName, true, false);
+        };
+        TiledMapLoader.prototype.shutdown = function () {
+            this.game.load.onFileComplete.remove(this.fileCompleted, this);
+            this.MainText.destroy();
+            this.SubText.destroy();
+            this.game.state.remove('TiledMapLoader');
         };
         return TiledMapLoader;
     })(Phaser.State);
@@ -32,32 +99,32 @@ var GameStates;
 /// <reference path="lib/phaser.d.ts"/>
 /// <reference path="lib/phaser-tiled.d.ts"/>
 /// <reference path="scripts/GameStates.ts"/>
-var Tiled = Phaser.Plugin.Tiled;
-var game;
-var RPGame = (function () {
-    function RPGame(width, height) {
-        this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
-        this.mapName = 'mijn2';
-        this.mapURL = 'maps/mijn2.json';
-    }
-    RPGame.prototype.loadMap = function (url, filename) {
-        this.game.load.tiledmap(Phaser.Plugin.Tiled.utils.cacheKey(filename, 'tiledmap'), url, null, Phaser.Tilemap.TILED_JSON);
-    };
-    RPGame.prototype.preload = function () {
-        this.game.add.plugin(new Tiled(this.game, this.game.stage));
-        game.loadMap(game.mapURL, game.mapName);
-    };
-    RPGame.prototype.create = function () {
-        this.game.state.add('TiledMapLoader', GameStates.TiledMapLoader, true);
-    };
-    return RPGame;
-})();
+var MyGame;
+(function (MyGame) {
+    var RPGame = (function () {
+        function RPGame(width, height) {
+            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
+        }
+        RPGame.prototype.preload = function () {
+            this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
+        };
+        RPGame.prototype.create = function () {
+            loadGameLevel(this.game, new GameStates.BeginMap2());
+        };
+        return RPGame;
+    })();
+    MyGame.RPGame = RPGame;
+})(MyGame || (MyGame = {}));
+function loadGameLevel(game, levelToLoad) {
+    game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad.mapName, levelToLoad.mapURL, levelToLoad), false);
+    game.state.start('TiledMapLoader', true, true);
+}
 window.onload = function () {
     var winW = window.innerWidth;
     var winH = window.innerHeight;
     var widthAspectRatio = 16;
     var heightAspectRatio = 9;
     var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
-    game = new RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
+    var gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
 };
 //# sourceMappingURL=generated.js.map
