@@ -12,19 +12,13 @@ var GameStates;
         __extends(MineLevel, _super);
         function MineLevel() {
             _super.call(this);
-            this.counter = 0;
             this.mapName = 'mijn2';
             this.mapURL = 'maps/mijn2.json';
         }
         MineLevel.prototype.create = function () {
-            this.game.add.tiledmap(this.mapName);
-            this.game.time.events.loop(Phaser.Timer.SECOND, this.updateCounter, this);
-        };
-        MineLevel.prototype.updateCounter = function () {
-            this.counter++;
-            if (this.counter == 6) {
-                loadGameLevel(this.game, new BeginMap2());
-            }
+            this.map = this.game.add.tiledmap(this.mapName);
+            //(<any>this.game.physics.p2).convertTiledmap;
+            //console.log(this.map);
         };
         return MineLevel;
     })(Phaser.State);
@@ -33,19 +27,11 @@ var GameStates;
         __extends(BeginMap2, _super);
         function BeginMap2() {
             _super.call(this);
-            this.counter = 0;
             this.mapName = 'BEGINMAP2';
             this.mapURL = 'maps/BEGINMAP2.json';
         }
         BeginMap2.prototype.create = function () {
-            this.game.add.tiledmap(this.mapName);
-            this.game.time.events.loop(Phaser.Timer.SECOND, this.updateCounter, this);
-        };
-        BeginMap2.prototype.updateCounter = function () {
-            this.counter++;
-            if (this.counter == 6) {
-                loadGameLevel(this.game, new MineLevel());
-            }
+            this.map = this.game.add.tiledmap(this.mapName);
         };
         return BeginMap2;
     })(Phaser.State);
@@ -127,4 +113,18 @@ window.onload = function () {
     var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
     var gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
 };
+/// <reference path="../lib/phaser.d.ts"/>
+/// <reference path="../lib/phaser-tiled.d.ts"/>
+/// <reference path="../app.ts"/>
+var GameObjects;
+(function (GameObjects) {
+    var Player = (function (_super) {
+        __extends(Player, _super);
+        function Player(game, x, y, key, frame) {
+            _super.call(this, game, x, y, key, frame);
+        }
+        return Player;
+    })(Phaser.Sprite);
+    GameObjects.Player = Player;
+})(GameObjects || (GameObjects = {}));
 //# sourceMappingURL=generated.js.map

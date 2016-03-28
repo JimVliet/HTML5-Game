@@ -4,34 +4,26 @@
 
 module GameStates
 {
+    import Tiled = Phaser.Plugin.Tiled;
     export class MineLevel extends Phaser.State implements GameLevel
     {
         game: Phaser.Game;
         mapName: string;
         mapURL: string;
-        counter: number;
+        map: Tiled.Tilemap;
 
         constructor()
         {
             super();
-            this.counter = 0;
             this.mapName = 'mijn2';
             this.mapURL = 'maps/mijn2.json';
         }
 
         create()
         {
-            (<any>this.game.add).tiledmap(this.mapName);
-            this.game.time.events.loop(Phaser.Timer.SECOND, this.updateCounter, this);
-        }
-
-        updateCounter()
-        {
-            this.counter++;
-            if (this.counter == 6)
-            {
-                loadGameLevel(this.game, new BeginMap2());
-            }
+            this.map = (<any>this.game.add).tiledmap(this.mapName);
+            //(<any>this.game.physics.p2).convertTiledmap;
+            //console.log(this.map);
         }
     }
 
@@ -40,29 +32,19 @@ module GameStates
         game: Phaser.Game;
         mapName: string;
         mapURL: string;
-        counter: number;
+        map: Tiled.Tilemap;
 
         constructor()
         {
             super();
-            this.counter = 0;
             this.mapName = 'BEGINMAP2';
             this.mapURL = 'maps/BEGINMAP2.json';
         }
 
         create()
         {
-            (<any>this.game.add).tiledmap(this.mapName);
-            this.game.time.events.loop(Phaser.Timer.SECOND, this.updateCounter, this);
-        }
+            this.map = (<any>this.game.add).tiledmap(this.mapName);
 
-        updateCounter()
-        {
-            this.counter++;
-            if (this.counter == 6)
-            {
-                loadGameLevel(this.game, new MineLevel());
-            }
         }
     }
 
@@ -136,5 +118,6 @@ module GameStates
     {
         mapName: string;
         mapURL: string;
+        map: Tiled.Tilemap;
     }
 }
