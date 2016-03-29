@@ -5,6 +5,27 @@
 module GameStates
 {
     import Tiled = Phaser.Plugin.Tiled;
+
+    export class AITest extends Phaser.State implements GameLevel
+    {
+        game: Phaser.Game;
+        mapName: string;
+        mapURL: string;
+        map: Tiled.Tilemap;
+
+        constructor()
+        {
+            super();
+            this.mapName = 'AI-Test';
+            this.mapURL = 'maps/AI-Test.json';
+        }
+
+        create()
+        {
+            this.map = (<any>this.game.add).tiledmap(this.mapName);
+        }
+    }
+
     export class MineLevel extends Phaser.State implements GameLevel
     {
         game: Phaser.Game;

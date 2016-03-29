@@ -8,6 +8,19 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var GameStates;
 (function (GameStates) {
+    var AITest = (function (_super) {
+        __extends(AITest, _super);
+        function AITest() {
+            _super.call(this);
+            this.mapName = 'AI-Test';
+            this.mapURL = 'maps/AI-Test.json';
+        }
+        AITest.prototype.create = function () {
+            this.map = this.game.add.tiledmap(this.mapName);
+        };
+        return AITest;
+    })(Phaser.State);
+    GameStates.AITest = AITest;
     var MineLevel = (function (_super) {
         __extends(MineLevel, _super);
         function MineLevel() {
@@ -95,7 +108,7 @@ var MyGame;
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
         };
         RPGame.prototype.create = function () {
-            loadGameLevel(this.game, new GameStates.BeginMap2());
+            loadGameLevel(this.game, new GameStates.AITest());
         };
         return RPGame;
     })();
@@ -113,18 +126,4 @@ window.onload = function () {
     var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
     var gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
 };
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
-var GameObjects;
-(function (GameObjects) {
-    var Player = (function (_super) {
-        __extends(Player, _super);
-        function Player(game, x, y, key, frame) {
-            _super.call(this, game, x, y, key, frame);
-        }
-        return Player;
-    })(Phaser.Sprite);
-    GameObjects.Player = Player;
-})(GameObjects || (GameObjects = {}));
 //# sourceMappingURL=generated.js.map

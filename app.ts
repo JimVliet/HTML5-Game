@@ -19,7 +19,7 @@ module MyGame
 
         create()
         {
-            loadGameLevel(this.game, new GameStates.BeginMap2());
+            loadGameLevel(this.game, new GameStates.AITest());
         }
     }
 }
