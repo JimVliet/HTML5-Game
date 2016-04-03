@@ -1,11 +1,122 @@
 /// <reference path="../lib/phaser.d.ts"/>
 /// <reference path="../lib/phaser-tiled.d.ts"/>
 /// <reference path="../app.ts"/>
+var functionFile;
+(function (functionFile) {
+    function setupWASDKeys(game) {
+        var keyLib = {};
+        keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
+        keyLib['a'] = game.input.keyboard.addKey(Phaser.Keyboard.A);
+        keyLib['s'] = game.input.keyboard.addKey(Phaser.Keyboard.S);
+        keyLib['d'] = game.input.keyboard.addKey(Phaser.Keyboard.D);
+        return keyLib;
+    }
+    functionFile.setupWASDKeys = setupWASDKeys;
+    function convertTiledMapLayer(map, layer) {
+        var tile;
+        for (var y = 0, h = layer.size.y; y < h; y++) {
+            for (var x = 0, w = layer.size.x; x < w; x++) {
+                if (!layer.tiles[y])
+                    continue;
+                tile = layer.tiles[y][x];
+            }
+        }
+    }
+    functionFile.convertTiledMapLayer = convertTiledMapLayer;
+})(functionFile || (functionFile = {}));
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+/// <reference path="../lib/phaser.d.ts"/>
+/// <reference path="../lib/phaser-tiled.d.ts"/>
+/// <reference path="../app.ts"/>
+/// <reference path="functionFile.ts"/>
+var GameObjects;
+(function (GameObjects) {
+    (function (GameObjectType) {
+        GameObjectType[GameObjectType["PLAYER"] = 0] = "PLAYER";
+    })(GameObjects.GameObjectType || (GameObjects.GameObjectType = {}));
+    var GameObjectType = GameObjects.GameObjectType;
+    var Player = (function (_super) {
+        __extends(Player, _super);
+        function Player(game, x, y, currentLevel, key, frame) {
+            _super.call(this, game, x, y, key, frame);
+            this.objectType = GameObjectType.PLAYER;
+            this.currentLevel = currentLevel;
+            this.moveSpeed = 250;
+            this.keyListener = functionFile.setupWASDKeys(this.game);
+            this.game.physics.arcade.enable(this);
+            this.body.collideWorldBounds = true;
+        }
+        Player.prototype.update = function () {
+            this.updateMovementControl();
+        };
+        Player.prototype.updateMovementControl = function () {
+            var xVel = 0.0;
+            var yVel = 0.0;
+            if (this.keyListener['s'].isDown) {
+                yVel += this.moveSpeed;
+            }
+            if (this.keyListener['w'].isDown) {
+                yVel -= this.moveSpeed;
+            }
+            if (this.keyListener['d'].isDown) {
+                xVel += this.moveSpeed;
+            }
+            if (this.keyListener['a'].isDown) {
+                xVel -= this.moveSpeed;
+            }
+            if (xVel != 0 && yVel != 0) {
+                this.body.velocity.x = xVel * 0.7071;
+                this.body.velocity.y = yVel * 0.7071;
+            }
+            else {
+                this.body.velocity.x = xVel;
+                this.body.velocity.y = yVel;
+            }
+        };
+        return Player;
+    })(Phaser.Sprite);
+    GameObjects.Player = Player;
+})(GameObjects || (GameObjects = {}));
+/// <reference path="lib/phaser.d.ts"/>
+/// <reference path="lib/phaser-tiled.d.ts"/>
+/// <reference path="scripts/GameStates.ts"/>
+/// <reference path="scripts/GameObjects.ts"/>
+var MyGame;
+(function (MyGame) {
+    var RPGame = (function () {
+        function RPGame(width, height) {
+            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
+        }
+        RPGame.prototype.preload = function () {
+            this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
+        };
+        RPGame.prototype.create = function () {
+            loadGameLevel(this.game, new GameStates.AITest());
+        };
+        return RPGame;
+    })();
+    MyGame.RPGame = RPGame;
+})(MyGame || (MyGame = {}));
+function loadGameLevel(game, levelToLoad) {
+    game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
+    game.state.start('TiledMapLoader', true, true);
+}
+window.onload = function () {
+    var winW = window.innerWidth;
+    var winH = window.innerHeight;
+    var widthAspectRatio = 16;
+    var heightAspectRatio = 9;
+    var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
+    var gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
+};
+/// <reference path="../lib/phaser.d.ts"/>
+/// <reference path="../lib/phaser-tiled.d.ts"/>
+/// <reference path="../app.ts"/>
+/// <reference path="GameObjects.ts"/>
 var GameStates;
 (function (GameStates) {
     var AITest = (function (_super) {
@@ -15,40 +126,33 @@ var GameStates;
             this.mapName = 'AI-Test';
             this.mapURL = 'maps/AI-Test.json';
         }
+        AITest.prototype.preload = function () {
+            this.game.load.spritesheet('PlayerTileset', 'images/tilesets/TestingTile.png', 32, 32);
+        };
         AITest.prototype.create = function () {
             this.map = this.game.add.tiledmap(this.mapName);
+            //Setup physics
+            this.game.time.advancedTiming = true;
+            //Add player object
+            this.player = new GameObjects.Player(this.game, 80, 100, this, 'PlayerTileset', 0);
+            this.map.getTilelayer('Player').add(this.player);
+            //Test physics
+            var solidLayer = this.map.getTilelayer("Solid");
+            var tiles = solidLayer.tiles;
+            console.log(tiles[0][0]);
+            console.log(tiles[0]);
+            console.log(tiles);
+            //Setup the camera
+            this.game.camera.follow(this.player);
+            this.game.camera.scale.set(1.8);
+        };
+        AITest.prototype.render = function () {
+            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
+            this.game.debug.cameraInfo(this.game.camera, 32, 64);
         };
         return AITest;
     })(Phaser.State);
     GameStates.AITest = AITest;
-    var MineLevel = (function (_super) {
-        __extends(MineLevel, _super);
-        function MineLevel() {
-            _super.call(this);
-            this.mapName = 'mijn2';
-            this.mapURL = 'maps/mijn2.json';
-        }
-        MineLevel.prototype.create = function () {
-            this.map = this.game.add.tiledmap(this.mapName);
-            //(<any>this.game.physics.p2).convertTiledmap;
-            //console.log(this.map);
-        };
-        return MineLevel;
-    })(Phaser.State);
-    GameStates.MineLevel = MineLevel;
-    var BeginMap2 = (function (_super) {
-        __extends(BeginMap2, _super);
-        function BeginMap2() {
-            _super.call(this);
-            this.mapName = 'BEGINMAP2';
-            this.mapURL = 'maps/BEGINMAP2.json';
-        }
-        BeginMap2.prototype.create = function () {
-            this.map = this.game.add.tiledmap(this.mapName);
-        };
-        return BeginMap2;
-    })(Phaser.State);
-    GameStates.BeginMap2 = BeginMap2;
     var TiledMapLoader = (function (_super) {
         __extends(TiledMapLoader, _super);
         function TiledMapLoader(game, state) {
@@ -95,35 +199,4 @@ var GameStates;
     })(Phaser.State);
     GameStates.TiledMapLoader = TiledMapLoader;
 })(GameStates || (GameStates = {}));
-/// <reference path="lib/phaser.d.ts"/>
-/// <reference path="lib/phaser-tiled.d.ts"/>
-/// <reference path="scripts/GameStates.ts"/>
-var MyGame;
-(function (MyGame) {
-    var RPGame = (function () {
-        function RPGame(width, height) {
-            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
-        }
-        RPGame.prototype.preload = function () {
-            this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
-        };
-        RPGame.prototype.create = function () {
-            loadGameLevel(this.game, new GameStates.AITest());
-        };
-        return RPGame;
-    })();
-    MyGame.RPGame = RPGame;
-})(MyGame || (MyGame = {}));
-function loadGameLevel(game, levelToLoad) {
-    game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
-    game.state.start('TiledMapLoader', true, true);
-}
-window.onload = function () {
-    var winW = window.innerWidth;
-    var winH = window.innerHeight;
-    var widthAspectRatio = 16;
-    var heightAspectRatio = 9;
-    var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
-    var gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
-};
 //# sourceMappingURL=generated.js.map

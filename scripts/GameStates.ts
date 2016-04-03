@@ -1,10 +1,13 @@
 /// <reference path="../lib/phaser.d.ts"/>
 /// <reference path="../lib/phaser-tiled.d.ts"/>
 /// <reference path="../app.ts"/>
+/// <reference path="GameObjects.ts"/>
 
 module GameStates
 {
     import Tiled = Phaser.Plugin.Tiled;
+    import GameObject = GameObjects.GameObject;
+    import game = PIXI.game;
 
     export class AITest extends Phaser.State implements GameLevel
     {
@@ -12,6 +15,8 @@ module GameStates
         mapName: string;
         mapURL: string;
         map: Tiled.Tilemap;
+        player: GameObject & Phaser.Sprite;
+        camera: Phaser.Camera;
 
         constructor()
         {
@@ -20,52 +25,38 @@ module GameStates
             this.mapURL = 'maps/AI-Test.json';
         }
 
-        create()
+        preload()
         {
-            this.map = (<any>this.game.add).tiledmap(this.mapName);
-        }
-    }
-
-    export class MineLevel extends Phaser.State implements GameLevel
-    {
-        game: Phaser.Game;
-        mapName: string;
-        mapURL: string;
-        map: Tiled.Tilemap;
-
-        constructor()
-        {
-            super();
-            this.mapName = 'mijn2';
-            this.mapURL = 'maps/mijn2.json';
-        }
-
-        create()
-        {
-            this.map = (<any>this.game.add).tiledmap(this.mapName);
-            //(<any>this.game.physics.p2).convertTiledmap;
-            //console.log(this.map);
-        }
-    }
-
-    export class BeginMap2 extends Phaser.State implements GameLevel
-    {
-        game: Phaser.Game;
-        mapName: string;
-        mapURL: string;
-        map: Tiled.Tilemap;
-
-        constructor()
-        {
-            super();
-            this.mapName = 'BEGINMAP2';
-            this.mapURL = 'maps/BEGINMAP2.json';
+            this.game.load.spritesheet('PlayerTileset', 'images/tilesets/TestingTile.png', 32, 32);
         }
 
         create()
         {
             this.map = (<any>this.game.add).tiledmap(this.mapName);
 
+            //Setup physics
+            this.game.time.advancedTiming = true;
+
+            //Add player object
+            this.player = new GameObjects.Player(this.game, 80, 100, this, 'PlayerTileset', 0);
+            this.map.getTilelayer('Player').add(this.player);
+
+            //Test physics
+            var solidLayer = this.map.getTilelayer("Solid");
+            var tiles = solidLayer.tiles;
+            console.log(tiles[0][0]);
+            console.log(tiles[0]);
+            console.log(tiles);
+
+            //Setup the camera
+            this.game.camera.follow(this.player);
+            this.game.camera.scale.set(1.8);
+        }
+
+        render()
+        {
+            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
+            this.game.debug.cameraInfo(this.game.camera, 32, 64);
         }
     }
 
@@ -140,5 +131,7 @@ module GameStates
         mapName: string;
         mapURL: string;
         map: Tiled.Tilemap;
+        player: GameObject & Phaser.Sprite;
+        camera: Phaser.Camera;
     }
 }

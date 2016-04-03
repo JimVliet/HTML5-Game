@@ -1,6 +1,7 @@
 /// <reference path="lib/phaser.d.ts"/>
 /// <reference path="lib/phaser-tiled.d.ts"/>
 /// <reference path="scripts/GameStates.ts"/>
+/// <reference path="scripts/GameObjects.ts"/>
 
 module MyGame
 {
