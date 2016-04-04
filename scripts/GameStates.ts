@@ -21,8 +21,8 @@ module GameStates
         constructor()
         {
             super();
-            this.mapName = 'AI-Test';
-            this.mapURL = 'maps/AI-Test.json';
+            this.mapName = 'Dungeon-Test';
+            this.mapURL = 'maps/Dungeon-Test.json';
         }
 
         preload()
@@ -41,16 +41,9 @@ module GameStates
             this.player = new GameObjects.Player(this.game, 80, 100, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
 
-            //Test physics
-            var solidLayer = this.map.getTilelayer("Solid");
-            var tiles = solidLayer.tiles;
-            console.log(tiles[0][0]);
-            console.log(tiles[0]);
-            console.log(tiles);
-
             //Setup the camera
             this.game.camera.follow(this.player);
-            this.game.camera.scale.set(1.8);
+            this.game.camera.scale.set(4);
         }
 
         render()

@@ -123,8 +123,8 @@ var GameStates;
         __extends(AITest, _super);
         function AITest() {
             _super.call(this);
-            this.mapName = 'AI-Test';
-            this.mapURL = 'maps/AI-Test.json';
+            this.mapName = 'Dungeon-Test';
+            this.mapURL = 'maps/Dungeon-Test.json';
         }
         AITest.prototype.preload = function () {
             this.game.load.spritesheet('PlayerTileset', 'images/tilesets/TestingTile.png', 32, 32);
@@ -136,15 +136,9 @@ var GameStates;
             //Add player object
             this.player = new GameObjects.Player(this.game, 80, 100, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
-            //Test physics
-            var solidLayer = this.map.getTilelayer("Solid");
-            var tiles = solidLayer.tiles;
-            console.log(tiles[0][0]);
-            console.log(tiles[0]);
-            console.log(tiles);
             //Setup the camera
             this.game.camera.follow(this.player);
-            this.game.camera.scale.set(1.8);
+            this.game.camera.scale.set(4);
         };
         AITest.prototype.render = function () {
             this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
