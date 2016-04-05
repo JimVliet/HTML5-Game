@@ -45,37 +45,105 @@ var GameObjects;
             _super.call(this, game, x, y, key, frame);
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
-            this.moveSpeed = 250;
+            this.moveSpeed = 40;
             this.keyListener = functionFile.setupWASDKeys(this.game);
-            this.game.physics.arcade.enable(this);
-            this.body.collideWorldBounds = true;
+            this.game.physics.p2.enable(this);
+            this.anchor.setTo(0.5, 0.5);
+            //Setup animations
+            this.smoothed = false;
+            this.animations.add('Idle', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 5, true);
+            this.animations.add('Right', [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
+            this.animations.add('Left', [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
+            this.animations.add('AttackRight', [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, true);
+            this.animations.add('AttackLeft', [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, true);
+            this.animations.add('DieRight', [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, true);
+            this.animations.add('DieLeft', [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, true);
+            this.animations.play('Idle');
         }
         Player.prototype.update = function () {
             this.updateMovementControl();
         };
         Player.prototype.updateMovementControl = function () {
-            var xVel = 0.0;
-            var yVel = 0.0;
+            this.body.setZeroVelocity();
+            var ang = 0;
             if (this.keyListener['s'].isDown) {
-                yVel += this.moveSpeed;
+                ang -= 3;
             }
             if (this.keyListener['w'].isDown) {
-                yVel -= this.moveSpeed;
+                ang += 3;
             }
             if (this.keyListener['d'].isDown) {
-                xVel += this.moveSpeed;
+                ang += 1;
             }
             if (this.keyListener['a'].isDown) {
-                xVel -= this.moveSpeed;
+                ang -= 1;
             }
-            if (xVel != 0 && yVel != 0) {
-                this.body.velocity.x = xVel * 0.7071;
-                this.body.velocity.y = yVel * 0.7071;
+            var diagSpeed = this.moveSpeed * 0.7071;
+            switch (ang) {
+                case 4:
+                    this.playRight();
+                    this.body.moveRight(diagSpeed);
+                    this.body.moveUp(diagSpeed);
+                    break;
+                case 1:
+                    this.playRight();
+                    this.body.moveRight(this.moveSpeed);
+                    break;
+                case -2:
+                    this.playRight();
+                    this.body.moveRight(diagSpeed);
+                    this.body.moveDown(diagSpeed);
+                    break;
+                case -3:
+                    this.playUpDown();
+                    this.body.moveDown(this.moveSpeed);
+                    break;
+                case -4:
+                    this.playLeft();
+                    this.body.moveLeft(diagSpeed);
+                    this.body.moveDown(diagSpeed);
+                    break;
+                case -1:
+                    this.playLeft();
+                    this.body.moveLeft(this.moveSpeed);
+                    break;
+                case 2:
+                    this.playLeft();
+                    this.body.moveLeft(diagSpeed);
+                    this.body.moveUp(diagSpeed);
+                    break;
+                case 3:
+                    this.playUpDown();
+                    this.body.moveUp(this.moveSpeed);
+                    break;
+                default:
+                    this.playIdle();
+                    break;
             }
-            else {
-                this.body.velocity.x = xVel;
-                this.body.velocity.y = yVel;
+        };
+        Player.prototype.playRight = function () {
+            if (this.animations.currentAnim.name != "Right") {
+                this.scale.x = 1;
+                this.animations.play('Right');
             }
+        };
+        Player.prototype.playLeft = function () {
+            if (this.animations.currentAnim.name != "Left") {
+                this.scale.x = -1;
+                this.animations.play('Left');
+            }
+        };
+        Player.prototype.playIdle = function () {
+            if (this.animations.currentAnim.name != "Idle") {
+                this.animations.play('Idle');
+            }
+        };
+        Player.prototype.playUpDown = function () {
+            if (this.scale.x < 0) {
+                this.playLeft();
+                return;
+            }
+            this.playRight();
         };
         return Player;
     })(Phaser.Sprite);
@@ -127,11 +195,13 @@ var GameStates;
             this.mapURL = 'maps/Cave.json';
         }
         AITest.prototype.preload = function () {
-            this.game.load.spritesheet('PlayerTileset', 'images/tilesets/TestingTile.png', 32, 32);
+            this.game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
         };
         AITest.prototype.create = function () {
-            this.map = this.game.add.tiledmap(this.mapName);
             //Setup physics
+            this.game.physics.startSystem(Phaser.Physics.P2JS);
+            //Add tilemap
+            this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
             //Add player object
             this.player = new GameObjects.Player(this.game, 80, 100, this, 'PlayerTileset', 0);
@@ -142,7 +212,6 @@ var GameStates;
         };
         AITest.prototype.render = function () {
             this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
-            this.game.debug.cameraInfo(this.game.camera, 32, 64);
         };
         return AITest;
     })(Phaser.State);

@@ -33,25 +33,21 @@
          "x":0,
          "y":0
         }],
+ "nextobjectid":1,
  "orientation":"orthogonal",
- "properties":
-    {
-
-    },
+ "renderorder":"right-down",
  "tileheight":16,
  "tilesets":[
         {
+         "columns":30,
          "firstgid":1,
          "image":"..\/images\/dungeon\/dungeon tileset calciumtrice.png",
          "imageheight":560,
          "imagewidth":480,
          "margin":0,
          "name":"dungeon tileset calciumtrice",
-         "properties":
-            {
-
-            },
          "spacing":0,
+         "tilecount":1050,
          "tileheight":16,
          "tilewidth":16
         }],

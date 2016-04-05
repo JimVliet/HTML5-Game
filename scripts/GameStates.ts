@@ -27,14 +27,16 @@ module GameStates
 
         preload()
         {
-            this.game.load.spritesheet('PlayerTileset', 'images/tilesets/TestingTile.png', 32, 32);
+            this.game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
         }
 
         create()
         {
-            this.map = (<any>this.game.add).tiledmap(this.mapName);
-
             //Setup physics
+            this.game.physics.startSystem(Phaser.Physics.P2JS);
+
+            //Add tilemap
+            this.map = (<any>this.game.add).tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
 
             //Add player object
@@ -49,7 +51,6 @@ module GameStates
         render()
         {
             this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
-            this.game.debug.cameraInfo(this.game.camera, 32, 64);
         }
     }
 
