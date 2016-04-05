@@ -21,8 +21,8 @@ module GameStates
         constructor()
         {
             super();
-            this.mapName = 'Dungeon-Test';
-            this.mapURL = 'maps/Dungeon-Test.json';
+            this.mapName = 'Cave';
+            this.mapURL = 'maps/Cave.json';
         }
 
         preload()

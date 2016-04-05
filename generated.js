@@ -89,7 +89,7 @@ var MyGame;
 (function (MyGame) {
     var RPGame = (function () {
         function RPGame(width, height) {
-            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create });
+            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create }, false, false);
         }
         RPGame.prototype.preload = function () {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
@@ -123,8 +123,8 @@ var GameStates;
         __extends(AITest, _super);
         function AITest() {
             _super.call(this);
-            this.mapName = 'Dungeon-Test';
-            this.mapURL = 'maps/Dungeon-Test.json';
+            this.mapName = 'Cave';
+            this.mapURL = 'maps/Cave.json';
         }
         AITest.prototype.preload = function () {
             this.game.load.spritesheet('PlayerTileset', 'images/tilesets/TestingTile.png', 32, 32);

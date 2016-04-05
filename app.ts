@@ -8,7 +8,7 @@ module MyGame
     export class RPGame {
 
         constructor(width: number, height: number) {
-            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create});
+            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create}, false, false);
         }
 
         game: Phaser.Game;
