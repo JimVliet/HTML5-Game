@@ -196,6 +196,7 @@ var GameStates;
         }
         AITest.prototype.preload = function () {
             this.game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+            this.game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
         };
         AITest.prototype.create = function () {
             //Setup physics
@@ -204,11 +205,13 @@ var GameStates;
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
             //Add player object
-            this.player = new GameObjects.Player(this.game, 80, 100, this, 'PlayerTileset', 0);
+            this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             //Setup the camera
             this.game.camera.follow(this.player);
-            this.game.camera.scale.set(4);
+            this.game.camera.scale.set(4.5);
+            //Play music
+            this.game.add.audio('Pershdal-Dung').play('', 0, 0.3, true);
         };
         AITest.prototype.render = function () {
             this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
