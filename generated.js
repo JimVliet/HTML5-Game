@@ -1,64 +1,3 @@
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
-var functionFile;
-(function (functionFile) {
-    var Polygon = Phaser.Polygon;
-    function setupWASDKeys(game) {
-        var keyLib = {};
-        keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
-        keyLib['a'] = game.input.keyboard.addKey(Phaser.Keyboard.A);
-        keyLib['s'] = game.input.keyboard.addKey(Phaser.Keyboard.S);
-        keyLib['d'] = game.input.keyboard.addKey(Phaser.Keyboard.D);
-        return keyLib;
-    }
-    functionFile.setupWASDKeys = setupWASDKeys;
-    function setupSolidLayer(game, layer) {
-        //layer.visible = false;
-        //Declare variables
-        var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], usedTiles = {}, rectList = [], x, y;
-        for (var index = 0; index < layerlength; index++) {
-            if (layerTiles[index] != 0 && !(index in usedTiles)) {
-                x = index % mapWidth;
-                y = Math.floor(index / mapHeight);
-                var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
-                while (curY < mapHeight && layerTiles[curY * mapWidth + x] && !(curY * mapWidth + x in usedTiles)) {
-                    var curX = x, curYIndex = curY * mapWidth, surface;
-                    //Check if the tile isn't outside the map and if it's a wall and if it isn't already used
-                    while (curX + 1 <= maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex + curX + 1 in usedTiles)) {
-                        curX++;
-                    }
-                    maxWidth = curX;
-                    surface = (curX - x + 1) * (curY - y + 1);
-                    if (surface > curBestRect[0]) {
-                        curBestRect = [surface, x, y, curX, curY];
-                    }
-                    curY++;
-                }
-                rectList.push(curBestRect);
-                //Update usedTiles list
-                for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
-                    var yIndex = mapWidth * usedY;
-                    for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
-                        usedTiles[yIndex + usedX] = null;
-                    }
-                }
-            }
-        }
-        return rectList;
-    }
-    functionFile.setupSolidLayer = setupSolidLayer;
-    function turnIntoPolygons(rectArray, tileWidth, tileHeight) {
-        var polygonList = [];
-        for (var i = 0; i < rectArray.length; i++) {
-            var x = rectArray[i][1] * tileWidth, y = rectArray[i][2] * tileHeight, xEnd = (rectArray[i][3] + 1) * tileWidth, yEnd = (rectArray[i][4] + 1) * tileHeight;
-            var poly = new Polygon(new Phaser.Point(x, y), new Phaser.Point(xEnd, y), new Phaser.Point(xEnd, yEnd), new Phaser.Point(x, yEnd));
-            polygonList.push(poly);
-        }
-        return polygonList;
-    }
-    functionFile.turnIntoPolygons = turnIntoPolygons;
-})(functionFile || (functionFile = {}));
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -85,6 +24,8 @@ var GameObjects;
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
             this.body.fixedRotation = true;
+            this.body.clearShapes();
+            this.body.addRectangle(16, 16, 0, 16, 0);
             //Setup animations
             this.smoothed = false;
             this.animations.add('Idle', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 5, true);
@@ -191,12 +132,47 @@ var GameObjects;
 /// <reference path="GameObjects.ts"/>
 var GameStates;
 (function (GameStates) {
+    var AITest = (function (_super) {
+        __extends(AITest, _super);
+        function AITest() {
+            _super.call(this);
+            this.mapName = 'Cave';
+            this.mapURL = 'maps/Cave.json';
+        }
+        AITest.prototype.customPreload = function (game) {
+            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
+            //game.load.audio('HollywoodVines', 'sounds/mp3/HollywoodVines.mp3');
+        };
+        AITest.prototype.create = function () {
+            //Setup physics
+            this.game.physics.startSystem(Phaser.Physics.P2JS);
+            //Add tilemap and setup the solid layer
+            this.map = this.game.add.tiledmap(this.mapName);
+            this.game.time.advancedTiming = true;
+            //Setup the object layer
+            functionFile.addSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
+            //Add player object
+            this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
+            this.map.getTilelayer('Player').add(this.player);
+            //Setup the camera
+            this.game.camera.follow(this.player);
+            this.game.camera.scale.set(4.5);
+            //Play music
+            this.game.add.audio('Pershdal-Dung').play(undefined, 0, 0.3, true);
+        };
+        AITest.prototype.render = function () {
+            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
+        };
+        return AITest;
+    })(Phaser.State);
+    GameStates.AITest = AITest;
     var SolidTest = (function (_super) {
         __extends(SolidTest, _super);
         function SolidTest() {
             _super.call(this);
-            this.mapName = 'SolidTestMap';
-            this.mapURL = 'maps/SolidTestMap.json';
+            this.mapName = 'Cave';
+            this.mapURL = 'maps/Cave.json';
         }
         SolidTest.prototype.customPreload = function (game) {
             game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
@@ -221,41 +197,6 @@ var GameStates;
         return SolidTest;
     })(Phaser.State);
     GameStates.SolidTest = SolidTest;
-    var AITest = (function (_super) {
-        __extends(AITest, _super);
-        function AITest() {
-            _super.call(this);
-            this.mapName = 'Cave';
-            this.mapURL = 'maps/Cave.json';
-        }
-        AITest.prototype.customPreload = function (game) {
-            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
-            //game.load.audio('HollywoodVines', 'sounds/mp3/HollywoodVines.mp3');
-        };
-        AITest.prototype.create = function () {
-            //Setup physics
-            this.game.physics.startSystem(Phaser.Physics.P2JS);
-            //Add tilemap and setup the solid layer
-            this.map = this.game.add.tiledmap(this.mapName);
-            this.game.time.advancedTiming = true;
-            //functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'));
-            this.map.getTilelayer('Solid').visible = false;
-            //Add player object
-            this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
-            this.map.getTilelayer('Player').add(this.player);
-            //Setup the camera
-            this.game.camera.follow(this.player);
-            this.game.camera.scale.set(4.5);
-            //Play music
-            this.game.add.audio('Pershdal-Dung').play('', 0, 0.3, true);
-        };
-        AITest.prototype.render = function () {
-            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
-        };
-        return AITest;
-    })(Phaser.State);
-    GameStates.AITest = AITest;
     var TiledMapLoader = (function (_super) {
         __extends(TiledMapLoader, _super);
         function TiledMapLoader(game, state) {
@@ -341,4 +282,76 @@ window.onload = function () {
     var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
     var gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
 };
+/// <reference path="../lib/phaser.d.ts"/>
+/// <reference path="../lib/phaser-tiled.d.ts"/>
+/// <reference path="../app.ts"/>
+var functionFile;
+(function (functionFile) {
+    var Polygon = Phaser.Polygon;
+    function setupWASDKeys(game) {
+        var keyLib = {};
+        keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
+        keyLib['a'] = game.input.keyboard.addKey(Phaser.Keyboard.A);
+        keyLib['s'] = game.input.keyboard.addKey(Phaser.Keyboard.S);
+        keyLib['d'] = game.input.keyboard.addKey(Phaser.Keyboard.D);
+        return keyLib;
+    }
+    functionFile.setupWASDKeys = setupWASDKeys;
+    function addSolidLayer(game, layer, map, debug) {
+        var pointList = functionFile.setupSolidLayer(layer);
+        for (var i = 0; i < pointList.length; i++) {
+            var x = pointList[i][1] * map.tileWidth, y = pointList[i][2] * map.tileHeight, xEnd = (pointList[i][3] + 1) * map.tileWidth, yEnd = (pointList[i][4] + 1) * map.tileHeight, body = game.physics.p2.createBody(x, y, 0, false);
+            body.addRectangle(xEnd - x, yEnd - y, (xEnd - x) / 2, (yEnd - y) / 2, 0);
+            body.debug = debug;
+            game.physics.p2.addBody(body);
+            layer.bodies.push(body);
+        }
+    }
+    functionFile.addSolidLayer = addSolidLayer;
+    function setupSolidLayer(layer) {
+        layer.visible = false;
+        //Declare variables
+        var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], usedTiles = {}, rectList = [], x, y;
+        for (var index = 0; index < layerlength; index++) {
+            if (layerTiles[index] != 0 && !(index in usedTiles)) {
+                x = index % mapWidth;
+                y = Math.floor(index / mapHeight);
+                var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
+                while (curY < mapHeight && layerTiles[curY * mapWidth + x] && !(curY * mapWidth + x in usedTiles)) {
+                    var curX = x, curYIndex = curY * mapWidth, surface;
+                    //Check if the tile isn't outside the map and if it's a wall and if it isn't already used
+                    while (curX + 1 <= maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex + curX + 1 in usedTiles)) {
+                        curX++;
+                    }
+                    maxWidth = curX;
+                    surface = (curX - x + 1) * (curY - y + 1);
+                    if (surface > curBestRect[0]) {
+                        curBestRect = [surface, x, y, curX, curY];
+                    }
+                    curY++;
+                }
+                rectList.push(curBestRect);
+                //Update usedTiles list
+                for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
+                    var yIndex = mapWidth * usedY;
+                    for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
+                        usedTiles[yIndex + usedX] = null;
+                    }
+                }
+            }
+        }
+        return rectList;
+    }
+    functionFile.setupSolidLayer = setupSolidLayer;
+    function turnIntoPolygons(rectArray, tileWidth, tileHeight) {
+        var polygonList = [];
+        for (var i = 0; i < rectArray.length; i++) {
+            var x = rectArray[i][1] * tileWidth, y = rectArray[i][2] * tileHeight, xEnd = (rectArray[i][3] + 1) * tileWidth, yEnd = (rectArray[i][4] + 1) * tileHeight;
+            var poly = new Polygon(new Phaser.Point(x, y), new Phaser.Point(xEnd, y), new Phaser.Point(xEnd, yEnd), new Phaser.Point(x, yEnd));
+            polygonList.push(poly);
+        }
+        return polygonList;
+    }
+    functionFile.turnIntoPolygons = turnIntoPolygons;
+})(functionFile || (functionFile = {}));
 //# sourceMappingURL=generated.js.map

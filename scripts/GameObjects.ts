@@ -26,6 +26,8 @@ module GameObjects
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5,0.5);
             this.body.fixedRotation = true;
+            (<Phaser.Physics.P2.Body>this.body).clearShapes();
+            (<Phaser.Physics.P2.Body>this.body).addRectangle(16,16, 0, 16, 0);
 
             //Setup animations
             this.smoothed = false;
