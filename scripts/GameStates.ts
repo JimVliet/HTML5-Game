@@ -7,7 +7,54 @@ module GameStates
 {
     import Tiled = Phaser.Plugin.Tiled;
     import GameObject = GameObjects.GameObject;
-    import game = PIXI.game;
+    import Color = Phaser.Color;
+
+    export class SolidTest extends Phaser.State implements GameLevel
+    {
+        game: Phaser.Game;
+        mapName: string;
+        mapURL: string;
+        map: Tiled.Tilemap;
+        player: GameObject & Phaser.Sprite;
+
+        constructor()
+        {
+            super();
+            this.mapName = 'SolidTestMap';
+            this.mapURL = 'maps/SolidTestMap.json';
+        }
+
+        customPreload(game: Phaser.Game)
+        {
+            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+        }
+
+        create()
+        {
+            this.game.physics.startSystem(Phaser.Physics.P2JS);
+
+            this.map = (<any>this.game.add).tiledmap(this.mapName);
+            this.game.time.advancedTiming = true;
+            this.game.camera.scale.set(1.5);
+
+            var pointList = functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'));
+            var polyList = functionFile.turnIntoPolygons(pointList, this.map.tileWidth, this.map.tileHeight);
+            var graphics = this.game.add.graphics(0,0);
+
+            for(var i = 0; i < polyList.length; i++)
+            {
+                graphics.beginFill(Phaser.Color.getRandomColor());
+                graphics.drawPolygon(polyList[i]);
+                graphics.endFill();
+            }
+        }
+
+        render()
+        {
+            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
+        }
+
+    }
 
     export class AITest extends Phaser.State implements GameLevel
     {
@@ -16,7 +63,6 @@ module GameStates
         mapURL: string;
         map: Tiled.Tilemap;
         player: GameObject & Phaser.Sprite;
-        camera: Phaser.Camera;
 
         constructor()
         {
@@ -25,10 +71,11 @@ module GameStates
             this.mapURL = 'maps/Cave.json';
         }
 
-        preload()
+        customPreload(game: Phaser.Game)
         {
-            this.game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-            this.game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3')
+            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
+            //game.load.audio('HollywoodVines', 'sounds/mp3/HollywoodVines.mp3');
         }
 
         create()
@@ -36,9 +83,12 @@ module GameStates
             //Setup physics
             this.game.physics.startSystem(Phaser.Physics.P2JS);
 
-            //Add tilemap
+            //Add tilemap and setup the solid layer
             this.map = (<any>this.game.add).tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
+
+            //functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'));
+            this.map.getTilelayer('Solid').visible = false;
 
             //Add player object
             this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
@@ -86,6 +136,9 @@ module GameStates
             this.SubText.anchor.x = 0.5;
 
             (<any>this.game.load).tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
+
+            //Load the custom assets needed for the state
+            this.StateToStart.customPreload(this.game);
             this.game.load.onFileComplete.add(this.fileCompleted, this);
         }
 
@@ -130,6 +183,7 @@ module GameStates
         mapURL: string;
         map: Tiled.Tilemap;
         player: GameObject & Phaser.Sprite;
-        camera: Phaser.Camera;
+
+        customPreload(game: Phaser.Game): void;
     }
 }

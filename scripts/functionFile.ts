@@ -4,6 +4,8 @@
 
 module functionFile
 {
+    import Polygon = Phaser.Polygon;
+    import Polygon = Phaser.Polygon;
     export function setupWASDKeys(game: Phaser.Game)
     {
         var keyLib = {};
@@ -14,17 +16,84 @@ module functionFile
         return keyLib;
     }
 
-    export function convertTiledMapLayer(map: Phaser.Plugin.Tiled.Tilemap, layer: Phaser.Plugin.Tiled.Tilelayer)
+    export function setupSolidLayer(game: Phaser.Game,layer: Phaser.Plugin.Tiled.Tilelayer): Array<Array<number>>
     {
-        var tile;
-        for(var y = 0, h = layer.size.y; y < h; y++)
-        {
-            for(var x = 0, w= layer.size.x; x < w; x++)
-            {
-                if(!layer.tiles[y]) continue;
+        //layer.visible = false;
 
-                tile = layer.tiles[y][x];
+        //Declare variables
+        var layerTiles = layer.tileIds,
+            layerlength = layerTiles.length,
+            mapWidth = layer.size['x'],
+            mapHeight = layer.size['y'],
+            usedTiles = {},
+            rectList = [],
+            x, y;
+
+        //Area and the x,y coords and the current x,y coords
+        type bestRect = [number, number, number, number, number];
+
+        for (var index = 0; index < layerlength; index++)
+        {
+            if(layerTiles[index] != 0 && !(index in usedTiles))
+            {
+                x = index % mapWidth;
+                y = Math.floor(index / mapHeight);
+
+                var curY = y,
+                    maxWidth = mapWidth - 1,
+                    curBestRect: bestRect = [1, x, y, x, y];
+
+                while(curY < mapHeight && layerTiles[curY*mapWidth + x] && !(curY*mapWidth + x in usedTiles))
+                {
+                    var curX = x,
+                        curYIndex = curY * mapWidth,
+                        surface;
+
+                    //Check if the tile isn't outside the map and if it's a wall and if it isn't already used
+                    while(curX+1 <= maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex+curX+1 in usedTiles))
+                    {
+                        curX++;
+                    }
+                    maxWidth = curX;
+                    surface = (curX - x + 1) * (curY - y + 1);
+                    if(surface > curBestRect[0])
+                    {
+                        curBestRect = [surface, x, y, curX, curY];
+                    }
+                    curY++;
+                }
+                rectList.push(curBestRect);
+
+                //Update usedTiles list
+                for(var usedY = y; usedY <= curBestRect[4]; usedY++)
+                {
+                    var yIndex = mapWidth * usedY;
+                    for(var usedX = x; usedX <= curBestRect[3]; usedX++)
+                    {
+                        usedTiles[yIndex+usedX] = null;
+                    }
+                }
+
             }
         }
+        return rectList;
     }
+
+    export function turnIntoPolygons(rectArray: Array<Array<number>>, tileWidth: number, tileHeight: number)
+    {
+        var polygonList: Array<Phaser.Polygon> = [];
+        for(var i = 0; i < rectArray.length; i++)
+        {
+            var x = rectArray[i][1] * tileWidth,
+                y = rectArray[i][2] * tileHeight,
+                xEnd = (rectArray[i][3]+1) * tileWidth,
+                yEnd = (rectArray[i][4]+1) * tileHeight;
+
+            var poly = new Polygon(new Phaser.Point(x,y), new Phaser.Point(xEnd,y), new Phaser.Point(xEnd,yEnd), new Phaser.Point(x,yEnd));
+            polygonList.push(poly);
+        }
+
+        return polygonList;
+    }
+
 }

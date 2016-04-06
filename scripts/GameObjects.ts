@@ -25,6 +25,7 @@ module GameObjects
             this.keyListener = functionFile.setupWASDKeys(this.game);
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5,0.5);
+            this.body.fixedRotation = true;
 
             //Setup animations
             this.smoothed = false;

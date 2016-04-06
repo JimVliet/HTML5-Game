@@ -20,7 +20,14 @@ module MyGame
 
         create()
         {
-            loadGameLevel(this.game, new GameStates.AITest());
+            if(window.location.href.indexOf('objectConverter') != -1)
+            {
+                loadGameLevel(this.game, new GameStates.SolidTest());
+            }
+            else
+            {
+                loadGameLevel(this.game, new GameStates.AITest());
+            }
         }
     }
 }
