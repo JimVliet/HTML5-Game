@@ -1,3 +1,75 @@
+/// <reference path="../lib/phaser.d.ts"/>
+/// <reference path="../lib/phaser-tiled.d.ts"/>
+/// <reference path="../app.ts"/>
+var functionFile;
+(function (functionFile) {
+    var Polygon = Phaser.Polygon;
+    function setupWASDKeys(game) {
+        var keyLib = {};
+        keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
+        keyLib['a'] = game.input.keyboard.addKey(Phaser.Keyboard.A);
+        keyLib['s'] = game.input.keyboard.addKey(Phaser.Keyboard.S);
+        keyLib['d'] = game.input.keyboard.addKey(Phaser.Keyboard.D);
+        return keyLib;
+    }
+    functionFile.setupWASDKeys = setupWASDKeys;
+    function addSolidLayer(game, layer, map, debug) {
+        var pointList = functionFile.setupSolidLayer(layer);
+        for (var i = 0; i < pointList.length; i++) {
+            var x = pointList[i][1] * map.tileWidth, y = pointList[i][2] * map.tileHeight, xEnd = (pointList[i][3] + 1) * map.tileWidth, yEnd = (pointList[i][4] + 1) * map.tileHeight, body = game.physics.p2.createBody(x, y, 0, false);
+            body.addRectangle(xEnd - x, yEnd - y, (xEnd - x) / 2, (yEnd - y) / 2, 0);
+            body.debug = debug;
+            game.physics.p2.addBody(body);
+            layer.bodies.push(body);
+        }
+    }
+    functionFile.addSolidLayer = addSolidLayer;
+    function setupSolidLayer(layer) {
+        layer.visible = false;
+        //Declare variables
+        var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], usedTiles = {}, rectList = [], x, y;
+        for (var index = 0; index < layerlength; index++) {
+            if (layerTiles[index] != 0 && !(index in usedTiles)) {
+                x = index % mapWidth;
+                y = Math.floor(index / mapHeight);
+                var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
+                while (curY < mapHeight && layerTiles[curY * mapWidth + x] && !(curY * mapWidth + x in usedTiles)) {
+                    var curX = x, curYIndex = curY * mapWidth, surface;
+                    //Check if the tile isn't outside the map and if it's a wall and if it isn't already used
+                    while (curX + 1 <= maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex + curX + 1 in usedTiles)) {
+                        curX++;
+                    }
+                    maxWidth = curX;
+                    surface = (curX - x + 1) * (curY - y + 1);
+                    if (surface > curBestRect[0]) {
+                        curBestRect = [surface, x, y, curX, curY];
+                    }
+                    curY++;
+                }
+                rectList.push(curBestRect);
+                //Update usedTiles list
+                for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
+                    var yIndex = mapWidth * usedY;
+                    for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
+                        usedTiles[yIndex + usedX] = null;
+                    }
+                }
+            }
+        }
+        return rectList;
+    }
+    functionFile.setupSolidLayer = setupSolidLayer;
+    function turnIntoPolygons(rectArray, tileWidth, tileHeight) {
+        var polygonList = [];
+        for (var i = 0; i < rectArray.length; i++) {
+            var x = rectArray[i][1] * tileWidth, y = rectArray[i][2] * tileHeight, xEnd = (rectArray[i][3] + 1) * tileWidth, yEnd = (rectArray[i][4] + 1) * tileHeight;
+            var poly = new Polygon(new Phaser.Point(x, y), new Phaser.Point(xEnd, y), new Phaser.Point(xEnd, yEnd), new Phaser.Point(x, yEnd));
+            polygonList.push(poly);
+        }
+        return polygonList;
+    }
+    functionFile.turnIntoPolygons = turnIntoPolygons;
+})(functionFile || (functionFile = {}));
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -126,6 +198,43 @@ var GameObjects;
     })(Phaser.Sprite);
     GameObjects.Player = Player;
 })(GameObjects || (GameObjects = {}));
+/// <reference path="lib/phaser.d.ts"/>
+/// <reference path="lib/phaser-tiled.d.ts"/>
+/// <reference path="scripts/GameStates.ts"/>
+/// <reference path="scripts/GameObjects.ts"/>
+var MyGame;
+(function (MyGame) {
+    var RPGame = (function () {
+        function RPGame(width, height) {
+            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create }, false, false);
+        }
+        RPGame.prototype.preload = function () {
+            this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
+        };
+        RPGame.prototype.create = function () {
+            if (window.location.href.indexOf('objectConverter') != -1) {
+                loadGameLevel(this.game, new GameStates.SolidTest());
+            }
+            else {
+                loadGameLevel(this.game, new GameStates.AITest());
+            }
+        };
+        return RPGame;
+    })();
+    MyGame.RPGame = RPGame;
+})(MyGame || (MyGame = {}));
+function loadGameLevel(game, levelToLoad) {
+    game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
+    game.state.start('TiledMapLoader', true, true);
+}
+window.onload = function () {
+    var winW = window.innerWidth;
+    var winH = window.innerHeight;
+    var widthAspectRatio = 16;
+    var heightAspectRatio = 9;
+    var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
+    var gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
+};
 /// <reference path="../lib/phaser.d.ts"/>
 /// <reference path="../lib/phaser-tiled.d.ts"/>
 /// <reference path="../app.ts"/>
@@ -182,7 +291,7 @@ var GameStates;
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
             this.game.camera.scale.set(1.5);
-            var pointList = functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'));
+            var pointList = functionFile.setupSolidLayer(this.map.getTilelayer('Solid'));
             var polyList = functionFile.turnIntoPolygons(pointList, this.map.tileWidth, this.map.tileHeight);
             var graphics = this.game.add.graphics(0, 0);
             for (var i = 0; i < polyList.length; i++) {
@@ -245,113 +354,4 @@ var GameStates;
     })(Phaser.State);
     GameStates.TiledMapLoader = TiledMapLoader;
 })(GameStates || (GameStates = {}));
-/// <reference path="lib/phaser.d.ts"/>
-/// <reference path="lib/phaser-tiled.d.ts"/>
-/// <reference path="scripts/GameStates.ts"/>
-/// <reference path="scripts/GameObjects.ts"/>
-var MyGame;
-(function (MyGame) {
-    var RPGame = (function () {
-        function RPGame(width, height) {
-            this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create }, false, false);
-        }
-        RPGame.prototype.preload = function () {
-            this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
-        };
-        RPGame.prototype.create = function () {
-            if (window.location.href.indexOf('objectConverter') != -1) {
-                loadGameLevel(this.game, new GameStates.SolidTest());
-            }
-            else {
-                loadGameLevel(this.game, new GameStates.AITest());
-            }
-        };
-        return RPGame;
-    })();
-    MyGame.RPGame = RPGame;
-})(MyGame || (MyGame = {}));
-function loadGameLevel(game, levelToLoad) {
-    game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
-    game.state.start('TiledMapLoader', true, true);
-}
-window.onload = function () {
-    var winW = window.innerWidth;
-    var winH = window.innerHeight;
-    var widthAspectRatio = 16;
-    var heightAspectRatio = 9;
-    var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
-    var gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
-};
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
-var functionFile;
-(function (functionFile) {
-    var Polygon = Phaser.Polygon;
-    function setupWASDKeys(game) {
-        var keyLib = {};
-        keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
-        keyLib['a'] = game.input.keyboard.addKey(Phaser.Keyboard.A);
-        keyLib['s'] = game.input.keyboard.addKey(Phaser.Keyboard.S);
-        keyLib['d'] = game.input.keyboard.addKey(Phaser.Keyboard.D);
-        return keyLib;
-    }
-    functionFile.setupWASDKeys = setupWASDKeys;
-    function addSolidLayer(game, layer, map, debug) {
-        var pointList = functionFile.setupSolidLayer(layer);
-        for (var i = 0; i < pointList.length; i++) {
-            var x = pointList[i][1] * map.tileWidth, y = pointList[i][2] * map.tileHeight, xEnd = (pointList[i][3] + 1) * map.tileWidth, yEnd = (pointList[i][4] + 1) * map.tileHeight, body = game.physics.p2.createBody(x, y, 0, false);
-            body.addRectangle(xEnd - x, yEnd - y, (xEnd - x) / 2, (yEnd - y) / 2, 0);
-            body.debug = debug;
-            game.physics.p2.addBody(body);
-            layer.bodies.push(body);
-        }
-    }
-    functionFile.addSolidLayer = addSolidLayer;
-    function setupSolidLayer(layer) {
-        layer.visible = false;
-        //Declare variables
-        var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], usedTiles = {}, rectList = [], x, y;
-        for (var index = 0; index < layerlength; index++) {
-            if (layerTiles[index] != 0 && !(index in usedTiles)) {
-                x = index % mapWidth;
-                y = Math.floor(index / mapHeight);
-                var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
-                while (curY < mapHeight && layerTiles[curY * mapWidth + x] && !(curY * mapWidth + x in usedTiles)) {
-                    var curX = x, curYIndex = curY * mapWidth, surface;
-                    //Check if the tile isn't outside the map and if it's a wall and if it isn't already used
-                    while (curX + 1 <= maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex + curX + 1 in usedTiles)) {
-                        curX++;
-                    }
-                    maxWidth = curX;
-                    surface = (curX - x + 1) * (curY - y + 1);
-                    if (surface > curBestRect[0]) {
-                        curBestRect = [surface, x, y, curX, curY];
-                    }
-                    curY++;
-                }
-                rectList.push(curBestRect);
-                //Update usedTiles list
-                for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
-                    var yIndex = mapWidth * usedY;
-                    for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
-                        usedTiles[yIndex + usedX] = null;
-                    }
-                }
-            }
-        }
-        return rectList;
-    }
-    functionFile.setupSolidLayer = setupSolidLayer;
-    function turnIntoPolygons(rectArray, tileWidth, tileHeight) {
-        var polygonList = [];
-        for (var i = 0; i < rectArray.length; i++) {
-            var x = rectArray[i][1] * tileWidth, y = rectArray[i][2] * tileHeight, xEnd = (rectArray[i][3] + 1) * tileWidth, yEnd = (rectArray[i][4] + 1) * tileHeight;
-            var poly = new Polygon(new Phaser.Point(x, y), new Phaser.Point(xEnd, y), new Phaser.Point(xEnd, yEnd), new Phaser.Point(x, yEnd));
-            polygonList.push(poly);
-        }
-        return polygonList;
-    }
-    functionFile.turnIntoPolygons = turnIntoPolygons;
-})(functionFile || (functionFile = {}));
 //# sourceMappingURL=generated.js.map

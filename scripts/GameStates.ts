@@ -89,7 +89,7 @@ module GameStates
             this.game.time.advancedTiming = true;
             this.game.camera.scale.set(1.5);
 
-            var pointList = functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'));
+            var pointList = functionFile.setupSolidLayer(this.map.getTilelayer('Solid'));
             var polyList = functionFile.turnIntoPolygons(pointList, this.map.tileWidth, this.map.tileHeight);
             var graphics = this.game.add.graphics(0,0);
 
