@@ -1,6 +1,5 @@
 var functionFile;
 (function (functionFile) {
-    var Polygon = Phaser.Polygon;
     function setupWASDKeys(game) {
         var keyLib = {};
         keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
@@ -45,16 +44,6 @@ var functionFile;
         }
     }
     functionFile.setupSolidLayer = setupSolidLayer;
-    function turnIntoPolygons(rectArray, tileWidth, tileHeight) {
-        var polygonList = [];
-        for (var i = 0; i < rectArray.length; i++) {
-            var x = rectArray[i][1] * tileWidth, y = rectArray[i][2] * tileHeight, xEnd = (rectArray[i][3] + 1) * tileWidth, yEnd = (rectArray[i][4] + 1) * tileHeight;
-            var poly = new Polygon(new Phaser.Point(x, y), new Phaser.Point(xEnd, y), new Phaser.Point(xEnd, yEnd), new Phaser.Point(x, yEnd));
-            polygonList.push(poly);
-        }
-        return polygonList;
-    }
-    functionFile.turnIntoPolygons = turnIntoPolygons;
     function loadGameLevel(game, levelToLoad) {
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
         game.state.start('TiledMapLoader', true, true);

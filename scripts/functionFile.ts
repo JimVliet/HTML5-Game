@@ -87,23 +87,6 @@ module functionFile
         }
     }
 
-    export function turnIntoPolygons(rectArray: Array<Array<number>>, tileWidth: number, tileHeight: number)
-    {
-        var polygonList: Array<Phaser.Polygon> = [];
-        for(var i = 0; i < rectArray.length; i++)
-        {
-            var x = rectArray[i][1] * tileWidth,
-                y = rectArray[i][2] * tileHeight,
-                xEnd = (rectArray[i][3]+1) * tileWidth,
-                yEnd = (rectArray[i][4]+1) * tileHeight;
-
-            var poly = new Polygon(new Phaser.Point(x,y), new Phaser.Point(xEnd,y), new Phaser.Point(xEnd,yEnd), new Phaser.Point(x,yEnd));
-            polygonList.push(poly);
-        }
-
-        return polygonList;
-    }
-
     export function loadGameLevel(game: Phaser.Game, levelToLoad: GameStates.GameLevel & Phaser.State)
     {
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
