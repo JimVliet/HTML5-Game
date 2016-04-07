@@ -15,26 +15,8 @@ module functionFile
         return keyLib;
     }
 
-    export function addSolidLayer(game: Phaser.Game,layer: Phaser.Plugin.Tiled.Tilelayer, map: Phaser.Plugin.Tiled.Tilemap, debug: boolean)
-    {
-        var pointList = functionFile.setupSolidLayer(layer);
 
-        for(var i = 0; i < pointList.length; i++)
-        {
-            var x = pointList[i][1] * map.tileWidth,
-                y = pointList[i][2] * map.tileHeight,
-                xEnd = (pointList[i][3]+1) * map.tileWidth,
-                yEnd = (pointList[i][4]+1) * map.tileHeight,
-                body = game.physics.p2.createBody(x,y, 0, false);
-
-            body.addRectangle(xEnd - x, yEnd - y, (xEnd - x)/2, (yEnd - y)/2, 0);
-            body.debug = debug;
-            game.physics.p2.addBody(body);
-            layer.bodies.push(body);
-        }
-    }
-
-    export function setupSolidLayer(layer: Phaser.Plugin.Tiled.Tilelayer): Array<Array<number>>
+    export function setupSolidLayer(game: Phaser.Game, layer: Phaser.Plugin.Tiled.Tilelayer, map: Phaser.Plugin.Tiled.Tilemap, debug: boolean)
     {
         layer.visible = false;
 
@@ -44,7 +26,6 @@ module functionFile
             mapWidth = layer.size['x'],
             mapHeight = layer.size['y'],
             usedTiles = {},
-            rectList = [],
             x, y;
 
         //Area and the x,y coords and the current x,y coords
@@ -55,7 +36,7 @@ module functionFile
             if(layerTiles[index] != 0 && !(index in usedTiles))
             {
                 x = index % mapWidth;
-                y = Math.floor(index / mapHeight);
+                y = Math.floor(index / mapWidth);
 
                 var curY = y,
                     maxWidth = mapWidth - 1,
@@ -80,7 +61,17 @@ module functionFile
                     }
                     curY++;
                 }
-                rectList.push(curBestRect);
+
+                var xPixel = curBestRect[1] * map.tileWidth,
+                    yPixel = curBestRect[2] * map.tileHeight,
+                    xEndPixel = (curBestRect[3]+1) * map.tileWidth,
+                    yEndPixel = (curBestRect[4]+1) * map.tileHeight,
+                    body = game.physics.p2.createBody(xPixel, yPixel, 0, false);
+
+                body.addRectangle(xEndPixel - xPixel, yEndPixel - yPixel, (xEndPixel - xPixel)/2, (yEndPixel - yPixel)/2, 0);
+                body.debug = debug;
+                game.physics.p2.addBody(body);
+                layer.bodies.push(body);
 
                 //Update usedTiles list
                 for(var usedY = y; usedY <= curBestRect[4]; usedY++)
@@ -94,7 +85,6 @@ module functionFile
 
             }
         }
-        return rectList;
     }
 
     export function turnIntoPolygons(rectArray: Array<Array<number>>, tileWidth: number, tileHeight: number)
