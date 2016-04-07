@@ -62,8 +62,8 @@ module GameStates
 
         setupNextLevel()
         {
-            var nextLevelBody = this.game.physics.p2.createBody(128, 70, 0, false);
-            nextLevelBody.addRectangle(this.map.tileWidth, this.map.tileHeight/4, this.map.tileWidth/2, this.map.tileHeight/2, 0);
+            var nextLevelBody = this.game.physics.p2.createBody(128, 74, 0, false);
+            nextLevelBody.addRectangle(this.map.tileWidth/8, this.map.tileHeight/4, this.map.tileWidth/2, this.map.tileHeight/4, 0);
             nextLevelBody.onBeginContact.add(this.nextLevel, this);
             this.game.physics.p2.addBody(nextLevelBody);
             this.map.getTilelayer('Solid').bodies.push(nextLevelBody);

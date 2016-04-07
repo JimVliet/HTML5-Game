@@ -21,7 +21,7 @@ module GameObjects
             super(game, x, y,  key, frame);
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
-            this.moveSpeed = 40;
+            this.moveSpeed = 45;
             this.keyListener = functionFile.setupWASDKeys(this.game);
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5,0.5);
