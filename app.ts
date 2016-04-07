@@ -2,6 +2,9 @@
 /// <reference path="lib/phaser-tiled.d.ts"/>
 /// <reference path="scripts/GameStates.ts"/>
 /// <reference path="scripts/GameObjects.ts"/>
+/// <reference path="scripts/functionFile.ts"/>
+/// <reference path="scripts/levels/Level1.ts"/>
+/// <reference path="scripts/levels/SolidTest.ts"/>
 
 module MyGame
 {
@@ -22,19 +25,14 @@ module MyGame
         {
             if(window.location.href.indexOf('objectConverter') != -1)
             {
-                loadGameLevel(this.game, new GameStates.SolidTest());
+                functionFile.loadGameLevel(this.game, new GameLevels.SolidTest());
             }
             else
             {
-                loadGameLevel(this.game, new GameStates.AITest());
+                functionFile.loadGameLevel(this.game, new GameLevels.Level1());
             }
         }
     }
-}
-function loadGameLevel(game: Phaser.Game, levelToLoad: GameStates.GameLevel & Phaser.State)
-{
-    game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
-    game.state.start('TiledMapLoader', true, true);
 }
 
 window.onload = () => {

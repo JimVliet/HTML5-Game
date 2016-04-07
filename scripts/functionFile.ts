@@ -104,4 +104,9 @@ module functionFile
         return polygonList;
     }
 
+    export function loadGameLevel(game: Phaser.Game, levelToLoad: GameStates.GameLevel & Phaser.State)
+    {
+        game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
+        game.state.start('TiledMapLoader', true, true);
+    }
 }
