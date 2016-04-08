@@ -54,7 +54,7 @@ module functionFile
                         surface;
 
                     //Check if the tile isn't outside the map and if it's a wall and if it isn't already used
-                    while(curX+1 <= maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex+curX+1 in usedTiles))
+                    while(curX < maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex+curX+1 in usedTiles))
                     {
                         curX++;
                     }

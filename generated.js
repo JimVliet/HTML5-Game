@@ -23,7 +23,7 @@ var functionFile;
                 var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
                 while (curY < mapHeight && layerTiles[curY * mapWidth + x] && !(curY * mapWidth + x in usedTiles)) {
                     var curX = x, curYIndex = curY * mapWidth, surface;
-                    while (curX + 1 <= maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex + curX + 1 in usedTiles)) {
+                    while (curX < maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex + curX + 1 in usedTiles)) {
                         curX++;
                     }
                     maxWidth = curX;
