@@ -2,8 +2,12 @@
 /// <reference path="../lib/phaser-tiled.d.ts"/>
 /// <reference path="../app.ts"/>
 /// <reference path="functionFile.ts"/>
+/// <reference path="AnimationManager.ts"/>
+
 module GameObjects
 {
+    import AnimManager = Manager.AnimManager;
+    import AnimType = Manager.AnimType;
     export enum GameObjectType
     {
         PLAYER
@@ -14,42 +18,51 @@ module GameObjects
         objectType: GameObjectType;
         currentLevel: GameStates.GameLevel & Phaser.State;
         moveSpeed: number;
-        keyListener: {};
+        baseMoveSpeed: number;
+        moveSpeedMod: number;
+        keyListener: {[name: string]: Phaser.Key};
+        body: Phaser.Physics.P2.Body;
+        AnimManager: AnimManager;
+        canAttack: boolean;
+        attackDelay: number;
 
         constructor(game: Phaser.Game, x: number, y: number, currentLevel: GameStates.GameLevel & Phaser.State, key?: string | Phaser.RenderTexture | Phaser.BitmapData | PIXI.Texture, frame?: string | number)
         {
             super(game, x, y,  key, frame);
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
-            this.moveSpeed = 45;
-            this.keyListener = functionFile.setupWASDKeys(this.game);
+            this.baseMoveSpeed = 45;
+            this.moveSpeedMod = 0;
+            this.canAttack = true;
+            this.attackDelay = 800;
+            this.keyListener = functionFile.setupPlayerKeys(this.game);
+
+            //Setup physics and the player body
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5,0.5);
+            this.body.clearShapes();
             this.body.fixedRotation = true;
-            this.body.debug = false;
-            (<Phaser.Physics.P2.Body>this.body).clearShapes();
-            (<Phaser.Physics.P2.Body>this.body).addRectangle(14,5, 0, 16, 0);
+            this.body.addRectangle(14,5, 0, 16, 0);
 
-            //Setup animations
-            this.smoothed = false;
-            this.animations.add('Idle', [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], 5, true);
-            this.animations.add('Right', [20,21,22,23,24,25,26,27,28,29], 10, true);
-            this.animations.add('Left', [20,21,22,23,24,25,26,27,28,29], 10, true);
-            this.animations.add('AttackRight', [30,31,32,33,34,35,36,37,38,39], 10, true);
-            this.animations.add('AttackLeft', [30,31,32,33,34,35,36,37,38,39], 10, true);
-            this.animations.add('DieRight', [40,41,42,43,44,45,46,47,48,49], 10, true);
-            this.animations.add('DieLeft', [40,41,42,43,44,45,46,47,48,49], 10, true);
-            this.animations.play('Idle');
+            //Setup animationManager
+            this.AnimManager = new AnimManager(this);
         }
 
+        //Main update loop
         update()
         {
+            this.updateMoveSpeed();
             this.updateMovementControl();
+        }
+
+        updateMoveSpeed()
+        {
+            this.moveSpeed = this.baseMoveSpeed + this.baseMoveSpeed * this.moveSpeedMod;
         }
 
         updateMovementControl()
         {
-            (<Phaser.Physics.P2.Body>this.body).setZeroVelocity();
+            this.body.setZeroVelocity();
             var ang = 0;
 
             if(this.keyListener['s'].isDown)
@@ -69,87 +82,77 @@ module GameObjects
                 ang -= 1;
             }
 
-            var diagSpeed = this.moveSpeed * 0.7071;
+            var diagSpeed = this.moveSpeed * 0.7071,
+                anim: AnimType = AnimType.IDLE;
+
             switch (ang)
             {
                 case 4:
-                    this.playRight();
-                    (<Phaser.Physics.P2.Body>this.body).moveRight(diagSpeed);
-                    (<Phaser.Physics.P2.Body>this.body).moveUp(diagSpeed);
+                    anim = AnimType.RIGHT;
+                    this.body.moveRight(diagSpeed);
+                    this.body.moveUp(diagSpeed);
                     break;
                 case 1:
-                    this.playRight();
-                    (<Phaser.Physics.P2.Body>this.body).moveRight(this.moveSpeed);
+                    anim = AnimType.RIGHT;
+                    this.body.moveRight(this.moveSpeed);
                     break;
                 case -2:
-                    this.playRight();
-                    (<Phaser.Physics.P2.Body>this.body).moveRight(diagSpeed);
-                    (<Phaser.Physics.P2.Body>this.body).moveDown(diagSpeed);
+                    anim = AnimType.RIGHT;
+                    this.body.moveRight(diagSpeed);
+                    this.body.moveDown(diagSpeed);
                     break;
                 case -3:
-                    this.playUpDown();
-                    (<Phaser.Physics.P2.Body>this.body).moveDown(this.moveSpeed);
+                    anim = AnimType.UPDOWN;
+                    this.body.moveDown(this.moveSpeed);
                     break;
                 case -4:
-                    this.playLeft();
-                    (<Phaser.Physics.P2.Body>this.body).moveLeft(diagSpeed);
-                    (<Phaser.Physics.P2.Body>this.body).moveDown(diagSpeed);
+                    anim = AnimType.LEFT;
+                    this.body.moveLeft(diagSpeed);
+                    this.body.moveDown(diagSpeed);
                     break;
                 case -1:
-                    this.playLeft();
-                    (<Phaser.Physics.P2.Body>this.body).moveLeft(this.moveSpeed);
+                    anim = AnimType.LEFT;
+                    this.body.moveLeft(this.moveSpeed);
                     break;
                 case 2:
-                    this.playLeft();
-                    (<Phaser.Physics.P2.Body>this.body).moveLeft(diagSpeed);
-                    (<Phaser.Physics.P2.Body>this.body).moveUp(diagSpeed);
+                    anim = AnimType.LEFT;
+                    this.body.moveLeft(diagSpeed);
+                    this.body.moveUp(diagSpeed);
                     break;
                 case 3:
-                    this.playUpDown();
-                    (<Phaser.Physics.P2.Body>this.body).moveUp(this.moveSpeed);
-                    break;
-                default:
-                    this.playIdle();
+                    anim = AnimType.UPDOWN;
+                    this.body.moveUp(this.moveSpeed);
                     break;
             }
-        }
 
-        playRight()
-        {
-            if (this.animations.currentAnim.name != "Right")
+            if(this.keyListener['space'].isDown && this.canAttack)
             {
-                this.scale.x = 1;
-                this.animations.play('Right');
+                return this.attack();
             }
 
+            this.AnimManager.updateAnimation(anim);
         }
 
-        playLeft()
+        attack()
         {
-            if(this.animations.currentAnim.name != "Left")
-            {
-                this.scale.x = -1;
-                this.animations.play('Left');
-            }
+            this.AnimManager.attack();
+            var timer = this.game.time.add(new Phaser.Timer(this.game, true));
+            timer.add(this.attackDelay, this.cooldownFinished, this);
+            timer.start();
+            this.canAttack = false;
+            this.moveSpeedMod -= 0.6;
         }
 
-        playIdle()
+        cooldownFinished()
         {
-            if(this.animations.currentAnim.name != "Idle")
-            {
-                this.animations.play('Idle');
-            }
+            this.canAttack = true;
         }
 
-        playUpDown()
+        attackAnimFinished()
         {
-            if(this.scale.x < 0)
-            {
-                this.playLeft();
-                return;
-            }
-            this.playRight();
+            this.moveSpeedMod += 0.6;
         }
+
     }
 
     export interface GameObject
@@ -157,5 +160,11 @@ module GameObjects
         objectType: GameObjectType;
         currentLevel: GameStates.GameLevel & Phaser.State;
         moveSpeed: number;
+        baseMoveSpeed: number;
+        moveSpeedMod: number;
+        AnimManager: AnimManager;
+        attackDelay: number;
+
+        attackAnimFinished(): void;
     }
 }

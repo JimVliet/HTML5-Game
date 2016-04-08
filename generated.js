@@ -1,14 +1,15 @@
 var functionFile;
 (function (functionFile) {
-    function setupWASDKeys(game) {
+    function setupPlayerKeys(game) {
         var keyLib = {};
         keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
         keyLib['a'] = game.input.keyboard.addKey(Phaser.Keyboard.A);
         keyLib['s'] = game.input.keyboard.addKey(Phaser.Keyboard.S);
         keyLib['d'] = game.input.keyboard.addKey(Phaser.Keyboard.D);
+        keyLib['space'] = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
         return keyLib;
     }
-    functionFile.setupWASDKeys = setupWASDKeys;
+    functionFile.setupPlayerKeys = setupPlayerKeys;
     function setupSolidLayer(game, layer, map, debug) {
         layer.visible = false;
         var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], usedTiles = {}, x, y;
@@ -49,7 +50,105 @@ var functionFile;
         game.state.start('TiledMapLoader', true, true);
     }
     functionFile.loadGameLevel = loadGameLevel;
+    function copyObject(object) {
+        var objectCopy = {};
+        for (var key in object) {
+            if (object.hasOwnProperty(key)) {
+                objectCopy[key] = object[key];
+            }
+        }
+        return objectCopy;
+    }
+    functionFile.copyObject = copyObject;
 })(functionFile || (functionFile = {}));
+var Manager;
+(function (Manager) {
+    (function (AnimType) {
+        AnimType[AnimType["LEFT"] = 0] = "LEFT";
+        AnimType[AnimType["RIGHT"] = 1] = "RIGHT";
+        AnimType[AnimType["IDLE"] = 2] = "IDLE";
+        AnimType[AnimType["UPDOWN"] = 3] = "UPDOWN";
+        AnimType[AnimType["ATTACK"] = 4] = "ATTACK";
+        AnimType[AnimType["NONE"] = 5] = "NONE";
+    })(Manager.AnimType || (Manager.AnimType = {}));
+    var AnimType = Manager.AnimType;
+    var AnimManager = (function () {
+        function AnimManager(GameObject) {
+            this.gameObject = GameObject;
+            this.gameObject.smoothed = false;
+            this.gameObject.animations.add('Idle', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 5, true);
+            this.gameObject.animations.add('Walk', [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
+            this.gameObject.animations.add('Attack', [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 50, false).onComplete.add(this.attackDone, this);
+            this.gameObject.animations.add('Die', [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false);
+            this.gameObject.animations.play('Idle');
+            this.current = AnimType.IDLE;
+        }
+        AnimManager.prototype.attack = function () {
+            this.gameObject.animations.play('Attack');
+            this.current = AnimType.ATTACK;
+        };
+        AnimManager.prototype.attackDone = function () {
+            this.current = AnimType.NONE;
+            this.gameObject.attackAnimFinished();
+        };
+        AnimManager.prototype.updateAnimation = function (type) {
+            if (this.current == AnimType.ATTACK)
+                return;
+            if (this.current == AnimType.NONE) {
+                switch (type) {
+                    case AnimType.LEFT:
+                        this.gameObject.scale.x = -1;
+                        this.gameObject.animations.play('Walk');
+                        this.current = AnimType.LEFT;
+                        return;
+                    case AnimType.RIGHT:
+                        this.gameObject.scale.x = 1;
+                        this.gameObject.animations.play('Walk');
+                        this.current = AnimType.RIGHT;
+                        return;
+                    case AnimType.UPDOWN:
+                        this.gameObject.animations.play('Walk');
+                        this.current = AnimType.UPDOWN;
+                        return;
+                    default:
+                        this.gameObject.animations.play('Idle');
+                        this.current = AnimType.IDLE;
+                        return;
+                }
+            }
+            switch (type) {
+                case AnimType.LEFT:
+                    if (this.current != AnimType.LEFT) {
+                        this.gameObject.scale.x = -1;
+                        this.gameObject.animations.play('Walk');
+                        this.current = AnimType.LEFT;
+                    }
+                    return;
+                case AnimType.RIGHT:
+                    if (this.current != AnimType.RIGHT) {
+                        this.gameObject.scale.x = 1;
+                        this.gameObject.animations.play('Walk');
+                        this.current = AnimType.RIGHT;
+                    }
+                    return;
+                case AnimType.UPDOWN:
+                    if (this.current != AnimType.UPDOWN) {
+                        this.gameObject.animations.play('Walk');
+                        this.current = AnimType.UPDOWN;
+                    }
+                    return;
+                default:
+                    if (this.current != AnimType.IDLE) {
+                        this.gameObject.animations.play('Idle');
+                        this.current = AnimType.IDLE;
+                    }
+                    return;
+            }
+        };
+        return AnimManager;
+    })();
+    Manager.AnimManager = AnimManager;
+})(Manager || (Manager = {}));
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -57,6 +156,8 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 var GameObjects;
 (function (GameObjects) {
+    var AnimManager = Manager.AnimManager;
+    var AnimType = Manager.AnimType;
     (function (GameObjectType) {
         GameObjectType[GameObjectType["PLAYER"] = 0] = "PLAYER";
     })(GameObjects.GameObjectType || (GameObjects.GameObjectType = {}));
@@ -67,26 +168,24 @@ var GameObjects;
             _super.call(this, game, x, y, key, frame);
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
-            this.moveSpeed = 45;
-            this.keyListener = functionFile.setupWASDKeys(this.game);
+            this.baseMoveSpeed = 45;
+            this.moveSpeedMod = 0;
+            this.canAttack = true;
+            this.attackDelay = 800;
+            this.keyListener = functionFile.setupPlayerKeys(this.game);
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
-            this.body.fixedRotation = true;
-            this.body.debug = false;
             this.body.clearShapes();
+            this.body.fixedRotation = true;
             this.body.addRectangle(14, 5, 0, 16, 0);
-            this.smoothed = false;
-            this.animations.add('Idle', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 5, true);
-            this.animations.add('Right', [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
-            this.animations.add('Left', [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
-            this.animations.add('AttackRight', [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, true);
-            this.animations.add('AttackLeft', [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 10, true);
-            this.animations.add('DieRight', [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, true);
-            this.animations.add('DieLeft', [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, true);
-            this.animations.play('Idle');
+            this.AnimManager = new AnimManager(this);
         }
         Player.prototype.update = function () {
+            this.updateMoveSpeed();
             this.updateMovementControl();
+        };
+        Player.prototype.updateMoveSpeed = function () {
+            this.moveSpeed = this.baseMoveSpeed + this.baseMoveSpeed * this.moveSpeedMod;
         };
         Player.prototype.updateMovementControl = function () {
             this.body.setZeroVelocity();
@@ -103,72 +202,63 @@ var GameObjects;
             if (this.keyListener['a'].isDown) {
                 ang -= 1;
             }
-            var diagSpeed = this.moveSpeed * 0.7071;
+            var diagSpeed = this.moveSpeed * 0.7071, anim = AnimType.IDLE;
             switch (ang) {
                 case 4:
-                    this.playRight();
+                    anim = AnimType.RIGHT;
                     this.body.moveRight(diagSpeed);
                     this.body.moveUp(diagSpeed);
                     break;
                 case 1:
-                    this.playRight();
+                    anim = AnimType.RIGHT;
                     this.body.moveRight(this.moveSpeed);
                     break;
                 case -2:
-                    this.playRight();
+                    anim = AnimType.RIGHT;
                     this.body.moveRight(diagSpeed);
                     this.body.moveDown(diagSpeed);
                     break;
                 case -3:
-                    this.playUpDown();
+                    anim = AnimType.UPDOWN;
                     this.body.moveDown(this.moveSpeed);
                     break;
                 case -4:
-                    this.playLeft();
+                    anim = AnimType.LEFT;
                     this.body.moveLeft(diagSpeed);
                     this.body.moveDown(diagSpeed);
                     break;
                 case -1:
-                    this.playLeft();
+                    anim = AnimType.LEFT;
                     this.body.moveLeft(this.moveSpeed);
                     break;
                 case 2:
-                    this.playLeft();
+                    anim = AnimType.LEFT;
                     this.body.moveLeft(diagSpeed);
                     this.body.moveUp(diagSpeed);
                     break;
                 case 3:
-                    this.playUpDown();
+                    anim = AnimType.UPDOWN;
                     this.body.moveUp(this.moveSpeed);
                     break;
-                default:
-                    this.playIdle();
-                    break;
             }
+            if (this.keyListener['space'].isDown && this.canAttack) {
+                return this.attack();
+            }
+            this.AnimManager.updateAnimation(anim);
         };
-        Player.prototype.playRight = function () {
-            if (this.animations.currentAnim.name != "Right") {
-                this.scale.x = 1;
-                this.animations.play('Right');
-            }
+        Player.prototype.attack = function () {
+            this.AnimManager.attack();
+            var timer = this.game.time.add(new Phaser.Timer(this.game, true));
+            timer.add(this.attackDelay, this.cooldownFinished, this);
+            timer.start();
+            this.canAttack = false;
+            this.moveSpeedMod -= 0.6;
         };
-        Player.prototype.playLeft = function () {
-            if (this.animations.currentAnim.name != "Left") {
-                this.scale.x = -1;
-                this.animations.play('Left');
-            }
+        Player.prototype.cooldownFinished = function () {
+            this.canAttack = true;
         };
-        Player.prototype.playIdle = function () {
-            if (this.animations.currentAnim.name != "Idle") {
-                this.animations.play('Idle');
-            }
-        };
-        Player.prototype.playUpDown = function () {
-            if (this.scale.x < 0) {
-                this.playLeft();
-                return;
-            }
-            this.playRight();
+        Player.prototype.attackAnimFinished = function () {
+            this.moveSpeedMod += 0.6;
         };
         return Player;
     })(Phaser.Sprite);

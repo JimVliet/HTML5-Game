@@ -5,13 +5,14 @@
 module functionFile
 {
     import Polygon = Phaser.Polygon;
-    export function setupWASDKeys(game: Phaser.Game)
+    export function setupPlayerKeys(game: Phaser.Game): {[name: string]: Phaser.Key}
     {
-        var keyLib = {};
+        var keyLib: {[name: string]: Phaser.Key} = {};
         keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
         keyLib['a'] = game.input.keyboard.addKey(Phaser.Keyboard.A);
         keyLib['s'] = game.input.keyboard.addKey(Phaser.Keyboard.S);
         keyLib['d'] = game.input.keyboard.addKey(Phaser.Keyboard.D);
+        keyLib['space'] = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
         return keyLib;
     }
 
@@ -91,5 +92,19 @@ module functionFile
     {
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
         game.state.start('TiledMapLoader', true, true);
+    }
+
+    export function copyObject<T> (object:T): T {
+        var objectCopy = <T>{};
+
+        for (var key in object)
+        {
+            if (object.hasOwnProperty(key))
+            {
+                objectCopy[key] = object[key];
+            }
+        }
+
+        return objectCopy;
     }
 }
