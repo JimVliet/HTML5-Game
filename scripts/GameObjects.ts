@@ -32,7 +32,7 @@ module GameObjects
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
             this.baseMoveSpeed = 45;
-            this.moveSpeedMod = 0;
+            this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
             this.keyListener = functionFile.setupPlayerKeys(this.game);
@@ -45,7 +45,7 @@ module GameObjects
             this.body.addRectangle(14,5, 0, 16, 0);
 
             //Setup animationManager
-            this.AnimManager = new AnimManager(this);
+            this.AnimManager = new AnimManager(this, {'Attack': [30,31,32,33,34,35,35,34,33,32,31]});
         }
 
         //Main update loop
@@ -57,7 +57,7 @@ module GameObjects
 
         updateMoveSpeed()
         {
-            this.moveSpeed = this.baseMoveSpeed + this.baseMoveSpeed * this.moveSpeedMod;
+            this.moveSpeed = this.baseMoveSpeed * this.moveSpeedMod;
         }
 
         updateMovementControl()

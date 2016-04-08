@@ -19,6 +19,7 @@ module MyGame
         preload()
         {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
+            this.game.add.plugin(new (<any>Phaser.Plugin).Debug(this.game, this.game.stage));
         }
 
         create()

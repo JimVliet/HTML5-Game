@@ -10,6 +10,9 @@ var functionFile;
         return keyLib;
     }
     functionFile.setupPlayerKeys = setupPlayerKeys;
+    function fixWrongTextures() {
+    }
+    functionFile.fixWrongTextures = fixWrongTextures;
     function setupSolidLayer(game, layer, map, debug) {
         layer.visible = false;
         var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], usedTiles = {}, x, y;
@@ -73,12 +76,13 @@ var Manager;
     })(Manager.AnimType || (Manager.AnimType = {}));
     var AnimType = Manager.AnimType;
     var AnimManager = (function () {
-        function AnimManager(GameObject) {
+        function AnimManager(GameObject, options) {
+            if (options === void 0) { options = { 'Attack': [30, 31, 32, 33, 34, 35, 36, 37, 38, 39] }; }
             this.gameObject = GameObject;
             this.gameObject.smoothed = false;
             this.gameObject.animations.add('Idle', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 5, true);
             this.gameObject.animations.add('Walk', [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
-            this.gameObject.animations.add('Attack', [30, 31, 32, 33, 34, 35, 36, 37, 38, 39], 50, false).onComplete.add(this.attackDone, this);
+            this.gameObject.animations.add('Attack', options['Attack'], 50, false).onComplete.add(this.attackDone, this);
             this.gameObject.animations.add('Die', [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false);
             this.gameObject.animations.play('Idle');
             this.current = AnimType.IDLE;
@@ -169,7 +173,7 @@ var GameObjects;
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
             this.baseMoveSpeed = 45;
-            this.moveSpeedMod = 0;
+            this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
             this.keyListener = functionFile.setupPlayerKeys(this.game);
@@ -178,14 +182,14 @@ var GameObjects;
             this.body.clearShapes();
             this.body.fixedRotation = true;
             this.body.addRectangle(14, 5, 0, 16, 0);
-            this.AnimManager = new AnimManager(this);
+            this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 35, 34, 33, 32, 31] });
         }
         Player.prototype.update = function () {
             this.updateMoveSpeed();
             this.updateMovementControl();
         };
         Player.prototype.updateMoveSpeed = function () {
-            this.moveSpeed = this.baseMoveSpeed + this.baseMoveSpeed * this.moveSpeedMod;
+            this.moveSpeed = this.baseMoveSpeed * this.moveSpeedMod;
         };
         Player.prototype.updateMovementControl = function () {
             this.body.setZeroVelocity();
@@ -288,7 +292,6 @@ var GameStates;
         TiledMapLoader.prototype.create = function () {
             this.game.state.add(this.StateToStart.mapName, this.StateToStart, false);
             this.game.state.start(this.StateToStart.mapName, true, false);
-            console.log('LoadCompleted');
         };
         TiledMapLoader.prototype.fileCompleted = function (progress, cacheKey) {
             this.MainText.setText('Loading ' + this.mapName + ' ' + progress + "%");
@@ -337,10 +340,7 @@ var GameLevels;
             this.player = new GameObjects.Player(this.game, 120, 920, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
-            this.game.camera.scale.set(4.5);
-        };
-        Level2.prototype.render = function () {
-            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
+            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
         };
         return Level2;
     })(Phaser.State);
@@ -354,6 +354,7 @@ var GameLevels;
             _super.call(this);
             this.mapName = 'Cave';
             this.mapURL = 'maps/Cave.json';
+            this.hasBeenFixed = 0;
         }
         Level1.prototype.customPreload = function (game) {
             game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
@@ -372,7 +373,8 @@ var GameLevels;
             this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
-            this.game.camera.scale.set(4.5);
+            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
+            console.log(this.map.getTilelayer('Objects').tileIds);
         };
         Level1.prototype.setupNextLevel = function () {
             var nextLevelBody = this.game.physics.p2.createBody(128, 74, 0, false);
@@ -383,9 +385,6 @@ var GameLevels;
         };
         Level1.prototype.nextLevel = function () {
             functionFile.loadGameLevel(this.game, new GameLevels.Level2());
-        };
-        Level1.prototype.render = function () {
-            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
         };
         return Level1;
     })(Phaser.State);
@@ -428,6 +427,7 @@ var MyGame;
         }
         RPGame.prototype.preload = function () {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
+            this.game.add.plugin(new Phaser.Plugin.Debug(this.game, this.game.stage));
         };
         RPGame.prototype.create = function () {
             if (window.location.href.indexOf('objectConverter') != -1) {

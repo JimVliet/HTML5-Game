@@ -19,7 +19,7 @@ module GameLevels
         {
             super();
             this.mapName = 'Level2';
-            this.mapURL = 'maps/Level2.json'
+            this.mapURL = 'maps/Level2.json';
         }
 
         customPreload(game: Phaser.Game)
@@ -51,12 +51,7 @@ module GameLevels
             this.player = new GameObjects.Player(this.game, 120, 920, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
-            this.game.camera.scale.set(4.5);
-        }
-
-        render()
-        {
-            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
+            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840/this.game.width)/2)));
         }
     }
 }

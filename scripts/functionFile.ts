@@ -16,6 +16,10 @@ module functionFile
         return keyLib;
     }
 
+    export function fixWrongTextures()
+    {
+
+    }
 
     export function setupSolidLayer(game: Phaser.Game, layer: Phaser.Plugin.Tiled.Tilelayer, map: Phaser.Plugin.Tiled.Tilemap, debug: boolean)
     {

@@ -45,7 +45,6 @@ module GameStates
         {
             this.game.state.add(this.StateToStart.mapName, this.StateToStart, false);
             this.game.state.start(this.StateToStart.mapName, true, false);
-            console.log('LoadCompleted');
         }
 
         fileCompleted(progress: number, cacheKey: string)

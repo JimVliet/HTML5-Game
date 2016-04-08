@@ -15,12 +15,14 @@ module GameLevels
         mapURL: string;
         map: Tiled.Tilemap;
         player: GameObject & Phaser.Sprite;
+        hasBeenFixed: number;
 
         constructor()
         {
             super();
             this.mapName = 'Cave';
             this.mapURL = 'maps/Cave.json';
+            this.hasBeenFixed = 0;
         }
 
         customPreload(game: Phaser.Game)
@@ -55,7 +57,9 @@ module GameLevels
             this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
-            this.game.camera.scale.set(4.5);
+            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840/this.game.width)/2)));
+
+            console.log(this.map.getTilelayer('Objects').tileIds);
         }
 
         setupNextLevel()
@@ -70,11 +74,6 @@ module GameLevels
         nextLevel()
         {
             functionFile.loadGameLevel(this.game, new GameLevels.Level2());
-        }
-
-        render()
-        {
-            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
         }
     }
 }
