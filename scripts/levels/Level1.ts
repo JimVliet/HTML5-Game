@@ -59,7 +59,8 @@ module GameLevels
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840/this.game.width)/2)));
 
-            console.log(this.map.getTilelayer('Objects').tileIds);
+            console.log(this.map.tilesets);
+            console.log(2147484219 & 0x80000000);
         }
 
         setupNextLevel()
@@ -71,9 +72,12 @@ module GameLevels
             this.map.getTilelayer('Solid').bodies.push(nextLevelBody);
         }
 
-        nextLevel()
+        nextLevel(body: any, bodyB: any, collidedShape: p2.Shape, contactShape: p2.Shape)
         {
-            functionFile.loadGameLevel(this.game, new GameLevels.Level2());
+            if(!contactShape.sensor)
+            {
+                functionFile.loadGameLevel(this.game, new GameLevels.Level2());
+            }
         }
     }
 }

@@ -86,6 +86,7 @@ var Manager;
             this.gameObject.animations.add('Die', [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false);
             this.gameObject.animations.play('Idle');
             this.current = AnimType.IDLE;
+            this.attackSignal = new Phaser.Signal();
         }
         AnimManager.prototype.attack = function () {
             this.gameObject.animations.play('Attack');
@@ -93,7 +94,7 @@ var Manager;
         };
         AnimManager.prototype.attackDone = function () {
             this.current = AnimType.NONE;
-            this.gameObject.attackAnimFinished();
+            this.attackSignal.dispatch();
         };
         AnimManager.prototype.updateAnimation = function (type) {
             if (this.current == AnimType.ATTACK)
@@ -182,7 +183,13 @@ var GameObjects;
             this.body.clearShapes();
             this.body.fixedRotation = true;
             this.body.addRectangle(14, 5, 0, 16, 0);
+            this.hitBox = this.body.addRectangle(16, 32, 0, 0, 0);
+            this.hitBox.sensor = true;
+            this.body.debug = true;
             this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 35, 34, 33, 32, 31] });
+            this.AnimManager.attackSignal.add(function () {
+                this.moveSpeedMod += 0.6;
+            }, this);
         }
         Player.prototype.update = function () {
             this.updateMoveSpeed();
@@ -253,16 +260,12 @@ var GameObjects;
         Player.prototype.attack = function () {
             this.AnimManager.attack();
             var timer = this.game.time.add(new Phaser.Timer(this.game, true));
-            timer.add(this.attackDelay, this.cooldownFinished, this);
+            timer.add(this.attackDelay, function () {
+                this.canAttack = true;
+            }, this);
             timer.start();
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
-        };
-        Player.prototype.cooldownFinished = function () {
-            this.canAttack = true;
-        };
-        Player.prototype.attackAnimFinished = function () {
-            this.moveSpeedMod += 0.6;
         };
         return Player;
     })(Phaser.Sprite);
@@ -374,7 +377,8 @@ var GameLevels;
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
-            console.log(this.map.getTilelayer('Objects').tileIds);
+            console.log(this.map.tilesets);
+            console.log(2147484219 & 0x80000000);
         };
         Level1.prototype.setupNextLevel = function () {
             var nextLevelBody = this.game.physics.p2.createBody(128, 74, 0, false);
@@ -383,8 +387,10 @@ var GameLevels;
             this.game.physics.p2.addBody(nextLevelBody);
             this.map.getTilelayer('Solid').bodies.push(nextLevelBody);
         };
-        Level1.prototype.nextLevel = function () {
-            functionFile.loadGameLevel(this.game, new GameLevels.Level2());
+        Level1.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
+            if (!contactShape.sensor) {
+                functionFile.loadGameLevel(this.game, new GameLevels.Level2());
+            }
         };
         return Level1;
     })(Phaser.State);

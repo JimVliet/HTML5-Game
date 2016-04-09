@@ -13,7 +13,7 @@ module GameObjects
         PLAYER
     }
 
-    export class Player extends Phaser.Sprite implements GameObject
+    export class Player extends Phaser.Sprite implements MobEntity
     {
         objectType: GameObjectType;
         currentLevel: GameStates.GameLevel & Phaser.State;
@@ -25,6 +25,7 @@ module GameObjects
         AnimManager: AnimManager;
         canAttack: boolean;
         attackDelay: number;
+        hitBox: p2.Rectangle;
 
         constructor(game: Phaser.Game, x: number, y: number, currentLevel: GameStates.GameLevel & Phaser.State, key?: string | Phaser.RenderTexture | Phaser.BitmapData | PIXI.Texture, frame?: string | number)
         {
@@ -43,9 +44,16 @@ module GameObjects
             this.body.clearShapes();
             this.body.fixedRotation = true;
             this.body.addRectangle(14,5, 0, 16, 0);
+            this.hitBox = this.body.addRectangle(16, 32, 0, 0, 0);
+            this.hitBox.sensor = true;
+            this.body.debug = true;
 
             //Setup animationManager
             this.AnimManager = new AnimManager(this, {'Attack': [30,31,32,33,34,35,35,34,33,32,31]});
+            this.AnimManager.attackSignal.add(function()
+            {
+                this.moveSpeedMod += 0.6;
+            }, this);
         }
 
         //Main update loop
@@ -137,34 +145,29 @@ module GameObjects
         {
             this.AnimManager.attack();
             var timer = this.game.time.add(new Phaser.Timer(this.game, true));
-            timer.add(this.attackDelay, this.cooldownFinished, this);
+            timer.add(this.attackDelay, function()
+            {
+                this.canAttack = true;
+            }, this);
             timer.start();
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
-        }
-
-        cooldownFinished()
-        {
-            this.canAttack = true;
-        }
-
-        attackAnimFinished()
-        {
-            this.moveSpeedMod += 0.6;
         }
 
     }
 
     export interface GameObject
     {
-        objectType: GameObjectType;
         currentLevel: GameStates.GameLevel & Phaser.State;
+        hitBox: p2.Rectangle;
+    }
+
+    export interface MobEntity extends GameObject
+    {
         moveSpeed: number;
         baseMoveSpeed: number;
         moveSpeedMod: number;
         AnimManager: AnimManager;
         attackDelay: number;
-
-        attackAnimFinished(): void;
     }
 }
