@@ -44,7 +44,7 @@ module GameObjects
             this.body.clearShapes();
             this.body.fixedRotation = true;
             this.body.addRectangle(14,5, 0, 16, 0);
-            this.hitBox = this.body.addRectangle(16, 32, 0, 0, 0);
+            this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
             this.body.debug = true;
 

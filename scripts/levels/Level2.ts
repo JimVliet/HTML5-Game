@@ -24,7 +24,6 @@ module GameLevels
 
         customPreload(game: Phaser.Game)
         {
-            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
             game.load.audio('HollywoodVines', 'sounds/mp3/HollywoodVines.mp3');
         }
 
@@ -32,7 +31,7 @@ module GameLevels
         {
             this.setupCurrentLevel();
             //Play music
-            this.game.add.audio('HollywoodVines').play(undefined, 0, 0.5, true);
+            //this.game.add.audio('HollywoodVines').play(undefined, 0, 0.5, true);
         }
 
         setupCurrentLevel()

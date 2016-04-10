@@ -58,9 +58,6 @@ module GameLevels
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840/this.game.width)/2)));
-
-            console.log(this.map.tilesets);
-            console.log(2147484219 & 0x80000000);
         }
 
         setupNextLevel()

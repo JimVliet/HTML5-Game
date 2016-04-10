@@ -16,11 +16,6 @@ module functionFile
         return keyLib;
     }
 
-    export function fixWrongTextures()
-    {
-
-    }
-
     export function setupSolidLayer(game: Phaser.Game, layer: Phaser.Plugin.Tiled.Tilelayer, map: Phaser.Plugin.Tiled.Tilemap, debug: boolean)
     {
         layer.visible = false;
@@ -94,8 +89,7 @@ module functionFile
 
     export function loadGameLevel(game: Phaser.Game, levelToLoad: GameStates.GameLevel & Phaser.State)
     {
-        game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
-        game.state.start('TiledMapLoader', true, true);
+        game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
     }
 
     export function copyObject<T> (object:T): T {

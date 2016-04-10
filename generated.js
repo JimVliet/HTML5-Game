@@ -10,9 +10,6 @@ var functionFile;
         return keyLib;
     }
     functionFile.setupPlayerKeys = setupPlayerKeys;
-    function fixWrongTextures() {
-    }
-    functionFile.fixWrongTextures = fixWrongTextures;
     function setupSolidLayer(game, layer, map, debug) {
         layer.visible = false;
         var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], usedTiles = {}, x, y;
@@ -49,8 +46,7 @@ var functionFile;
     }
     functionFile.setupSolidLayer = setupSolidLayer;
     function loadGameLevel(game, levelToLoad) {
-        game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), false);
-        game.state.start('TiledMapLoader', true, true);
+        game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
     }
     functionFile.loadGameLevel = loadGameLevel;
     function copyObject(object) {
@@ -183,7 +179,7 @@ var GameObjects;
             this.body.clearShapes();
             this.body.fixedRotation = true;
             this.body.addRectangle(14, 5, 0, 16, 0);
-            this.hitBox = this.body.addRectangle(16, 32, 0, 0, 0);
+            this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
             this.body.debug = true;
             this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 35, 34, 33, 32, 31] });
@@ -328,12 +324,10 @@ var GameLevels;
             this.mapURL = 'maps/Level2.json';
         }
         Level2.prototype.customPreload = function (game) {
-            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
             game.load.audio('HollywoodVines', 'sounds/mp3/HollywoodVines.mp3');
         };
         Level2.prototype.create = function () {
             this.setupCurrentLevel();
-            this.game.add.audio('HollywoodVines').play(undefined, 0, 0.5, true);
         };
         Level2.prototype.setupCurrentLevel = function () {
             this.game.physics.startSystem(Phaser.Physics.P2JS);
@@ -377,8 +371,6 @@ var GameLevels;
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
-            console.log(this.map.tilesets);
-            console.log(2147484219 & 0x80000000);
         };
         Level1.prototype.setupNextLevel = function () {
             var nextLevelBody = this.game.physics.p2.createBody(128, 74, 0, false);
