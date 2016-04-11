@@ -15,14 +15,12 @@ module GameLevels
         mapURL: string;
         map: Tiled.Tilemap;
         player: GameObject & Phaser.Sprite;
-        hasBeenFixed: number;
 
         constructor()
         {
             super();
             this.mapName = 'Cave';
             this.mapURL = 'maps/Cave.json';
-            this.hasBeenFixed = 0;
         }
 
         customPreload(game: Phaser.Game)
