@@ -1,6 +1,3 @@
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
 var functionFile;
 (function (functionFile) {
     function setupPlayerKeys(game) {
@@ -15,17 +12,18 @@ var functionFile;
     functionFile.setupPlayerKeys = setupPlayerKeys;
     function setupSolidLayer(game, layer, map, debug) {
         layer.visible = false;
-        //Declare variables
-        var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], usedTiles = {}, x, y;
+        var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], solidTileset = functionFile.getGidOfSolidTileset(map), usedTiles = {}, x, y;
+        if (solidTileset == null)
+            return console.log('There is no collision tileset');
+        var solidFirstGid = solidTileset.firstgid, solidLastGid = solidTileset.lastgid;
         for (var index = 0; index < layerlength; index++) {
-            if (layerTiles[index] != 0 && !(index in usedTiles)) {
+            if (layerTiles[index] == solidFirstGid && !(index in usedTiles)) {
                 x = index % mapWidth;
                 y = Math.floor(index / mapWidth);
                 var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
-                while (curY < mapHeight && layerTiles[curY * mapWidth + x] && !(curY * mapWidth + x in usedTiles)) {
+                while (curY < mapHeight && layerTiles[curY * mapWidth + x] == solidFirstGid && !(curY * mapWidth + x in usedTiles)) {
                     var curX = x, curYIndex = curY * mapWidth, surface;
-                    //Check if the tile isn't outside the map and if it's a wall and if it isn't already used
-                    while (curX < maxWidth && layerTiles[curYIndex + curX + 1] != 0 && !(curYIndex + curX + 1 in usedTiles)) {
+                    while (curX < maxWidth && layerTiles[curYIndex + curX + 1] == solidFirstGid && !(curYIndex + curX + 1 in usedTiles)) {
                         curX++;
                     }
                     maxWidth = curX;
@@ -40,7 +38,6 @@ var functionFile;
                 body.debug = debug;
                 game.physics.p2.addBody(body);
                 layer.bodies.push(body);
-                //Update usedTiles list
                 for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
                     var yIndex = mapWidth * usedY;
                     for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
@@ -48,9 +45,56 @@ var functionFile;
                     }
                 }
             }
+            else if (layerTiles[index] >= solidFirstGid && layerTiles[index] <= solidLastGid && !(index in usedTiles)) {
+                createCustomBody(game, layer, map, debug, layerTiles[index] - solidFirstGid, index);
+            }
         }
     }
     functionFile.setupSolidLayer = setupSolidLayer;
+    function createCustomBody(game, layer, map, debug, tileIndex, index) {
+        var mapWidth = layer.size['x'], mapHeight = layer.size['y'], x = (index % mapWidth) * map.tileWidth, y = Math.floor(index / mapWidth) * map.tileHeight, tileSetX = tileIndex % 5, tileSetY = Math.floor(tileIndex / 5), body;
+        if (tileIndex < 25) {
+            body = game.physics.p2.createBody(x + tileSetX, y + tileSetY, 0, false);
+            body.addRectangle(map.tileWidth - (tileSetX * 2), map.tileHeight - (tileSetY * 2), (map.tileWidth - (tileSetX * 2)) / 2, (map.tileHeight - (tileSetY * 2)) / 2, 0);
+            body.debug = debug;
+        }
+        else if (tileIndex < 35) {
+            body = game.physics.p2.createBody(x, y, 0, false);
+            var bodyHeight = map.tileHeight - tileIndex + 24;
+            body.addRectangle(map.tileWidth, bodyHeight, map.tileWidth / 2, bodyHeight / 2, 0);
+        }
+        else if (tileIndex < 45) {
+            var bodyHeightOffset = tileIndex - 34;
+            body = game.physics.p2.createBody(x, y + bodyHeightOffset, 0, false);
+            body.addRectangle(map.tileWidth, map.tileHeight - bodyHeightOffset, map.tileWidth / 2, (map.tileHeight - bodyHeightOffset) / 2, 0);
+        }
+        else if (tileIndex < 55) {
+            var bodyWidthOffset = tileIndex - 44;
+            body = game.physics.p2.createBody(x, y, 0, false);
+            body.addRectangle(map.tileWidth - bodyWidthOffset, map.tileHeight, (map.tileWidth - bodyWidthOffset) / 2, map.tileHeight / 2, 0);
+        }
+        else if (tileIndex < 65) {
+            var bodyWidthOffset = tileIndex - 54;
+            body = game.physics.p2.createBody(x + bodyWidthOffset, y, 0, false);
+            body.addRectangle(map.tileWidth - bodyWidthOffset, map.tileHeight, (map.tileWidth - bodyWidthOffset) / 2, map.tileHeight / 2, 0);
+        }
+        else {
+            return console.log('This is some weird shit, this should never happen. It\'s probably because this tileset is not valid');
+        }
+        body.debug = debug;
+        game.physics.p2.addBody(body);
+        layer.bodies.push(body);
+    }
+    functionFile.createCustomBody = createCustomBody;
+    function getGidOfSolidTileset(map) {
+        for (var tilesetId = 0; tilesetId < map.tilesets.length; tilesetId++) {
+            if (map.tilesets[tilesetId].name == "Collision") {
+                return map.tilesets[tilesetId];
+            }
+        }
+        return null;
+    }
+    functionFile.getGidOfSolidTileset = getGidOfSolidTileset;
     function loadGameLevel(game, levelToLoad) {
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
     }
@@ -66,9 +110,6 @@ var functionFile;
     }
     functionFile.copyObject = copyObject;
 })(functionFile || (functionFile = {}));
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
 var Manager;
 (function (Manager) {
     (function (AnimType) {
@@ -159,11 +200,6 @@ var Manager;
     })();
     Manager.AnimManager = AnimManager;
 })(Manager || (Manager = {}));
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
-/// <reference path="functionFile.ts"/>
-/// <reference path="AnimationManager.ts"/>
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -188,7 +224,6 @@ var GameObjects;
             this.canAttack = true;
             this.attackDelay = 800;
             this.keyListener = functionFile.setupPlayerKeys(this.game);
-            //Setup physics and the player body
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
             this.body.clearShapes();
@@ -196,13 +231,11 @@ var GameObjects;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
-            //Setup animationManager
             this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 35, 34, 33, 32, 31] });
             this.AnimManager.attackSignal.add(function () {
                 this.moveSpeedMod += 0.6;
             }, this);
         }
-        //Main update loop
         Player.prototype.update = function () {
             this.updateMoveSpeed();
             this.updateMovementControl();
@@ -283,10 +316,6 @@ var GameObjects;
     })(Phaser.Sprite);
     GameObjects.Player = Player;
 })(GameObjects || (GameObjects = {}));
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
-/// <reference path="GameObjects.ts"/>
 var GameStates;
 (function (GameStates) {
     var TiledMapLoader = (function (_super) {
@@ -300,12 +329,12 @@ var GameStates;
             this.mapCacheKey = Phaser.Plugin.Tiled.utils.cacheKey(this.mapName, 'tiledmap');
         }
         TiledMapLoader.prototype.preload = function () {
+            this.game.camera.scale.setTo(1, 1);
             this.MainText = this.game.add.text(this.game.width / 2, this.game.height / 2 - 80, 'Loading ' + this.mapName + " 0%", { fill: '#ffffff' });
             this.MainText.anchor.x = 0.5;
             this.SubText = this.game.add.text(this.game.width / 2, this.game.height / 2 + 80, 'Completed loading: ', { fill: '#ffffff' });
             this.SubText.anchor.x = 0.5;
             this.game.load.tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
-            //Load the custom assets needed for the state
             this.StateToStart.customPreload(this.game);
             this.game.load.onFileComplete.add(this.fileCompleted, this);
         };
@@ -333,40 +362,102 @@ var GameStates;
     })(Phaser.State);
     GameStates.TiledMapLoader = TiledMapLoader;
 })(GameStates || (GameStates = {}));
-/// <reference path="../../lib/phaser.d.ts"/>
-/// <reference path="../../lib/phaser-tiled.d.ts"/>
-/// <reference path="../../app.ts"/>
-/// <reference path="../GameObjects.ts"/>
-/// <reference path="Level2.ts"/>
+var GameLevels;
+(function (GameLevels) {
+    var Level3 = (function (_super) {
+        __extends(Level3, _super);
+        function Level3() {
+            _super.call(this);
+            this.mapName = 'Level3';
+            this.mapURL = 'maps/Level3.json';
+        }
+        Level3.prototype.customPreload = function (game) {
+            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
+            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+        };
+        Level3.prototype.create = function () {
+            this.setupCurrentLevel();
+        };
+        Level3.prototype.setupCurrentLevel = function () {
+            this.game.physics.startSystem(Phaser.Physics.P2JS);
+            this.map = this.game.add.tiledmap(this.mapName);
+            this.game.time.advancedTiming = true;
+            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
+            this.player = new GameObjects.Player(this.game, 424, 722, this, 'PlayerTileset', 0);
+            this.map.getTilelayer('Player').add(this.player);
+            this.game.camera.follow(this.player);
+            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
+        };
+        return Level3;
+    })(Phaser.State);
+    GameLevels.Level3 = Level3;
+})(GameLevels || (GameLevels = {}));
+var GameLevels;
+(function (GameLevels) {
+    var Level2 = (function (_super) {
+        __extends(Level2, _super);
+        function Level2() {
+            _super.call(this);
+            this.mapName = 'Level2';
+            this.mapURL = 'maps/Level2.json';
+        }
+        Level2.prototype.customPreload = function (game) {
+            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
+            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+        };
+        Level2.prototype.create = function () {
+            this.setupCurrentLevel();
+            this.setupNextLevel();
+        };
+        Level2.prototype.setupCurrentLevel = function () {
+            this.game.physics.startSystem(Phaser.Physics.P2JS);
+            this.map = this.game.add.tiledmap(this.mapName);
+            this.game.time.advancedTiming = true;
+            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
+            this.player = new GameObjects.Player(this.game, 80, 744, this, 'PlayerTileset', 0);
+            this.map.getTilelayer('Player').add(this.player);
+            this.game.camera.follow(this.player);
+            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
+        };
+        Level2.prototype.setupNextLevel = function () {
+            var nextLevelBody = this.game.physics.p2.createBody(848, 42, 0, false);
+            nextLevelBody.addRectangle(this.map.tileWidth / 8, this.map.tileHeight / 4, this.map.tileWidth / 2, this.map.tileHeight / 4, 0);
+            nextLevelBody.onBeginContact.add(this.nextLevel, this);
+            this.game.physics.p2.addBody(nextLevelBody);
+            this.map.getTilelayer('Solid').bodies.push(nextLevelBody);
+        };
+        Level2.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
+            if (!contactShape.sensor) {
+                functionFile.loadGameLevel(this.game, new GameLevels.Level3());
+            }
+        };
+        return Level2;
+    })(Phaser.State);
+    GameLevels.Level2 = Level2;
+})(GameLevels || (GameLevels = {}));
 var GameLevels;
 (function (GameLevels) {
     var Level1 = (function (_super) {
         __extends(Level1, _super);
         function Level1() {
             _super.call(this);
-            this.mapName = 'Cave';
-            this.mapURL = 'maps/Cave.json';
+            this.mapName = 'Level1';
+            this.mapURL = 'maps/Level1.json';
         }
         Level1.prototype.customPreload = function (game) {
             game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
             game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
-            //game.load.audio('HollywoodVines', 'sounds/mp3/HollywoodVines.mp3');
         };
         Level1.prototype.create = function () {
             this.setupCurrentLevel();
-            //Play music
             this.game.add.audio('Pershdal-Dung').play(undefined, 0, 0.3, true);
             this.setupNextLevel();
         };
         Level1.prototype.setupCurrentLevel = function () {
-            //Setup physics
             this.game.physics.startSystem(Phaser.Physics.P2JS);
-            //Add tilemap and setup the solid layer
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
-            //Setup the object layer
             functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
-            //Add player object and setup camera
             this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
@@ -388,10 +479,6 @@ var GameLevels;
     })(Phaser.State);
     GameLevels.Level1 = Level1;
 })(GameLevels || (GameLevels = {}));
-/// <reference path="../../lib/phaser.d.ts"/>
-/// <reference path="../../lib/phaser-tiled.d.ts"/>
-/// <reference path="../../app.ts"/>
-/// <reference path="../GameObjects.ts"/>
 var GameLevels;
 (function (GameLevels) {
     var SolidTest = (function (_super) {
@@ -421,13 +508,6 @@ var GameLevels;
     })(Phaser.State);
     GameLevels.SolidTest = SolidTest;
 })(GameLevels || (GameLevels = {}));
-/// <reference path="lib/phaser.d.ts"/>
-/// <reference path="lib/phaser-tiled.d.ts"/>
-/// <reference path="scripts/GameStates.ts"/>
-/// <reference path="scripts/GameObjects.ts"/>
-/// <reference path="scripts/functionFile.ts"/>
-/// <reference path="scripts/levels/Level1.ts"/>
-/// <reference path="scripts/levels/SolidTest.ts"/>
 var MyGame;
 (function (MyGame) {
     var RPGame = (function () {
@@ -458,97 +538,4 @@ window.onload = function () {
     var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
     var gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
 };
-/// <reference path="../../lib/phaser.d.ts"/>
-/// <reference path="../../lib/phaser-tiled.d.ts"/>
-/// <reference path="../../app.ts"/>
-/// <reference path="../GameObjects.ts"/>
-/// <reference path="Level2.ts"/>
-var GameLevels;
-(function (GameLevels) {
-    var Level3 = (function (_super) {
-        __extends(Level3, _super);
-        function Level3() {
-            _super.call(this);
-            this.mapName = 'dungeoncrawler2';
-            this.mapURL = 'maps/dungeoncrawler2.json';
-        }
-        Level3.prototype.customPreload = function (game) {
-            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
-            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-        };
-        Level3.prototype.create = function () {
-            this.setupCurrentLevel();
-        };
-        Level3.prototype.setupCurrentLevel = function () {
-            //Setup physics
-            this.game.physics.startSystem(Phaser.Physics.P2JS);
-            //Add tilemap and setup the solid layer
-            this.map = this.game.add.tiledmap(this.mapName);
-            this.game.time.advancedTiming = true;
-            //Setup the object layer
-            //functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
-            //Add player object and setup camera
-            this.player = new GameObjects.Player(this.game, 424, 722, this, 'PlayerTileset', 0);
-            this.map.getTilelayer('Player').add(this.player);
-            this.game.camera.follow(this.player);
-            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
-        };
-        return Level3;
-    })(Phaser.State);
-    GameLevels.Level3 = Level3;
-})(GameLevels || (GameLevels = {}));
-/// <reference path="../../lib/phaser.d.ts"/>
-/// <reference path="../../lib/phaser-tiled.d.ts"/>
-/// <reference path="../../app.ts"/>
-/// <reference path="../GameObjects.ts"/>
-/// <reference path="Level3.ts"/>
-var GameLevels;
-(function (GameLevels) {
-    var Level2 = (function (_super) {
-        __extends(Level2, _super);
-        function Level2() {
-            _super.call(this);
-            this.mapName = 'Level2';
-            this.mapURL = 'maps/Level2.json';
-        }
-        Level2.prototype.customPreload = function (game) {
-            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
-            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-        };
-        Level2.prototype.create = function () {
-            this.setupCurrentLevel();
-            //Play music
-            this.setupNextLevel();
-        };
-        Level2.prototype.setupCurrentLevel = function () {
-            //Setup physics
-            this.game.physics.startSystem(Phaser.Physics.P2JS);
-            //Add tilemap and setup the solid layer
-            this.map = this.game.add.tiledmap(this.mapName);
-            this.game.time.advancedTiming = true;
-            //Setup the object layer
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
-            //Add player object
-            this.player = new GameObjects.Player(this.game, 80, 744, this, 'PlayerTileset', 0);
-            this.map.getTilelayer('Player').add(this.player);
-            this.game.camera.follow(this.player);
-            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
-        };
-        Level2.prototype.setupNextLevel = function () {
-            var nextLevelBody = this.game.physics.p2.createBody(848, 42, 0, false);
-            nextLevelBody.addRectangle(this.map.tileWidth / 8, this.map.tileHeight / 4, this.map.tileWidth / 2, this.map.tileHeight / 4, 0);
-            nextLevelBody.onBeginContact.add(this.nextLevel, this);
-            nextLevelBody.debug = true;
-            this.game.physics.p2.addBody(nextLevelBody);
-            this.map.getTilelayer('Solid').bodies.push(nextLevelBody);
-        };
-        Level2.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
-            if (!contactShape.sensor) {
-                functionFile.loadGameLevel(this.game, new GameLevels.Level3());
-            }
-        };
-        return Level2;
-    })(Phaser.State);
-    GameLevels.Level2 = Level2;
-})(GameLevels || (GameLevels = {}));
 //# sourceMappingURL=generated.js.map

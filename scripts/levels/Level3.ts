@@ -20,8 +20,8 @@ module GameLevels
         constructor()
         {
             super();
-            this.mapName = 'dungeoncrawler2';
-            this.mapURL = 'maps/dungeoncrawler2.json';
+            this.mapName = 'Level3';
+            this.mapURL = 'maps/Level3.json';
         }
 
         customPreload(game: Phaser.Game)
@@ -45,7 +45,7 @@ module GameLevels
             this.game.time.advancedTiming = true;
 
             //Setup the object layer
-            //functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
+            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
 
             //Add player object and setup camera
             this.player = new GameObjects.Player(this.game, 424, 722, this, 'PlayerTileset', 0);

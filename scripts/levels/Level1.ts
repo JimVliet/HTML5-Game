@@ -19,8 +19,8 @@ module GameLevels
         constructor()
         {
             super();
-            this.mapName = 'Cave';
-            this.mapURL = 'maps/Cave.json';
+            this.mapName = 'Level1';
+            this.mapURL = 'maps/Level1.json';
         }
 
         customPreload(game: Phaser.Game)
