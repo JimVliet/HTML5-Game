@@ -183,7 +183,7 @@ var GameObjects;
             _super.call(this, game, x, y, key, frame);
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
-            this.baseMoveSpeed = 45;
+            this.baseMoveSpeed = 100;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
@@ -196,7 +196,6 @@ var GameObjects;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
-            this.body.debug = true;
             //Setup animationManager
             this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 35, 34, 33, 32, 31] });
             this.AnimManager.attackSignal.add(function () {
@@ -328,8 +327,6 @@ var GameStates;
         };
         TiledMapLoader.prototype.shutdown = function () {
             this.game.load.onFileComplete.remove(this.fileCompleted, this);
-            this.MainText.destroy();
-            this.SubText.destroy();
             this.game.state.remove('TiledMapLoader');
         };
         return TiledMapLoader;
@@ -476,6 +473,8 @@ var GameLevels;
             this.mapURL = 'maps/dungeoncrawler2.json';
         }
         Level3.prototype.customPreload = function (game) {
+            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
+            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
         };
         Level3.prototype.create = function () {
             this.setupCurrentLevel();
@@ -487,9 +486,9 @@ var GameLevels;
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
             //Setup the object layer
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
+            //functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
             //Add player object and setup camera
-            this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
+            this.player = new GameObjects.Player(this.game, 424, 722, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
@@ -513,7 +512,8 @@ var GameLevels;
             this.mapURL = 'maps/Level2.json';
         }
         Level2.prototype.customPreload = function (game) {
-            game.load.audio('HollywoodVines', 'sounds/mp3/HollywoodVines.mp3');
+            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
+            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
         };
         Level2.prototype.create = function () {
             this.setupCurrentLevel();
@@ -529,15 +529,16 @@ var GameLevels;
             //Setup the object layer
             functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
             //Add player object
-            this.player = new GameObjects.Player(this.game, 120, 920, this, 'PlayerTileset', 0);
+            this.player = new GameObjects.Player(this.game, 80, 744, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
         };
         Level2.prototype.setupNextLevel = function () {
-            var nextLevelBody = this.game.physics.p2.createBody(128, 74, 0, false);
+            var nextLevelBody = this.game.physics.p2.createBody(848, 42, 0, false);
             nextLevelBody.addRectangle(this.map.tileWidth / 8, this.map.tileHeight / 4, this.map.tileWidth / 2, this.map.tileHeight / 4, 0);
             nextLevelBody.onBeginContact.add(this.nextLevel, this);
+            nextLevelBody.debug = true;
             this.game.physics.p2.addBody(nextLevelBody);
             this.map.getTilelayer('Solid').bodies.push(nextLevelBody);
         };

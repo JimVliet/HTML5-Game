@@ -25,7 +25,8 @@ module GameLevels
 
         customPreload(game: Phaser.Game)
         {
-            game.load.audio('HollywoodVines', 'sounds/mp3/HollywoodVines.mp3');
+            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
+            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
         }
 
         create()
@@ -48,7 +49,7 @@ module GameLevels
             functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
 
             //Add player object
-            this.player = new GameObjects.Player(this.game, 120, 920, this, 'PlayerTileset', 0);
+            this.player = new GameObjects.Player(this.game, 80, 744, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840/this.game.width)/2)));
@@ -56,9 +57,10 @@ module GameLevels
 
         setupNextLevel()
         {
-            var nextLevelBody = this.game.physics.p2.createBody(128, 74, 0, false);
+            var nextLevelBody = this.game.physics.p2.createBody(848, 42, 0, false);
             nextLevelBody.addRectangle(this.map.tileWidth/8, this.map.tileHeight/4, this.map.tileWidth/2, this.map.tileHeight/4, 0);
             nextLevelBody.onBeginContact.add(this.nextLevel, this);
+            nextLevelBody.debug = true;
             this.game.physics.p2.addBody(nextLevelBody);
             this.map.getTilelayer('Solid').bodies.push(nextLevelBody);
         }

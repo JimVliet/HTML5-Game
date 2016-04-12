@@ -68,8 +68,6 @@ module GameStates
         shutdown()
         {
             this.game.load.onFileComplete.remove(this.fileCompleted, this);
-            this.MainText.destroy();
-            this.SubText.destroy();
             this.game.state.remove('TiledMapLoader');
         }
     }

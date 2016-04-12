@@ -26,7 +26,8 @@ module GameLevels
 
         customPreload(game: Phaser.Game)
         {
-
+            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
+            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
         }
 
         create()
@@ -44,10 +45,10 @@ module GameLevels
             this.game.time.advancedTiming = true;
 
             //Setup the object layer
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
+            //functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
 
             //Add player object and setup camera
-            this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
+            this.player = new GameObjects.Player(this.game, 424, 722, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840/this.game.width)/2)));
