@@ -2,6 +2,7 @@
 /// <reference path="../../lib/phaser-tiled.d.ts"/>
 /// <reference path="../../app.ts"/>
 /// <reference path="../GameObjects.ts"/>
+/// <reference path="../entities/Player.ts"/>
 /// <reference path="Level2.ts"/>
 
 module GameLevels
@@ -20,8 +21,8 @@ module GameLevels
         constructor()
         {
             super();
-            this.mapName = 'dungeoncrawler2';
-            this.mapURL = 'maps/dungeoncrawler2.json';
+            this.mapName = 'Level3';
+            this.mapURL = 'maps/Level3.json';
         }
 
         customPreload(game: Phaser.Game)
@@ -45,10 +46,10 @@ module GameLevels
             this.game.time.advancedTiming = true;
 
             //Setup the object layer
-            //functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
+            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
 
             //Add player object and setup camera
-            this.player = new GameObjects.Player(this.game, 424, 722, this, 'PlayerTileset', 0);
+            this.player = new Entities.Player(this.game, 424, 722, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840/this.game.width)/2)));

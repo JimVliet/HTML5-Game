@@ -29,6 +29,7 @@ module GameStates
 
         preload()
         {
+            this.game.camera.scale.setTo(1, 1);
             this.MainText = this.game.add.text(this.game.width/2, this.game.height/2 - 80, 'Loading ' + this.mapName + " 0%", {fill: '#ffffff'});
             this.MainText.anchor.x = 0.5;
             this.SubText = this.game.add.text(this.game.width/2, this.game.height/2 + 80, 'Completed loading: ', {fill: '#ffffff'});
