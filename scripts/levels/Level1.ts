@@ -2,6 +2,7 @@
 /// <reference path="../../lib/phaser-tiled.d.ts"/>
 /// <reference path="../../app.ts"/>
 /// <reference path="../GameObjects.ts"/>
+/// <reference path="../entities/Player.ts"/>
 /// <reference path="Level2.ts"/>
 
 module GameLevels
@@ -52,7 +53,7 @@ module GameLevels
             functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
 
             //Add player object and setup camera
-            this.player = new GameObjects.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
+            this.player = new Entities.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840/this.game.width)/2)));

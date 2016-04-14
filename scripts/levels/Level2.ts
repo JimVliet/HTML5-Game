@@ -3,6 +3,7 @@
 /// <reference path="../../app.ts"/>
 /// <reference path="../GameObjects.ts"/>
 /// <reference path="Level3.ts"/>
+/// <reference path="../entities/Player.ts"/>
 
 module GameLevels
 {
@@ -49,7 +50,7 @@ module GameLevels
             functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
 
             //Add player object
-            this.player = new GameObjects.Player(this.game, 80, 744, this, 'PlayerTileset', 0);
+            this.player = new Entities.Player(this.game, 80, 744, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840/this.game.width)/2)));
