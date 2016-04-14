@@ -105,4 +105,21 @@ module functionFile
 
         return objectCopy;
     }
+
+    export function nextSong(game: Phaser.Game, songName: string)
+    {
+        var playList = {};
+        playList['Pershdal-Dungeon'] = 'The-Final-Choice';
+        playList['The-Final-Choice'] = 'Saviour-in-the-Dark';
+        playList['Saviour-in-the-Dark'] = 'Orcward-Silences';
+        playList['Orcward-Silences'] = 'An-Alternate-Demonsion';
+        playList['An-Alternate-Demonsion'] = 'Sulphur-So-Good';
+        playList['Sulphur-so-Good'] = 'The-Spinal-Tap-Dance';
+        playList['The-Spinal-Tap-Dance'] = 'I-Have-a-Bone-to-Pick-with-You';
+        playList['I-Have-a-Bone-to-Pick-with-You'] = 'The-Party-Shop';
+        playList['The-Party-Shop'] = 'TinyKeep';
+        playList['TinyKeep'] = 'Pershdal-Dungeon';
+
+        game.add.audio(songName, 0.3, false).onStop.add(nextSong, this, undefined, game, playList[songName]);
+    }
 }
