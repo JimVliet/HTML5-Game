@@ -2,6 +2,7 @@
 /// <reference path="../../lib/phaser-tiled.d.ts"/>
 /// <reference path="../../app.ts"/>
 /// <reference path="../GameObjects.ts"/>
+/// <reference path="../SongManager.ts"/>
 /// <reference path="../entities/Player.ts"/>
 /// <reference path="Level2.ts"/>
 
@@ -27,17 +28,7 @@ module GameLevels
         customPreload(game: Phaser.Game)
         {
             game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
-            game.load.audio('The-Final-Choice', 'sounds/mp3/The Final Choice.mp3');
-            game.load.audio('Saviour-in-the-Dark', 'sounds/mp3/Saviour in the Dark.mp3');
-            game.load.audio('Orcward-Silences', 'sounds/mp3/Orcward Silences.mp3');
-            game.load.audio('An-Alternate-Demonsion', 'sounds/mp3/An Alternate Demonsion.mp3');
-            game.load.audio('Sulphur-so-Good', 'sounds/mp3/Sulphur so Good.mp3');
-            game.load.audio('The-Spinal-Tap-Dance', 'sounds/mp3/The Spinal Tap-Dance.mp3');
-            game.load.audio('I-Have-a-Bone-to-Pick-with-You', 'sounds/mp3/I have a Bone to Pick with You.mp3');
-            game.load.audio('The-Party-Shop', 'sounds/mp3/The Party Shop.mp3');
-            game.load.audio('TinyKeep', 'sounds/mp3/TinyKeep');
-            //game.load.audio('HollywoodVines', 'sounds/mp3/HollywoodVines.mp3');
+            SongManager.playList.load(game);
         }
 
         create()
@@ -45,7 +36,8 @@ module GameLevels
             this.setupCurrentLevel();
 
             //Play music
-            this.game.add.audio('Pershdal-Dung').play(undefined, 0, 0.3, false).onStop.add(functionFile.nextSong, undefined, undefined, this.game, 'Pershdal-Dung');
+            new SongManager.playList(this.game).next();
+
             this.setupNextLevel();
         }
 
