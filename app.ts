@@ -3,12 +3,16 @@
 /// <reference path="scripts/GameStates.ts"/>
 /// <reference path="scripts/GameObjects.ts"/>
 /// <reference path="scripts/functionFile.ts"/>
+/// <reference path="scripts/SongManager.ts"/>
 /// <reference path="scripts/levels/Level1.ts"/>
 /// <reference path="scripts/levels/SolidTest.ts"/>
 
+
+var gameVar: MyGame.RPGame;
 module MyGame
 {
     export class RPGame {
+        songManager: SongManager.SongManager;
 
         constructor(width: number, height: number) {
             this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create}, false, false);
@@ -45,5 +49,5 @@ window.onload = () => {
 
     var aspectMultiplier = Math.min(winW/widthAspectRatio, winH/heightAspectRatio);
 
-    var gameVar = new MyGame.RPGame(aspectMultiplier*widthAspectRatio, aspectMultiplier*heightAspectRatio);
+    gameVar = new MyGame.RPGame(aspectMultiplier*widthAspectRatio, aspectMultiplier*heightAspectRatio);
 };
