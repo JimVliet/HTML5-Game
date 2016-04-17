@@ -256,10 +256,10 @@ var SongManager;
             this.currentSongNumb = 0;
             this.playList = [];
             this.playList[0] = game.add.audio('Pershdal-Dung', 0.3, false);
-            this.playList[1] = game.add.audio('Vines', 0.3, false);
+            this.playList[1] = game.add.audio('Vines', 0.45, false);
             this.playList[2] = game.add.audio('The-Final-Choice', 0.3, false);
-            this.playList[4] = game.add.audio('An-Alternate-Demonsion', 0.3, false);
-            this.playList[6] = game.add.audio('I-Have-a-Bone-to-Pick-with-You', 0.3, false);
+            this.playList[3] = game.add.audio('An-Alternate-Demonsion', 0.3, false);
+            this.playList[4] = game.add.audio('I-Have-a-Bone-to-Pick-with-You', 0.3, false);
         }
         SongManager.prototype.next = function () {
             this.playList[this.currentSongNumb].play().onStop.add(this.next, this);
@@ -562,4 +562,36 @@ window.onload = function () {
     var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
     gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
 };
+var Pathfinding;
+(function (Pathfinding) {
+    function setupNodes(game, map, layer) {
+        var layerWidth = layer.size['x'], layerHeight = layer.size['y'], tiles = layer.tileIds, xCoord, yCoord, nodeOptions;
+        for (var index = 0; index < tiles.length; index++) {
+            if (tiles[index] != 0) {
+                xCoord = index % layerWidth;
+                yCoord = Math.floor(index / layerWidth);
+                nodeOptions = [true, true, true, true];
+                if (xCoord == 0) {
+                    nodeOptions[0] = false;
+                    nodeOptions[1] = false;
+                }
+                else if (xCoord == layerWidth - 1) {
+                    nodeOptions[2] = false;
+                    nodeOptions[3] = false;
+                }
+                if (yCoord == 0) {
+                    nodeOptions[0] = false;
+                    nodeOptions[2] = false;
+                }
+                else if (yCoord == layerHeight - 1) {
+                    nodeOptions[1] = false;
+                    nodeOptions[3] = false;
+                }
+                if (nodeOptions[0] && nodeOptions[1] && tiles[index - 1] != 0) {
+                }
+            }
+        }
+    }
+    Pathfinding.setupNodes = setupNodes;
+})(Pathfinding || (Pathfinding = {}));
 //# sourceMappingURL=generated.js.map
