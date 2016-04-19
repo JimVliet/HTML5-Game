@@ -3,11 +3,11 @@
 
 module Pathfinding
 {
-    export function setupNodes(game: Phaser.Game, map: Phaser.Plugin.Tiled.Tilemap, layer: Phaser.Plugin.Tiled.Tilelayer)
+    export function setupNodes(layer: Phaser.Plugin.Tiled.Tilelayer): Array<Array<number>>
     {
         var layerWidth = layer.size['x'],
             layerHeight = layer.size['y'],
-            tiles = layer.tileIds,
+            tiles = layer.tileIds, coordsOutput: Array<Array<number>> = [],
             xCoord, yCoord, nodeOptions: Array<boolean>;
 
         //Nodeoptions indexes:
@@ -39,11 +39,43 @@ module Pathfinding
                     nodeOptions[3] = false;
                 }
 
-                if(nodeOptions[0] && nodeOptions[1] && tiles[index - 1] != 0)
-                {
-
+                //Check nodes adjacent to the tile
+                if ((nodeOptions[0] || nodeOptions[1]) && tiles[index - 1] != 0) {
+                    nodeOptions[0] = false;
+                    nodeOptions[1] = false;
                 }
+                if ((nodeOptions[2] || nodeOptions[3]) && tiles[index + 1] != 0) {
+                    nodeOptions[2] = false;
+                    nodeOptions[3] = false;
+                }
+                if ((nodeOptions[0] || nodeOptions[2]) && tiles[index - layerWidth] != 0) {
+                    nodeOptions[0] = false;
+                    nodeOptions[2] = false;
+                }
+                if ((nodeOptions[1] || nodeOptions[3]) && tiles[index + layerWidth] != 0) {
+                    nodeOptions[1] = false;
+                    nodeOptions[3] = false;
+                }
+
+                if(nodeOptions[0] && tiles[index - layerWidth -1] == 0)
+                {
+                    coordsOutput.push([xCoord -1, yCoord -1]);
+                }
+                if(nodeOptions[1] && tiles[index + layerWidth -1] == 0)
+                {
+                    coordsOutput.push([xCoord -1, yCoord +1]);
+                }
+                if(nodeOptions[2] && tiles[index - layerWidth +1] == 0)
+                {
+                    coordsOutput.push([xCoord +1, yCoord -1]);
+                }
+                if(nodeOptions[2] && tiles[index + layerWidth +1] == 0)
+                {
+                    coordsOutput.push([xCoord +1, yCoord +1]);
+                }
+
             }
         }
+        return coordsOutput;
     }
 }

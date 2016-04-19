@@ -32,7 +32,7 @@ module SongManager
             game.load.audio('Vines', 'sounds/mp3/HollywoodVines.mp3');
             game.load.audio('The-Final-Choice', 'sounds/mp3/The Final Choice.mp3');
             game.load.audio('An-Alternate-Demonsion', 'sounds/mp3/An Alternate Demonsion.mp3');
-            game.load.audio('I-Have-a-Bone-to-Pick-with-You', 'sounds/mp3/I have a Bone to Pick with You.mp3');
+            game.load.audio('I-Have-a-Bone-to-Pick-with-You', 'sounds/mp3/I Have a Bone to Pick with You.mp3');
         }
     }
 }

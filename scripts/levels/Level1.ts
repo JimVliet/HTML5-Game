@@ -3,6 +3,7 @@
 /// <reference path="../../app.ts"/>
 /// <reference path="../GameObjects.ts"/>
 /// <reference path="../SongManager.ts"/>
+/// <reference path="../Pathfinding.ts"/>
 /// <reference path="../entities/Player.ts"/>
 /// <reference path="Level2.ts"/>
 
@@ -17,6 +18,8 @@ module GameLevels
         mapURL: string;
         map: Tiled.Tilemap;
         player: GameObject & Phaser.Sprite;
+        pointList: Array<Array<number>>;
+        graphics: Phaser.Graphics;
 
         constructor()
         {
@@ -34,6 +37,9 @@ module GameLevels
         create()
         {
             this.setupCurrentLevel();
+
+            this.graphics = this.game.add.graphics(0,0);
+            this.pointList = Pathfinding.setupNodes(this.map.getTilelayer('Solid'));
 
             //Play music
             gameVar.songManager = new SongManager.SongManager(this.game);
@@ -76,6 +82,17 @@ module GameLevels
             {
                 functionFile.loadGameLevel(this.game, new GameLevels.Level2());
             }
+        }
+
+        render()
+        {
+            this.graphics.lineStyle(0);
+            this.graphics.beginFill();
+            for(var i = 0; i < this.pointList.length; i++)
+            {
+                this.graphics.drawCircle(this.pointList[i][0], this.pointList[i][1], 5);
+            }
+            this.graphics.endFill();
         }
     }
 }
