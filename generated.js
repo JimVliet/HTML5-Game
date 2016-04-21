@@ -324,16 +324,16 @@ var Pathfinding;
                         nodeOptions[3] = false;
                     }
                     if (nodeOptions[0] && tiles[index - layerWidth - 1] == 0) {
-                        coordsOutput.push(new Node(xCoord, yCoord));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth, yCoord * this.map.tileHeight));
                     }
                     if (nodeOptions[1] && tiles[index + layerWidth - 1] == 0) {
-                        coordsOutput.push(new Node(xCoord, yCoord + 1));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth, (yCoord + 1) * this.map.tileHeight));
                     }
                     if (nodeOptions[2] && tiles[index - layerWidth + 1] == 0) {
-                        coordsOutput.push(new Node(xCoord + 1, yCoord));
+                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth, yCoord * this.map.tileHeight));
                     }
                     if (nodeOptions[3] && tiles[index + layerWidth + 1] == 0) {
-                        coordsOutput.push(new Node(xCoord + 1, yCoord + 1));
+                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth, (yCoord + 1) * this.map.tileHeight));
                     }
                 }
             }
@@ -345,7 +345,7 @@ var Pathfinding;
             graphics.lineStyle(0);
             graphics.beginFill(0xFFFFFF);
             for (var i = 0; i < this.nodeList.length; i++) {
-                graphics.drawCircle(this.nodeList[i].x * this.map.tileWidth, this.nodeList[i].y * this.map.tileHeight, 3);
+                graphics.drawCircle(this.nodeList[i].x, this.nodeList[i].y, 3);
             }
             graphics.endFill();
         };
