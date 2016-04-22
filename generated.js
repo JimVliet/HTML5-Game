@@ -34,7 +34,7 @@ var functionFile;
                     curY++;
                 }
                 var xPixel = curBestRect[1] * map.tileWidth, yPixel = curBestRect[2] * map.tileHeight, xEndPixel = (curBestRect[3] + 1) * map.tileWidth, yEndPixel = (curBestRect[4] + 1) * map.tileHeight, body = game.physics.p2.createBody(xPixel, yPixel, 0, false);
-                body.addRectangle(xEndPixel - xPixel, yEndPixel - yPixel, (xEndPixel - xPixel) / 2, (yEndPixel - yPixel) / 2, 0);
+                body.addRectangle(xEndPixel - xPixel + 0.2, yEndPixel - yPixel + 0.2, (xEndPixel - xPixel) / 2, (yEndPixel - yPixel) / 2, 0);
                 body.debug = debug;
                 game.physics.p2.addBody(body);
                 layer.bodies.push(body);
@@ -327,13 +327,13 @@ var Pathfinding;
                         coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, yCoord * this.map.tileHeight - 1));
                     }
                     if (nodeOptions[1] && tiles[index + layerWidth - 1] == 0) {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, (yCoord + 1) * this.map.tileHeight));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, (yCoord + 1) * this.map.tileHeight + 1));
                     }
                     if (nodeOptions[2] && tiles[index - layerWidth + 1] == 0) {
-                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth, yCoord * this.map.tileHeight - 1));
+                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth + 1, yCoord * this.map.tileHeight - 1));
                     }
                     if (nodeOptions[3] && tiles[index + layerWidth + 1] == 0) {
-                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth, (yCoord + 1) * this.map.tileHeight));
+                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth + 1, (yCoord + 1) * this.map.tileHeight + 1));
                     }
                 }
             }
@@ -510,6 +510,10 @@ var GameLevels;
         };
         Level3.prototype.create = function () {
             this.setupCurrentLevel();
+            this.graphics = this.game.add.graphics(0, 0);
+            this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
+            this.pathFinding.setupNodes();
+            this.pathFinding.drawNodes();
         };
         Level3.prototype.setupCurrentLevel = function () {
             this.game.physics.startSystem(Phaser.Physics.P2JS);
@@ -520,6 +524,21 @@ var GameLevels;
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
+        };
+        Level3.prototype.render = function () {
+            this.graphics.clear();
+            this.graphics.beginFill();
+            this.graphics.lineStyle(1, 0x6ACCBF, 0.5);
+            var line = new Phaser.Line();
+            for (var i = 0; i < this.pathFinding.nodeList.length; i++) {
+                line.start.setTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                line.end.setTo(this.player.x, this.player.y + 16);
+                if (!this.pathFinding.raycastLine(line)) {
+                    this.graphics.moveTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                    this.graphics.lineTo(this.player.x, this.player.y + 16);
+                }
+            }
+            this.graphics.endFill();
         };
         return Level3;
     })(Phaser.State);
@@ -540,6 +559,10 @@ var GameLevels;
         };
         Level2.prototype.create = function () {
             this.setupCurrentLevel();
+            this.graphics = this.game.add.graphics(0, 0);
+            this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
+            this.pathFinding.setupNodes();
+            this.pathFinding.drawNodes();
             this.setupNextLevel();
         };
         Level2.prototype.setupCurrentLevel = function () {
@@ -563,6 +586,21 @@ var GameLevels;
             if (!contactShape.sensor) {
                 functionFile.loadGameLevel(this.game, new GameLevels.Level3());
             }
+        };
+        Level2.prototype.render = function () {
+            this.graphics.clear();
+            this.graphics.beginFill();
+            this.graphics.lineStyle(1, 0x6ACCBF, 0.5);
+            var line = new Phaser.Line();
+            for (var i = 0; i < this.pathFinding.nodeList.length; i++) {
+                line.start.setTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                line.end.setTo(this.player.x, this.player.y + 16);
+                if (!this.pathFinding.raycastLine(line)) {
+                    this.graphics.moveTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                    this.graphics.lineTo(this.player.x, this.player.y + 16);
+                }
+            }
+            this.graphics.endFill();
         };
         return Level2;
     })(Phaser.State);
@@ -592,7 +630,7 @@ var GameLevels;
             this.game.physics.startSystem(Phaser.Physics.P2JS);
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, true);
+            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
             this.player = new Entities.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);

@@ -56,7 +56,7 @@ module GameLevels
             this.game.time.advancedTiming = true;
 
             //Setup the object layer
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, true);
+            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
 
             //Add player object and setup camera
             this.player = new Entities.Player(this.game, 408, 280, this, 'PlayerTileset', 0);

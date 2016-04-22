@@ -16,6 +16,8 @@ module GameLevels
         mapURL: string;
         map: Tiled.Tilemap;
         player: GameObject & Phaser.Sprite;
+        pathFinding: Pathfinding.Pathfinding;
+        graphics: Phaser.Graphics;
 
         constructor()
         {
@@ -33,7 +35,12 @@ module GameLevels
         create()
         {
             this.setupCurrentLevel();
-            //Play music
+
+            this.graphics = this.game.add.graphics(0,0);
+            this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
+            this.pathFinding.setupNodes();
+            this.pathFinding.drawNodes();
+
             this.setupNextLevel();
         }
 
@@ -71,6 +78,25 @@ module GameLevels
             {
                 functionFile.loadGameLevel(this.game, new GameLevels.Level3());
             }
+        }
+
+        render()
+        {
+            this.graphics.clear();
+            this.graphics.beginFill();
+            this.graphics.lineStyle(1, 0x6ACCBF, 0.5);
+            var line = new Phaser.Line();
+            for(var i = 0; i < this.pathFinding.nodeList.length; i++)
+            {
+                line.start.setTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                line.end.setTo(this.player.x, this.player.y + 16);
+                if(!this.pathFinding.raycastLine(line))
+                {
+                    this.graphics.moveTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                    this.graphics.lineTo(this.player.x, this.player.y + 16);
+                }
+            }
+            this.graphics.endFill();
         }
     }
 }

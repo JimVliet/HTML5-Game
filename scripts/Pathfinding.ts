@@ -72,15 +72,15 @@ module Pathfinding
                     }
                     if(nodeOptions[1] && tiles[index + layerWidth -1] == 0)
                     {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth -1, (yCoord +1) * this.map.tileHeight));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth -1, (yCoord +1) * this.map.tileHeight +1));
                     }
                     if(nodeOptions[2] && tiles[index - layerWidth +1] == 0)
                     {
-                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth, yCoord * this.map.tileHeight -1));
+                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth +1, yCoord * this.map.tileHeight -1));
                     }
                     if(nodeOptions[3] && tiles[index + layerWidth +1] == 0)
                     {
-                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth, (yCoord +1) * this.map.tileHeight));
+                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth +1, (yCoord +1) * this.map.tileHeight +1));
                     }
                 }
             }
