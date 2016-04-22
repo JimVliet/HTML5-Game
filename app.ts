@@ -24,8 +24,6 @@ module MyGame
         {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
             this.game.add.plugin(new (<any>Phaser.Plugin).Debug(this.game, this.game.stage));
-            //Play music
-            SongManager.SongManager.load(this.game);
         }
 
         create()
@@ -36,8 +34,6 @@ module MyGame
             }
             else
             {
-                gameVar.songManager = new SongManager.SongManager(this.game);
-                gameVar.songManager.next();
                 functionFile.loadGameLevel(this.game, new GameLevels.Level1());
             }
         }

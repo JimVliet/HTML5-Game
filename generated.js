@@ -617,6 +617,7 @@ var GameLevels;
         }
         Level1.prototype.customPreload = function (game) {
             game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+            SongManager.SongManager.load(this.game);
         };
         Level1.prototype.create = function () {
             this.setupCurrentLevel();
@@ -625,6 +626,8 @@ var GameLevels;
             this.pathFinding.setupNodes();
             this.pathFinding.drawNodes();
             this.setupNextLevel();
+            gameVar.songManager = new SongManager.SongManager(this.game);
+            gameVar.songManager.next();
         };
         Level1.prototype.setupCurrentLevel = function () {
             this.game.physics.startSystem(Phaser.Physics.P2JS);
@@ -706,15 +709,12 @@ var MyGame;
         RPGame.prototype.preload = function () {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
             this.game.add.plugin(new Phaser.Plugin.Debug(this.game, this.game.stage));
-            SongManager.SongManager.load(this.game);
         };
         RPGame.prototype.create = function () {
             if (window.location.href.indexOf('objectConverter') != -1) {
                 functionFile.loadGameLevel(this.game, new GameLevels.SolidTest());
             }
             else {
-                gameVar.songManager = new SongManager.SongManager(this.game);
-                gameVar.songManager.next();
                 functionFile.loadGameLevel(this.game, new GameLevels.Level1());
             }
         };
