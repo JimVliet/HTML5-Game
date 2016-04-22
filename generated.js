@@ -324,13 +324,13 @@ var Pathfinding;
                         nodeOptions[3] = false;
                     }
                     if (nodeOptions[0] && tiles[index - layerWidth - 1] == 0) {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth, yCoord * this.map.tileHeight));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, yCoord * this.map.tileHeight - 1));
                     }
                     if (nodeOptions[1] && tiles[index + layerWidth - 1] == 0) {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth, (yCoord + 1) * this.map.tileHeight));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, (yCoord + 1) * this.map.tileHeight));
                     }
                     if (nodeOptions[2] && tiles[index - layerWidth + 1] == 0) {
-                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth, yCoord * this.map.tileHeight));
+                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth, yCoord * this.map.tileHeight - 1));
                     }
                     if (nodeOptions[3] && tiles[index + layerWidth + 1] == 0) {
                         coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth, (yCoord + 1) * this.map.tileHeight));
@@ -338,16 +338,51 @@ var Pathfinding;
                 }
             }
             this.nodeList = coordsOutput;
-            return coordsOutput;
+        };
+        Pathfinding.prototype.setupConnections = function () {
+            for (var i = 0; i < this.nodeList.length; i++) {
+            }
         };
         Pathfinding.prototype.drawNodes = function () {
             var graphics = this.game.add.graphics(0, 0);
             graphics.lineStyle(0);
-            graphics.beginFill(0xFFFFFF);
+            graphics.beginFill(0x71A37D, 0.5);
             for (var i = 0; i < this.nodeList.length; i++) {
                 graphics.drawCircle(this.nodeList[i].x, this.nodeList[i].y, 3);
             }
             graphics.endFill();
+        };
+        Pathfinding.prototype.raycastLine = function (line) {
+            if (line.start.x > line.end.x) {
+                var tempX = line.start.x;
+                line.start.x = line.end.x;
+                line.end.x = tempX;
+            }
+            if (line.start.y > line.end.y) {
+                var tempY = line.start.y;
+                line.start.y = line.end.y;
+                line.end.y = tempY;
+            }
+            var bodies = this.layer.bodies, currentBody, bodyList = [];
+            for (var i = 0; i < bodies.length; i++) {
+                currentBody = bodies[i];
+                var bodyRightX = currentBody.x + (currentBody.data.shapes[0].width / 0.8 * this.map.tileWidth), bodyRightY = currentBody.y + (currentBody.data.shapes[0].height / 0.8 * this.map.tileHeight);
+                if (!(line.end.x < currentBody.x || bodyRightX < line.start.x || line.end.y < currentBody.y || bodyRightY < line.start.y)) {
+                    bodyList.push([currentBody.x, currentBody.y, bodyRightX, bodyRightY]);
+                }
+            }
+            var coords = [];
+            line.coordinatesOnLine(4, coords);
+            for (var index = 0; index < bodyList.length; index++) {
+                for (var coordIndex = 0; coordIndex < coords.length; coordIndex++) {
+                    if (this.containsPoint(bodyList[index], coords[coordIndex][0], coords[coordIndex][1]))
+                        return true;
+                }
+            }
+            return false;
+        };
+        Pathfinding.prototype.containsPoint = function (rectangle, x, y) {
+            return !(x < rectangle[0] || y < rectangle[1] || x > rectangle[2] || y > rectangle[3]);
         };
         return Pathfinding;
     })();
@@ -553,22 +588,20 @@ var GameLevels;
         }
         Level1.prototype.customPreload = function (game) {
             game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-            SongManager.SongManager.load(game);
         };
         Level1.prototype.create = function () {
             this.setupCurrentLevel();
+            this.graphics = this.game.add.graphics(0, 0);
             this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
             this.pathFinding.setupNodes();
             this.pathFinding.drawNodes();
-            gameVar.songManager = new SongManager.SongManager(this.game);
-            gameVar.songManager.next();
             this.setupNextLevel();
         };
         Level1.prototype.setupCurrentLevel = function () {
             this.game.physics.startSystem(Phaser.Physics.P2JS);
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, true);
+            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
             this.player = new Entities.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
@@ -585,6 +618,21 @@ var GameLevels;
             if (!contactShape.sensor) {
                 functionFile.loadGameLevel(this.game, new GameLevels.Level2());
             }
+        };
+        Level1.prototype.render = function () {
+            this.graphics.clear();
+            this.graphics.beginFill();
+            this.graphics.lineStyle(1, 0x6ACCBF, 0.5);
+            var line = new Phaser.Line();
+            for (var i = 0; i < this.pathFinding.nodeList.length; i++) {
+                line.start.setTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                line.end.setTo(this.player.x, this.player.y + 16);
+                if (!this.pathFinding.raycastLine(line)) {
+                    this.graphics.moveTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                    this.graphics.lineTo(this.player.x, this.player.y + 16);
+                }
+            }
+            this.graphics.endFill();
         };
         return Level1;
     })(Phaser.State);
@@ -629,12 +677,15 @@ var MyGame;
         RPGame.prototype.preload = function () {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
             this.game.add.plugin(new Phaser.Plugin.Debug(this.game, this.game.stage));
+            SongManager.SongManager.load(this.game);
         };
         RPGame.prototype.create = function () {
             if (window.location.href.indexOf('objectConverter') != -1) {
                 functionFile.loadGameLevel(this.game, new GameLevels.SolidTest());
             }
             else {
+                gameVar.songManager = new SongManager.SongManager(this.game);
+                gameVar.songManager.next();
                 functionFile.loadGameLevel(this.game, new GameLevels.Level1());
             }
         };

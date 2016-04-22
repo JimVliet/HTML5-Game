@@ -31,23 +31,20 @@ module GameLevels
         customPreload(game: Phaser.Game)
         {
             game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-            SongManager.SongManager.load(game);
         }
 
         create()
         {
             this.setupCurrentLevel();
 
+            this.graphics = this.game.add.graphics(0,0);
             this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
             this.pathFinding.setupNodes();
             this.pathFinding.drawNodes();
 
-            //Play music
-            gameVar.songManager = new SongManager.SongManager(this.game);
-            gameVar.songManager.next();
-
             this.setupNextLevel();
         }
+
 
         setupCurrentLevel()
         {
@@ -59,7 +56,7 @@ module GameLevels
             this.game.time.advancedTiming = true;
 
             //Setup the object layer
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, true);
+            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
 
             //Add player object and setup camera
             this.player = new Entities.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
@@ -83,6 +80,25 @@ module GameLevels
             {
                 functionFile.loadGameLevel(this.game, new GameLevels.Level2());
             }
+        }
+
+        render()
+        {
+            this.graphics.clear();
+            this.graphics.beginFill();
+            this.graphics.lineStyle(1, 0x6ACCBF, 0.5);
+            var line = new Phaser.Line();
+            for(var i = 0; i < this.pathFinding.nodeList.length; i++)
+            {
+                line.start.setTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                line.end.setTo(this.player.x, this.player.y + 16);
+                if(!this.pathFinding.raycastLine(line))
+                {
+                    this.graphics.moveTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
+                    this.graphics.lineTo(this.player.x, this.player.y + 16);
+                }
+            }
+            this.graphics.endFill();
         }
     }
 }
