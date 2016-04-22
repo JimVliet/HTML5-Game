@@ -353,21 +353,12 @@ var Pathfinding;
             graphics.endFill();
         };
         Pathfinding.prototype.raycastLine = function (line) {
-            if (line.start.x > line.end.x) {
-                var tempX = line.start.x;
-                line.start.x = line.end.x;
-                line.end.x = tempX;
-            }
-            if (line.start.y > line.end.y) {
-                var tempY = line.start.y;
-                line.start.y = line.end.y;
-                line.end.y = tempY;
-            }
             var bodies = this.layer.bodies, currentBody, bodyList = [];
             for (var i = 0; i < bodies.length; i++) {
                 currentBody = bodies[i];
                 var bodyRightX = currentBody.x + (currentBody.data.shapes[0].width / 0.8 * this.map.tileWidth), bodyRightY = currentBody.y + (currentBody.data.shapes[0].height / 0.8 * this.map.tileHeight);
-                if (!(line.end.x < currentBody.x || bodyRightX < line.start.x || line.end.y < currentBody.y || bodyRightY < line.start.y)) {
+                if (!(Math.max(line.start.x, line.end.x) < currentBody.x || bodyRightX < Math.min(line.start.x, line.end.x)
+                    || Math.max(line.start.y, line.end.y) < currentBody.y || bodyRightY < Math.min(line.start.y, line.end.y))) {
                     bodyList.push([currentBody.x, currentBody.y, bodyRightX, bodyRightY]);
                 }
             }
@@ -601,7 +592,7 @@ var GameLevels;
             this.game.physics.startSystem(Phaser.Physics.P2JS);
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
+            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, true);
             this.player = new Entities.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);

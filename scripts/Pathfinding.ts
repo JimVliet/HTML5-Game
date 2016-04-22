@@ -110,21 +110,6 @@ module Pathfinding
 
         raycastLine(line: Phaser.Line)
         {
-            //Make sure the line is correct
-            if(line.start.x > line.end.x)
-            {
-                var tempX = line.start.x;
-                line.start.x = line.end.x;
-                line.end.x = tempX;
-            }
-            if(line.start.y > line.end.y)
-            {
-                var tempY = line.start.y;
-                line.start.y = line.end.y;
-                line.end.y = tempY;
-            }
-
-
             var bodies: Array<Phaser.Physics.P2.Body> = this.layer.bodies,
                 currentBody, bodyList: Array<[number, number, number, number]> = [];
 
@@ -135,7 +120,8 @@ module Pathfinding
                 var bodyRightX = currentBody.x + (currentBody.data.shapes[0].width / 0.8 * this.map.tileWidth),
                     bodyRightY = currentBody.y + (currentBody.data.shapes[0].height / 0.8 * this.map.tileHeight);
 
-                if(!(line.end.x < currentBody.x || bodyRightX < line.start.x || line.end.y < currentBody.y || bodyRightY < line.start.y))
+                if(!(Math.max(line.start.x, line.end.x) < currentBody.x || bodyRightX < Math.min(line.start.x, line.end.x)
+                    || Math.max(line.start.y, line.end.y) < currentBody.y || bodyRightY < Math.min(line.start.y, line.end.y)))
                 {
                     bodyList.push([currentBody.x, currentBody.y, bodyRightX, bodyRightY]);
                 }
