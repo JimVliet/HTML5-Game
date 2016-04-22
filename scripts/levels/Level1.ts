@@ -31,7 +31,7 @@ module GameLevels
         customPreload(game: Phaser.Game)
         {
             game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-            SongManager.SongManager.load(this.game);
+            SongManager.SongManager.load(gameVar.game);
         }
 
         create()

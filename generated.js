@@ -617,7 +617,7 @@ var GameLevels;
         }
         Level1.prototype.customPreload = function (game) {
             game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-            SongManager.SongManager.load(this.game);
+            SongManager.SongManager.load(gameVar.game);
         };
         Level1.prototype.create = function () {
             this.setupCurrentLevel();
