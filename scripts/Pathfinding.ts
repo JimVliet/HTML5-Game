@@ -91,7 +91,13 @@ module Pathfinding
         {
             for(var i = 0; i < this.nodeList.length; i++)
             {
-
+                for(var j = i; j < this.nodeList.length; j++)
+                {
+                    if(this.raycastLine(new Phaser.Line(this.nodeList[i].x, this.nodeList[i].y, this.nodeList[j].x, this.nodeList[j].y)))
+                    {
+                        this.nodeList[i].connectTo(this.nodeList[j]);
+                    }
+                }
             }
         }
 
@@ -108,7 +114,26 @@ module Pathfinding
             graphics.endFill();
         }
 
-        raycastLine(line: Phaser.Line)
+        drawConnections()
+        {
+            var graphics = this.game.add.graphics(0,0),
+                usedConnections = [];
+
+            graphics.lineStyle(0);
+            graphics.beginFill(0x71A37D, 0.5);
+            for(var i = 0; i < this.nodeList.length; i++)
+            {
+                for(var j = 0; j < this.nodeList[i].connections.length; j++)
+                {
+                    
+                }
+
+                graphics.drawCircle(this.nodeList[i].x, this.nodeList[i].y, 3);
+            }
+            graphics.endFill();
+        }
+
+        raycastLine(line: Phaser.Line): boolean
         {
             var bodies: Array<Phaser.Physics.P2.Body> = this.layer.bodies,
                 currentBody, bodyList: Array<[number, number, number, number]> = [];
@@ -148,9 +173,17 @@ module Pathfinding
 
     export class Node
     {
+        connections: Array<Node>;
+
         constructor(public x: number, public y: number)
         {
+            this.connections = [];
+        }
 
+        connectTo(node: Node)
+        {
+            this.connections.push(node);
+            node.connections.push(this);
         }
     }
 }
