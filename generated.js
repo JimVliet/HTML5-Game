@@ -7,6 +7,7 @@ var Pathfinding;
             this.game = game;
             this.map = map;
             this.layer = layer;
+            this.nodeIDCounter = 0;
         }
         Pathfinding.prototype.setupNodes = function () {
             var layerWidth = this.layer.size['x'], layerHeight = this.layer.size['y'], tiles = this.layer.tileIds, coordsOutput = [], xCoord, yCoord, nodeOptions;
@@ -53,16 +54,16 @@ var Pathfinding;
                         nodeOptions[3] = false;
                     }
                     if (nodeOptions[0] && tiles[index - layerWidth - 1] == 0) {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, yCoord * this.map.tileHeight - 1));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, yCoord * this.map.tileHeight - 1, this));
                     }
                     if (nodeOptions[1] && tiles[index + layerWidth - 1] == 0) {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, (yCoord + 1) * this.map.tileHeight + 1));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, (yCoord + 1) * this.map.tileHeight + 1, this));
                     }
                     if (nodeOptions[2] && tiles[index - layerWidth + 1] == 0) {
-                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth + 1, yCoord * this.map.tileHeight - 1));
+                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth + 1, yCoord * this.map.tileHeight - 1, this));
                     }
                     if (nodeOptions[3] && tiles[index + layerWidth + 1] == 0) {
-                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth + 1, (yCoord + 1) * this.map.tileHeight + 1));
+                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth + 1, (yCoord + 1) * this.map.tileHeight + 1, this));
                     }
                 }
             }
@@ -87,13 +88,18 @@ var Pathfinding;
             graphics.endFill();
         };
         Pathfinding.prototype.drawConnections = function () {
-            var graphics = this.game.add.graphics(0, 0), usedConnections = [];
+            var graphics = this.game.add.graphics(0, 0), usedConnections = {};
             graphics.lineStyle(0);
             graphics.beginFill(0x71A37D, 0.5);
             for (var i = 0; i < this.nodeList.length; i++) {
                 for (var j = 0; j < this.nodeList[i].connections.length; j++) {
+                    if (!(this.nodeList[i].nodeID in usedConnections && this.nodeList[i].connections[j].nodeID in usedConnections[this.nodeList[i].nodeID])) {
+                        graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
+                        graphics.lineTo(this.nodeList[i].connections[j].x, this.nodeList[i].connections[j].y);
+                        if (!(this.nodeList[i].connections[j].nodeID in usedConnections)) {
+                        }
+                    }
                 }
-                graphics.drawCircle(this.nodeList[i].x, this.nodeList[i].y, 3);
             }
             graphics.endFill();
         };
@@ -125,10 +131,12 @@ var Pathfinding;
     })();
     Pathfinding_1.Pathfinding = Pathfinding;
     var Node = (function () {
-        function Node(x, y) {
+        function Node(x, y, pathFinder) {
             this.x = x;
             this.y = y;
             this.connections = [];
+            this.nodeID = pathFinder.nodeIDCounter;
+            pathFinder.nodeIDCounter++;
         }
         Node.prototype.connectTo = function (node) {
             this.connections.push(node);

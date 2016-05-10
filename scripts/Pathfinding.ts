@@ -6,10 +6,11 @@ module Pathfinding
     export class Pathfinding
     {
         nodeList: Array<Node>;
+        nodeIDCounter: number;
 
         constructor(public game: Phaser.Game, public map: Phaser.Plugin.Tiled.Tilemap, public layer: Phaser.Plugin.Tiled.Tilelayer)
         {
-
+            this.nodeIDCounter = 0;
         }
 
         setupNodes()
@@ -68,19 +69,19 @@ module Pathfinding
 
                     if(nodeOptions[0] && tiles[index - layerWidth -1] == 0)
                     {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth -1, yCoord * this.map.tileHeight -1));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth -1, yCoord * this.map.tileHeight -1, this));
                     }
                     if(nodeOptions[1] && tiles[index + layerWidth -1] == 0)
                     {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth -1, (yCoord +1) * this.map.tileHeight +1));
+                        coordsOutput.push(new Node(xCoord * this.map.tileWidth -1, (yCoord +1) * this.map.tileHeight +1, this));
                     }
                     if(nodeOptions[2] && tiles[index - layerWidth +1] == 0)
                     {
-                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth +1, yCoord * this.map.tileHeight -1));
+                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth +1, yCoord * this.map.tileHeight -1, this));
                     }
                     if(nodeOptions[3] && tiles[index + layerWidth +1] == 0)
                     {
-                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth +1, (yCoord +1) * this.map.tileHeight +1));
+                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth +1, (yCoord +1) * this.map.tileHeight +1, this));
                     }
                 }
             }
@@ -117,7 +118,7 @@ module Pathfinding
         drawConnections()
         {
             var graphics = this.game.add.graphics(0,0),
-                usedConnections = [];
+                usedConnections = {};
 
             graphics.lineStyle(0);
             graphics.beginFill(0x71A37D, 0.5);
@@ -125,10 +126,16 @@ module Pathfinding
             {
                 for(var j = 0; j < this.nodeList[i].connections.length; j++)
                 {
-                    
+                    if(!(this.nodeList[i].nodeID in usedConnections && this.nodeList[i].connections[j].nodeID in usedConnections[this.nodeList[i].nodeID]))
+                    {
+                        graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
+                        graphics.lineTo(this.nodeList[i].connections[j].x, this.nodeList[i].connections[j].y);
+                        if(!(this.nodeList[i].connections[j].nodeID in usedConnections))
+                        {
+                            
+                        }
+                    }
                 }
-
-                graphics.drawCircle(this.nodeList[i].x, this.nodeList[i].y, 3);
             }
             graphics.endFill();
         }
@@ -174,10 +181,13 @@ module Pathfinding
     export class Node
     {
         connections: Array<Node>;
+        nodeID: number;
 
-        constructor(public x: number, public y: number)
+        constructor(public x: number, public y: number, pathFinder: Pathfinding)
         {
             this.connections = [];
+            this.nodeID = pathFinder.nodeIDCounter;
+            pathFinder.nodeIDCounter++;
         }
 
         connectTo(node: Node)
