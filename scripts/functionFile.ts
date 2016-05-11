@@ -143,7 +143,7 @@ module functionFile
         }
         else
         {
-            return console.log('This is some weird shit, this should never happen. It\'s probably because this tileset is not valid');
+            return console.log('invalid tile');
         }
         body.debug = debug;
         game.physics.p2.addBody(body);
@@ -165,5 +165,54 @@ module functionFile
     export function loadGameLevel(game: Phaser.Game, levelToLoad: GameStates.GameLevel & Phaser.State)
     {
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
+    }
+
+    export function matchCollision(tileIndex: number, compareTileIndex: number, direction: number): boolean
+    {
+        //Up: 0
+        //Right: 1
+        //Down: 2
+        //Left: 3
+
+        switch (direction)
+        {
+            case 0:
+                var tileProps = getTileCollisionProperties(tileIndex),
+                    compareProps = getTileCollisionProperties(compareTileIndex);
+                //Check if they even touch the upper border
+                if(tileProps[0][1] > 0 || tileProps[0][1] + tileProps[1][1] < 16) return false;
+                break;
+        }
+
+        return false;
+    }
+
+    export function getTileCollisionProperties(tileIndex: number): Array<Array<number>>
+    {
+        //X offset, Y offset
+        var offsets = [0,0],
+            size = [16, 16];
+        if(tileIndex < 25)
+        {
+            offsets[0] = tileIndex % 5;
+            offsets[1] = Math.floor(tileIndex /5);
+            size[0] = 16 - ((tileIndex % 5) *2);
+            size[1] = 16 - ((Math.floor(tileIndex /5)) * 2);
+        }
+        else if(tileIndex < 35)
+            size[1] = tileIndex - 24;
+        else if(tileIndex < 45)
+        {
+            offsets[1] = tileIndex - 34;
+            size[1] = 16 - (tileIndex - 34);
+        }
+        else if(tileIndex < 55)
+            size[0] =  16 - (tileIndex - 44);
+        else if(tileIndex < 65)
+        {
+            offsets[0] = tileIndex - 54;
+            size[0] = 16 - (tileIndex - 54);
+        }
+        return [offsets, size];
     }
 }
