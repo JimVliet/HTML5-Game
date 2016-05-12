@@ -94,7 +94,7 @@ module Pathfinding
             {
                 for(var j = i; j < this.nodeList.length; j++)
                 {
-                    if(this.raycastLine(new Phaser.Line(this.nodeList[i].x, this.nodeList[i].y, this.nodeList[j].x, this.nodeList[j].y)))
+                    if(!this.raycastLine(new Phaser.Line(this.nodeList[i].x, this.nodeList[i].y, this.nodeList[j].x, this.nodeList[j].y)))
                     {
                         this.nodeList[i].connectTo(this.nodeList[j]);
                     }
@@ -104,6 +104,7 @@ module Pathfinding
 
         drawNodes()
         {
+            //Make sure to clear the graphics
             var graphics = this.game.add.graphics(0,0);
 
             graphics.lineStyle(0);
@@ -115,27 +116,25 @@ module Pathfinding
             graphics.endFill();
         }
 
-        drawConnections()
+        drawConnections(graphics: Phaser.Graphics)
         {
-            var graphics = this.game.add.graphics(0,0),
-                usedConnections = {};
+            var usedConnections = {}, currentNode: Node;
 
-            graphics.lineStyle(0);
-            graphics.beginFill(0x71A37D, 0.5);
+            //Make sure to clear the graphics
+            graphics.beginFill();
+            graphics.lineStyle(1, 0xFF00FF, 1);
             for(var i = 0; i < this.nodeList.length; i++)
             {
                 for(var j = 0; j < this.nodeList[i].connections.length; j++)
                 {
-                    if(!(this.nodeList[i].nodeID in usedConnections && this.nodeList[i].connections[j].nodeID in usedConnections[this.nodeList[i].nodeID]))
+                    currentNode = this.nodeList[i].connections[j];
+                    if(!(currentNode.nodeID in usedConnections))
                     {
                         graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
-                        graphics.lineTo(this.nodeList[i].connections[j].x, this.nodeList[i].connections[j].y);
-                        if(!(this.nodeList[i].connections[j].nodeID in usedConnections))
-                        {
-                            
-                        }
+                        graphics.lineTo(currentNode.x, currentNode.y);
                     }
                 }
+                usedConnections[this.nodeList[i].nodeID] = true;
             }
             graphics.endFill();
         }
