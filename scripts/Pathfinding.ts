@@ -1,16 +1,32 @@
 /// <reference path="../lib/phaser.d.ts"/>
 /// <reference path="../lib/phaser-tiled.d.ts"/>
+/// <reference path="utils/Queue.ts"/>
 
 module Pathfinding
 {
+    import Queue = DataStructures.Queue;
     export class Pathfinding
     {
         nodeList: Array<Node>;
         nodeIDCounter: number;
+        graphics: Phaser.Graphics;
 
         constructor(public game: Phaser.Game, public map: Phaser.Plugin.Tiled.Tilemap, public layer: Phaser.Plugin.Tiled.Tilelayer)
         {
             this.nodeIDCounter = 0;
+            this.graphics = this.game.add.graphics(0,0);
+        }
+
+        setupPathfinding(x: number, y:number, debug: boolean)
+        {
+            this.setupNodes();
+            this.setupConnections();
+            //The x and y coords are used for determining the necessary nodes.
+            //So the player position for example.
+            this.removeUnnecessaryNodes(x, y);
+
+            this.drawNodes();
+            this.drawConnections(this.graphics);
         }
 
         setupNodes()
@@ -92,7 +108,9 @@ module Pathfinding
         {
             for(var i = 0; i < this.nodeList.length; i++)
             {
-                for(var j = i; j < this.nodeList.length; j++)
+                //Start at the next node that isn't checked
+                //j = i+1, because if it's the same it will check itself
+                for(var j = i+1; j < this.nodeList.length; j++)
                 {
                     if(!this.raycastLine(new Phaser.Line(this.nodeList[i].x, this.nodeList[i].y, this.nodeList[j].x, this.nodeList[j].y)))
                     {
@@ -116,13 +134,84 @@ module Pathfinding
             graphics.endFill();
         }
 
+        removeNode(node: Node): boolean
+        {
+            for(var index = 0; index < this.nodeList.length; index++)
+            {
+                if(node.nodeID == this.nodeList[index].nodeID)
+                {
+                    this.nodeList.splice(index, 1);
+                    node.disconnectAll();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        removeMultipleNodes(list: Array<Node>)
+        {
+            for(var index = 0; index < list.length; index++)
+            {
+                this.removeNode(list[index]);
+            }
+        }
+
+
+        removeUnnecessaryNodes(x: number, y: number)
+        {
+            var startingNode: Node = null;
+
+            for(var startNodeIndex = 0; startNodeIndex < this.nodeList.length; startNodeIndex++)
+            {
+                if(!this.raycastLine(new Phaser.Line(x,y, this.nodeList[startNodeIndex].x, this.nodeList[startNodeIndex].y)))
+                {
+                    startingNode = this.nodeList[startNodeIndex];
+                    break;
+                }
+            }
+
+            if(startingNode == null) return;
+
+            var visitedNodes = {},
+                nodeQueue: Queue<Node> = new Queue<Node>(),
+                currentNode: Node;
+
+            nodeQueue.add(startingNode);
+
+            while(!nodeQueue.isEmpty())
+            {
+                currentNode = nodeQueue.pop();
+                for(var index = 0; index < currentNode.connections.length; index++)
+                {
+                    if(!(currentNode.connections[index].nodeID in visitedNodes))
+                    {
+                        nodeQueue.add(currentNode.connections[index]);
+                    }
+                }
+                visitedNodes[currentNode.nodeID] = true;
+            }
+
+            var nodesToRemove: Array<Node> = [];
+
+            for(var nodeIndex = 0; nodeIndex < this.nodeList.length; nodeIndex++)
+            {
+                if(!(this.nodeList[nodeIndex].nodeID in visitedNodes))
+                {
+                    nodesToRemove.push(this.nodeList[nodeIndex]);
+                }
+            }
+
+            this.removeMultipleNodes(nodesToRemove);
+        }
+
         drawConnections(graphics: Phaser.Graphics)
         {
             var usedConnections = {}, currentNode: Node;
 
             //Make sure to clear the graphics
             graphics.beginFill();
-            graphics.lineStyle(1, 0xFF00FF, 1);
+            graphics.lineStyle(0.3, 0xFF00FF, 1);
             for(var i = 0; i < this.nodeList.length; i++)
             {
                 for(var j = 0; j < this.nodeList[i].connections.length; j++)
@@ -171,6 +260,24 @@ module Pathfinding
             return false;
         }
 
+        debugVisibleNodes(x: number, y: number, graphics: Phaser.Graphics)
+        {
+            graphics.beginFill();
+            graphics.lineStyle(0.3, 0x287994);
+            var line = new Phaser.Line();
+            for(var i = 0; i < this.nodeList.length; i++)
+            {
+                line.start.setTo(this.nodeList[i].x, this.nodeList[i].y);
+                line.end.setTo(x, y);
+                if(!this.raycastLine(line))
+                {
+                    graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
+                    graphics.lineTo(x, y);
+                }
+            }
+            graphics.endFill();
+        }
+
         private containsPoint(rectangle: [number, number, number, number], x, y): boolean
         {
             return !(x < rectangle[0] || y < rectangle[1] || x > rectangle[2] || y > rectangle[3]);
@@ -193,6 +300,26 @@ module Pathfinding
         {
             this.connections.push(node);
             node.connections.push(this);
+        }
+
+        disconnect(node: Node)
+        {
+            for(var index = 0; index < this.connections.length; index++)
+            {
+                if(this.connections[index].nodeID == node.nodeID)
+                {
+                    this.connections.splice(index, 1);
+                    return;
+                }
+            }
+        }
+
+        disconnectAll()
+        {
+            for(var i = 0; i < this.connections.length; i++)
+            {
+                this.connections[i].disconnect(this);
+            }
         }
     }
 }

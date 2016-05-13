@@ -6,11 +6,13 @@
 /// <reference path="scripts/SongManager.ts"/>
 /// <reference path="scripts/levels/Level1.ts"/>
 /// <reference path="scripts/levels/SolidTest.ts"/>
+/// <reference path="scripts/utils/Queue.ts"/>
 
 
 var gameVar: MyGame.RPGame;
 module MyGame
 {
+    import Queue = DataStructures.Queue;
     export class RPGame {
         songManager: SongManager.SongManager;
 

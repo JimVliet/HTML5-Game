@@ -1,6 +1,3 @@
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
 var functionFile;
 (function (functionFile) {
     function setupPlayerKeys(game) {
@@ -15,21 +12,17 @@ var functionFile;
     functionFile.setupPlayerKeys = setupPlayerKeys;
     function setupSolidLayer(game, layer, map, debug) {
         layer.visible = false;
-        //Declare variables
         var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], solidTileset = functionFile.getGidOfSolidTileset(map), usedTiles = {}, x, y;
-        //Check if the solidID is valid
         if (solidTileset == null)
             return console.log('There is no collision tileset');
         var solidFirstGid = solidTileset.firstgid, solidLastGid = solidTileset.lastgid;
         for (var index = 0; index < layerlength; index++) {
-            //Check if the tileID is the first tile in the solidTileSet
             if (layerTiles[index] == solidFirstGid && !(index in usedTiles)) {
                 x = index % mapWidth;
                 y = Math.floor(index / mapWidth);
                 var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
                 while (curY < mapHeight && layerTiles[curY * mapWidth + x] == solidFirstGid && !(curY * mapWidth + x in usedTiles)) {
                     var curX = x, curYIndex = curY * mapWidth, surface;
-                    //Check if the tile isn't outside the map and if it's a wall and if it isn't already used
                     while (curX < maxWidth && layerTiles[curYIndex + curX + 1] == solidFirstGid && !(curYIndex + curX + 1 in usedTiles)) {
                         curX++;
                     }
@@ -45,7 +38,6 @@ var functionFile;
                 body.debug = debug;
                 game.physics.p2.addBody(body);
                 layer.bodies.push(body);
-                //Update usedTiles list
                 for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
                     var yIndex = mapWidth * usedY;
                     for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
@@ -108,14 +100,9 @@ var functionFile;
     }
     functionFile.loadGameLevel = loadGameLevel;
     function matchCollision(tileIndex, compareTileIndex, direction) {
-        //Up: 0
-        //Right: 1
-        //Down: 2
-        //Left: 3
         switch (direction) {
             case 0:
                 var tileProps = getTileCollisionProperties(tileIndex), compareProps = getTileCollisionProperties(compareTileIndex);
-                //Check if they even touch the upper border
                 if (tileProps[0][1] > 0 || tileProps[0][1] + tileProps[1][1] < 16)
                     return false;
                 break;
@@ -124,7 +111,6 @@ var functionFile;
     }
     functionFile.matchCollision = matchCollision;
     function getTileCollisionProperties(tileIndex) {
-        //X offset, Y offset
         var offsets = [0, 0], size = [16, 16];
         if (tileIndex < 25) {
             offsets[0] = tileIndex % 5;
@@ -148,9 +134,6 @@ var functionFile;
     }
     functionFile.getTileCollisionProperties = getTileCollisionProperties;
 })(functionFile || (functionFile = {}));
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
 var Manager;
 (function (Manager) {
     (function (AnimType) {
@@ -241,11 +224,6 @@ var Manager;
     })();
     Manager.AnimManager = AnimManager;
 })(Manager || (Manager = {}));
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
-/// <reference path="functionFile.ts"/>
-/// <reference path="AnimationManager.ts"/>
 var GameObjects;
 (function (GameObjects) {
     (function (GameObjectType) {
@@ -253,10 +231,6 @@ var GameObjects;
     })(GameObjects.GameObjectType || (GameObjects.GameObjectType = {}));
     var GameObjectType = GameObjects.GameObjectType;
 })(GameObjects || (GameObjects = {}));
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="../app.ts"/>
-/// <reference path="GameObjects.ts"/>
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -281,7 +255,6 @@ var GameStates;
             this.SubText = this.game.add.text(this.game.width / 2, this.game.height / 2 + 80, 'Completed loading: ', { fill: '#ffffff' });
             this.SubText.anchor.x = 0.5;
             this.game.load.tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
-            //Load the custom assets needed for the state
             this.StateToStart.customPreload(this.game);
             this.game.load.onFileComplete.add(this.fileCompleted, this);
         };
@@ -309,8 +282,6 @@ var GameStates;
     })(Phaser.State);
     GameStates.TiledMapLoader = TiledMapLoader;
 })(GameStates || (GameStates = {}));
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
 var SongManager;
 (function (SongManager_1) {
     var SongManager = (function () {
@@ -339,28 +310,87 @@ var SongManager;
     })();
     SongManager_1.SongManager = SongManager;
 })(SongManager || (SongManager = {}));
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
+var DataStructures;
+(function (DataStructures) {
+    var Queue = (function () {
+        function Queue() {
+            this.head = null;
+        }
+        Queue.prototype.add = function (item) {
+            var newNode = new Node(item);
+            if (this.head == null) {
+                this.head = newNode;
+                this.tail = newNode;
+                return;
+            }
+            this.tail.next = newNode;
+            this.tail = newNode;
+        };
+        Queue.prototype.addMultiple = function (itemArray) {
+            for (var index in itemArray) {
+                this.add(itemArray[index]);
+            }
+        };
+        Queue.prototype.pop = function () {
+            if (this.head == null)
+                return null;
+            var tempHead = this.head;
+            this.head = this.head.next;
+            if (this.head == null)
+                this.tail = null;
+            return tempHead.element;
+        };
+        Queue.prototype.size = function () {
+            if (this.head == null) {
+                return 0;
+            }
+            var currentNode = this.head, counter = 1;
+            while (currentNode.next != null) {
+                currentNode = currentNode.next;
+                counter++;
+            }
+            return counter;
+        };
+        Queue.prototype.isEmpty = function () {
+            return this.head == null;
+        };
+        return Queue;
+    })();
+    DataStructures.Queue = Queue;
+    var Node = (function () {
+        function Node(item) {
+            this.element = item;
+            this.next = null;
+        }
+        return Node;
+    })();
+    DataStructures.Node = Node;
+})(DataStructures || (DataStructures = {}));
 var Pathfinding;
 (function (Pathfinding_1) {
+    var Queue = DataStructures.Queue;
     var Pathfinding = (function () {
         function Pathfinding(game, map, layer) {
             this.game = game;
             this.map = map;
             this.layer = layer;
             this.nodeIDCounter = 0;
+            this.graphics = this.game.add.graphics(0, 0);
         }
+        Pathfinding.prototype.setupPathfinding = function (x, y, debug) {
+            this.setupNodes();
+            this.setupConnections();
+            this.removeUnnecessaryNodes(x, y);
+            this.drawNodes();
+            this.drawConnections(this.graphics);
+        };
         Pathfinding.prototype.setupNodes = function () {
             var layerWidth = this.layer.size['x'], layerHeight = this.layer.size['y'], tiles = this.layer.tileIds, coordsOutput = [], xCoord, yCoord, nodeOptions;
-            //Nodeoptions indexes:
-            //02
-            //13
             for (var index = 0; index < tiles.length; index++) {
                 if (tiles[index] != 0) {
                     xCoord = index % layerWidth;
                     yCoord = Math.floor(index / layerWidth);
                     nodeOptions = [true, true, true, true];
-                    //This check won't work well if the map is 1 tile wide or 1 tile tall
                     if (xCoord == 0) {
                         nodeOptions[0] = false;
                         nodeOptions[1] = false;
@@ -377,7 +407,6 @@ var Pathfinding;
                         nodeOptions[1] = false;
                         nodeOptions[3] = false;
                     }
-                    //Check nodes adjacent to the tile
                     if ((nodeOptions[0] || nodeOptions[1]) && tiles[index - 1] != 0) {
                         nodeOptions[0] = false;
                         nodeOptions[1] = false;
@@ -412,7 +441,7 @@ var Pathfinding;
         };
         Pathfinding.prototype.setupConnections = function () {
             for (var i = 0; i < this.nodeList.length; i++) {
-                for (var j = i; j < this.nodeList.length; j++) {
+                for (var j = i + 1; j < this.nodeList.length; j++) {
                     if (!this.raycastLine(new Phaser.Line(this.nodeList[i].x, this.nodeList[i].y, this.nodeList[j].x, this.nodeList[j].y))) {
                         this.nodeList[i].connectTo(this.nodeList[j]);
                     }
@@ -420,7 +449,6 @@ var Pathfinding;
             }
         };
         Pathfinding.prototype.drawNodes = function () {
-            //Make sure to clear the graphics
             var graphics = this.game.add.graphics(0, 0);
             graphics.lineStyle(0);
             graphics.beginFill(0x71A37D, 0.5);
@@ -429,11 +457,54 @@ var Pathfinding;
             }
             graphics.endFill();
         };
+        Pathfinding.prototype.removeNode = function (node) {
+            for (var index = 0; index < this.nodeList.length; index++) {
+                if (node.nodeID == this.nodeList[index].nodeID) {
+                    this.nodeList.splice(index, 1);
+                    node.disconnectAll();
+                    return true;
+                }
+            }
+            return false;
+        };
+        Pathfinding.prototype.removeMultipleNodes = function (list) {
+            for (var index = 0; index < list.length; index++) {
+                this.removeNode(list[index]);
+            }
+        };
+        Pathfinding.prototype.removeUnnecessaryNodes = function (x, y) {
+            var startingNode = null;
+            for (var startNodeIndex = 0; startNodeIndex < this.nodeList.length; startNodeIndex++) {
+                if (!this.raycastLine(new Phaser.Line(x, y, this.nodeList[startNodeIndex].x, this.nodeList[startNodeIndex].y))) {
+                    startingNode = this.nodeList[startNodeIndex];
+                    break;
+                }
+            }
+            if (startingNode == null)
+                return;
+            var visitedNodes = {}, nodeQueue = new Queue(), currentNode;
+            nodeQueue.add(startingNode);
+            while (!nodeQueue.isEmpty()) {
+                currentNode = nodeQueue.pop();
+                for (var index = 0; index < currentNode.connections.length; index++) {
+                    if (!(currentNode.connections[index].nodeID in visitedNodes)) {
+                        nodeQueue.add(currentNode.connections[index]);
+                    }
+                }
+                visitedNodes[currentNode.nodeID] = true;
+            }
+            var nodesToRemove = [];
+            for (var nodeIndex = 0; nodeIndex < this.nodeList.length; nodeIndex++) {
+                if (!(this.nodeList[nodeIndex].nodeID in visitedNodes)) {
+                    nodesToRemove.push(this.nodeList[nodeIndex]);
+                }
+            }
+            this.removeMultipleNodes(nodesToRemove);
+        };
         Pathfinding.prototype.drawConnections = function (graphics) {
             var usedConnections = {}, currentNode;
-            //Make sure to clear the graphics
             graphics.beginFill();
-            graphics.lineStyle(1, 0xFF00FF, 1);
+            graphics.lineStyle(0.3, 0xFF00FF, 1);
             for (var i = 0; i < this.nodeList.length; i++) {
                 for (var j = 0; j < this.nodeList[i].connections.length; j++) {
                     currentNode = this.nodeList[i].connections[j];
@@ -448,7 +519,6 @@ var Pathfinding;
         };
         Pathfinding.prototype.raycastLine = function (line) {
             var bodies = this.layer.bodies, currentBody, bodyList = [];
-            //Get all relevant bodies
             for (var i = 0; i < bodies.length; i++) {
                 currentBody = bodies[i];
                 var bodyRightX = currentBody.x + (currentBody.data.shapes[0].width / 0.8 * this.map.tileWidth), bodyRightY = currentBody.y + (currentBody.data.shapes[0].height / 0.8 * this.map.tileHeight);
@@ -466,6 +536,20 @@ var Pathfinding;
                 }
             }
             return false;
+        };
+        Pathfinding.prototype.debugVisibleNodes = function (x, y, graphics) {
+            graphics.beginFill();
+            graphics.lineStyle(0.3, 0x287994);
+            var line = new Phaser.Line();
+            for (var i = 0; i < this.nodeList.length; i++) {
+                line.start.setTo(this.nodeList[i].x, this.nodeList[i].y);
+                line.end.setTo(x, y);
+                if (!this.raycastLine(line)) {
+                    graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
+                    graphics.lineTo(x, y);
+                }
+            }
+            graphics.endFill();
         };
         Pathfinding.prototype.containsPoint = function (rectangle, x, y) {
             return !(x < rectangle[0] || y < rectangle[1] || x > rectangle[2] || y > rectangle[3]);
@@ -485,15 +569,23 @@ var Pathfinding;
             this.connections.push(node);
             node.connections.push(this);
         };
+        Node.prototype.disconnect = function (node) {
+            for (var index = 0; index < this.connections.length; index++) {
+                if (this.connections[index].nodeID == node.nodeID) {
+                    this.connections.splice(index, 1);
+                    return;
+                }
+            }
+        };
+        Node.prototype.disconnectAll = function () {
+            for (var i = 0; i < this.connections.length; i++) {
+                this.connections[i].disconnect(this);
+            }
+        };
         return Node;
     })();
     Pathfinding_1.Node = Node;
 })(Pathfinding || (Pathfinding = {}));
-/// <reference path="../../lib/phaser.d.ts"/>
-/// <reference path="../../lib/phaser-tiled.d.ts"/>
-/// <reference path="../../app.ts"/>
-/// <reference path="../functionFile.ts"/>
-/// <reference path="../AnimationManager.ts"/>
 var Entities;
 (function (Entities) {
     var GameObjectType = GameObjects.GameObjectType;
@@ -510,7 +602,6 @@ var Entities;
             this.canAttack = true;
             this.attackDelay = 800;
             this.keyListener = functionFile.setupPlayerKeys(this.game);
-            //Setup physics and the player body
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
             this.body.clearShapes();
@@ -518,13 +609,11 @@ var Entities;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
-            //Setup animationManager
             this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 35, 34, 33, 32, 31] });
             this.AnimManager.attackSignal.add(function () {
                 this.moveSpeedMod += 0.6;
             }, this);
         }
-        //Main update loop
         Player.prototype.update = function () {
             this.updateMoveSpeed();
             this.updateMovementControl();
@@ -605,12 +694,6 @@ var Entities;
     })(Phaser.Sprite);
     Entities.Player = Player;
 })(Entities || (Entities = {}));
-/// <reference path="../../lib/phaser.d.ts"/>
-/// <reference path="../../lib/phaser-tiled.d.ts"/>
-/// <reference path="../../app.ts"/>
-/// <reference path="../GameObjects.ts"/>
-/// <reference path="../entities/Player.ts"/>
-/// <reference path="Level2.ts"/>
 var GameLevels;
 (function (GameLevels) {
     var Level3 = (function (_super) {
@@ -628,18 +711,13 @@ var GameLevels;
             this.setupCurrentLevel();
             this.graphics = this.game.add.graphics(0, 0);
             this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
-            this.pathFinding.setupNodes();
-            this.pathFinding.drawNodes();
+            this.pathFinding.setupPathfinding(this.player.x, this.player.y + 16, true);
         };
         Level3.prototype.setupCurrentLevel = function () {
-            //Setup physics
             this.game.physics.startSystem(Phaser.Physics.P2JS);
-            //Add tilemap and setup the solid layer
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
-            //Setup the object layer
             functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
-            //Add player object and setup camera
             this.player = new Entities.Player(this.game, 424, 722, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
@@ -647,29 +725,12 @@ var GameLevels;
         };
         Level3.prototype.render = function () {
             this.graphics.clear();
-            this.graphics.beginFill();
-            this.graphics.lineStyle(1, 0x6ACCBF, 0.5);
-            var line = new Phaser.Line();
-            for (var i = 0; i < this.pathFinding.nodeList.length; i++) {
-                line.start.setTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
-                line.end.setTo(this.player.x, this.player.y + 16);
-                if (!this.pathFinding.raycastLine(line)) {
-                    this.graphics.moveTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
-                    this.graphics.lineTo(this.player.x, this.player.y + 16);
-                }
-            }
-            this.graphics.endFill();
+            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
         };
         return Level3;
     })(Phaser.State);
     GameLevels.Level3 = Level3;
 })(GameLevels || (GameLevels = {}));
-/// <reference path="../../lib/phaser.d.ts"/>
-/// <reference path="../../lib/phaser-tiled.d.ts"/>
-/// <reference path="../../app.ts"/>
-/// <reference path="../GameObjects.ts"/>
-/// <reference path="Level3.ts"/>
-/// <reference path="../entities/Player.ts"/>
 var GameLevels;
 (function (GameLevels) {
     var Level2 = (function (_super) {
@@ -687,19 +748,14 @@ var GameLevels;
             this.setupCurrentLevel();
             this.graphics = this.game.add.graphics(0, 0);
             this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
-            this.pathFinding.setupNodes();
-            this.pathFinding.drawNodes();
+            this.pathFinding.setupPathfinding(this.player.x, this.player.y + 16, true);
             this.setupNextLevel();
         };
         Level2.prototype.setupCurrentLevel = function () {
-            //Setup physics
             this.game.physics.startSystem(Phaser.Physics.P2JS);
-            //Add tilemap and setup the solid layer
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
-            //Setup the object layer
             functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
-            //Add player object
             this.player = new Entities.Player(this.game, 80, 744, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
@@ -719,31 +775,12 @@ var GameLevels;
         };
         Level2.prototype.render = function () {
             this.graphics.clear();
-            this.graphics.beginFill();
-            this.graphics.lineStyle(1, 0x6ACCBF, 0.5);
-            var line = new Phaser.Line();
-            for (var i = 0; i < this.pathFinding.nodeList.length; i++) {
-                line.start.setTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
-                line.end.setTo(this.player.x, this.player.y + 16);
-                if (!this.pathFinding.raycastLine(line)) {
-                    this.graphics.moveTo(this.pathFinding.nodeList[i].x, this.pathFinding.nodeList[i].y);
-                    this.graphics.lineTo(this.player.x, this.player.y + 16);
-                }
-            }
-            this.graphics.endFill();
+            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
         };
         return Level2;
     })(Phaser.State);
     GameLevels.Level2 = Level2;
 })(GameLevels || (GameLevels = {}));
-/// <reference path="../../lib/phaser.d.ts"/>
-/// <reference path="../../lib/phaser-tiled.d.ts"/>
-/// <reference path="../../app.ts"/>
-/// <reference path="../GameObjects.ts"/>
-/// <reference path="../SongManager.ts"/>
-/// <reference path="../Pathfinding.ts"/>
-/// <reference path="../entities/Player.ts"/>
-/// <reference path="Level2.ts"/>
 var GameLevels;
 (function (GameLevels) {
     var Level1 = (function (_super) {
@@ -761,23 +798,16 @@ var GameLevels;
             this.setupCurrentLevel();
             this.graphics = this.game.add.graphics(0, 0);
             this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
-            this.pathFinding.setupNodes();
-            this.pathFinding.drawNodes();
-            this.pathFinding.setupConnections();
+            this.pathFinding.setupPathfinding(this.player.x, this.player.y + 16, true);
             this.setupNextLevel();
-            //Play music
             gameVar.songManager = new SongManager.SongManager(this.game);
             gameVar.songManager.next();
         };
         Level1.prototype.setupCurrentLevel = function () {
-            //Setup physics
             this.game.physics.startSystem(Phaser.Physics.P2JS);
-            //Add tilemap and setup the solid layer
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
-            //Setup the object layer
             functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
-            //Add player object and setup camera
             this.player = new Entities.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
@@ -797,16 +827,12 @@ var GameLevels;
         };
         Level1.prototype.render = function () {
             this.graphics.clear();
-            this.pathFinding.drawConnections(this.graphics);
+            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
         };
         return Level1;
     })(Phaser.State);
     GameLevels.Level1 = Level1;
 })(GameLevels || (GameLevels = {}));
-/// <reference path="../../lib/phaser.d.ts"/>
-/// <reference path="../../lib/phaser-tiled.d.ts"/>
-/// <reference path="../../app.ts"/>
-/// <reference path="../GameObjects.ts"/>
 var GameLevels;
 (function (GameLevels) {
     var SolidTest = (function (_super) {
@@ -836,14 +862,6 @@ var GameLevels;
     })(Phaser.State);
     GameLevels.SolidTest = SolidTest;
 })(GameLevels || (GameLevels = {}));
-/// <reference path="lib/phaser.d.ts"/>
-/// <reference path="lib/phaser-tiled.d.ts"/>
-/// <reference path="scripts/GameStates.ts"/>
-/// <reference path="scripts/GameObjects.ts"/>
-/// <reference path="scripts/functionFile.ts"/>
-/// <reference path="scripts/SongManager.ts"/>
-/// <reference path="scripts/levels/Level1.ts"/>
-/// <reference path="scripts/levels/SolidTest.ts"/>
 var gameVar;
 var MyGame;
 (function (MyGame) {

@@ -3,6 +3,7 @@
 /// <reference path="../../app.ts"/>
 /// <reference path="../functionFile.ts"/>
 /// <reference path="../AnimationManager.ts"/>
+/// <reference path="../PathFinding.ts"/>
 
 module Entities
 {
@@ -10,6 +11,7 @@ module Entities
     import GameObjectType = GameObjects.GameObjectType;
     import AnimManager = Manager.AnimManager;
     import AnimType = Manager.AnimType;
+
     export class Player extends Phaser.Sprite implements MobEntity
     {
         objectType: GameObjectType;
@@ -149,6 +151,5 @@ module Entities
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
         }
-
     }
 }

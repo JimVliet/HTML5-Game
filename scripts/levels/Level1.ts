@@ -40,9 +40,7 @@ module GameLevels
 
             this.graphics = this.game.add.graphics(0,0);
             this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
-            this.pathFinding.setupNodes();
-            this.pathFinding.drawNodes();
-            this.pathFinding.setupConnections();
+            this.pathFinding.setupPathfinding(this.player.x, this.player.y + 16, true);
 
             this.setupNextLevel();
 
@@ -91,7 +89,7 @@ module GameLevels
         render()
         {
             this.graphics.clear();
-            this.pathFinding.drawConnections(this.graphics);
+            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y +16, this.graphics);
         }
     }
 }

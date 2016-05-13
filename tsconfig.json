@@ -4,7 +4,8 @@
     "target": "es5",
     "sourceMap": true,
     "out": "generated.js",
-    "removeComments": true
+    "removeComments": true,
+    "moduleResolution": "node"
   },
   "exclude": [
     "node_modules",
