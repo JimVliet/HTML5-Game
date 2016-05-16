@@ -24,7 +24,7 @@ module Pathfinding
             this.setupConnections();
             //The x and y coords are used for determining the necessary nodes.
             //So the player position for example.
-            //this.removeUnnecessaryNodes(x, y);
+            this.removeUnnecessaryNodes(x, y);
 
             this.drawNodes(this.graphics);
             this.drawConnections(this.graphics);
@@ -33,7 +33,6 @@ module Pathfinding
         setupNodes()
         {
             var layerWidth = this.layer.size['x'],
-                layerHeight = this.layer.size['y'],
                 tiles = this.layer.tileIds, coordsOutput: Array<Node> = [],
                 map = CollisionTiles.getPropMap(tiles, layerWidth, functionFile.getGidOfSolidTileset(this.map).firstgid),
                 xCoord, yCoord, nodeOptions: Array<boolean>;
@@ -94,7 +93,7 @@ module Pathfinding
         {
             //Make sure to clear the graphics
             graphics.lineStyle(0);
-            graphics.beginFill(0x71A37D, 0.5);
+            graphics.beginFill(0xAB482C, 0.8);
             for(var i = 0; i < this.nodeList.length; i++)
             {
                 graphics.drawCircle(this.nodeList[i].x, this.nodeList[i].y, 3);

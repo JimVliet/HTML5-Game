@@ -50,8 +50,8 @@ var CollisionTiles;
     }
     CollisionTiles.getTileCollisionProperties = getTileCollisionProperties;
     function tileCornerWaypoint(x, y, map) {
-        var tileProps = map[y][x], topLeft = x >= 0 && y >= 0 ? map[x - 1][y - 1] : null, top = y >= 0 ? map[y - 1][x] : null, topRight = x + 1 < map[0].length && y >= 0 ? map[y - 1][x + 1] : null, left = x >= 0 ? map[y][x - 1] : null, right = x + 1 < map[0].length ? map[y][x + 1] : null, bottomLeft = x >= 0 && y + 1 < map.length ? map[y + 1][x - 1] : null, bottom = y + 1 < map.length ? map[y + 1][x] : null, bottomRight = x + 1 < map[0].length && y + 1 < map.length ? map[y + 1][x + 1] : null;
-        var outputCorners = [true, true, true, true];
+        var tileProps = map[y][x], minX = x == 0, maxX = x == map[0].length - 1, minY = y == 0, maxY = y == map.length - 1, topLeft = minX || minY ? null : map[y - 1][x - 1], top = minY ? null : map[y - 1][x], topRight = maxX || minY ? null : map[y - 1][x + 1], left = minX ? null : map[y][x - 1], right = maxX ? null : map[y][x + 1], bottomLeft = minX || maxY ? null : map[y + 1][x - 1], bottom = maxY ? null : map[y + 1][x], bottomRight = maxX || maxY ? null : map[y + 1][x + 1];
+        var outputCorners = [!minX && !minY, !maxX && !minY, !maxX && !maxY, !minX && !maxY];
         if (top != null && top.lowerY - tileProps.upperY == 15) {
             if (tileProps.leftX == top.leftX || top.collideXAxis(tileProps.leftX - 1))
                 outputCorners[0] = false;
@@ -76,13 +76,13 @@ var CollisionTiles;
             if (tileProps.lowerY == left.lowerY || left.collideYAxis(tileProps.lowerY + 1))
                 outputCorners[3] = false;
         }
-        if (outputCorners[0] && topLeft.rightX - tileProps.leftX == 15 && topLeft.lowerY - tileProps.upperY == 15)
+        if (topLeft != null && topLeft.rightX - tileProps.leftX == 15 && topLeft.lowerY - tileProps.upperY == 15)
             outputCorners[0] = false;
-        if (outputCorners[1] && tileProps.rightX - topRight.leftX == 15 && topLeft.lowerY - tileProps.upperY == 15)
+        if (topRight != null && tileProps.rightX - topRight.leftX == 15 && topRight.lowerY - tileProps.upperY == 15)
             outputCorners[1] = false;
-        if (outputCorners[2] && tileProps.rightX - bottomRight.leftX == 15 && tileProps.lowerY - bottomRight.upperY == 15)
+        if (bottomRight != null && tileProps.rightX - bottomRight.leftX == 15 && tileProps.lowerY - bottomRight.upperY == 15)
             outputCorners[2] = false;
-        if (outputCorners[3] && bottomLeft.rightX - tileProps.leftX == 15 && bottomLeft.upperY - tileProps.leftX == 15)
+        if (bottomLeft != null && bottomLeft.rightX - tileProps.leftX == 15 && bottomLeft.upperY - tileProps.leftX == 15)
             outputCorners[3] = false;
         return outputCorners;
     }
@@ -436,11 +436,12 @@ var Pathfinding;
         Pathfinding.prototype.setupPathfinding = function (x, y, debug) {
             this.setupNodes();
             this.setupConnections();
+            this.removeUnnecessaryNodes(x, y);
             this.drawNodes(this.graphics);
             this.drawConnections(this.graphics);
         };
         Pathfinding.prototype.setupNodes = function () {
-            var layerWidth = this.layer.size['x'], layerHeight = this.layer.size['y'], tiles = this.layer.tileIds, coordsOutput = [], map = CollisionTiles.getPropMap(tiles, layerWidth, functionFile.getGidOfSolidTileset(this.map).firstgid), xCoord, yCoord, nodeOptions;
+            var layerWidth = this.layer.size['x'], tiles = this.layer.tileIds, coordsOutput = [], map = CollisionTiles.getPropMap(tiles, layerWidth, functionFile.getGidOfSolidTileset(this.map).firstgid), xCoord, yCoord, nodeOptions;
             for (var index = 0; index < tiles.length; index++) {
                 if (tiles[index] != 0) {
                     xCoord = index % layerWidth;
@@ -473,7 +474,7 @@ var Pathfinding;
         };
         Pathfinding.prototype.drawNodes = function (graphics) {
             graphics.lineStyle(0);
-            graphics.beginFill(0x71A37D, 0.5);
+            graphics.beginFill(0xAB482C, 0.8);
             for (var i = 0; i < this.nodeList.length; i++) {
                 graphics.drawCircle(this.nodeList[i].x, this.nodeList[i].y, 3);
             }
