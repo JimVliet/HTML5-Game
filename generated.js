@@ -1,3 +1,93 @@
+var CollisionTiles;
+(function (CollisionTiles) {
+    var ColTileProps = (function () {
+        function ColTileProps() {
+            this.leftX = 0;
+            this.upperY = 0;
+            this.rightX = 15;
+            this.lowerY = 15;
+        }
+        ColTileProps.prototype.collideXAxis = function (x) {
+            return x >= this.leftX && x <= this.rightX;
+        };
+        ColTileProps.prototype.collideYAxis = function (y) {
+            return y >= this.upperY && y <= this.lowerY;
+        };
+        return ColTileProps;
+    })();
+    CollisionTiles.ColTileProps = ColTileProps;
+    function getPropMap(tiles, width, firstGid) {
+        var map = [], y, x;
+        for (var i = 0; i < tiles.length; i++) {
+            y = Math.floor(i / width);
+            x = i % width;
+            if (map[y] == null)
+                map[y] = [];
+            map[y][x] = getTileCollisionProperties(tiles[i] - firstGid);
+        }
+        return map;
+    }
+    CollisionTiles.getPropMap = getPropMap;
+    function getTileCollisionProperties(tileIndex) {
+        if (tileIndex < 0 || tileIndex >= 65)
+            return null;
+        var props = new ColTileProps();
+        if (tileIndex < 25) {
+            props.leftX = tileIndex % 5;
+            props.upperY = Math.floor(tileIndex / 5);
+            props.rightX = 15 - (tileIndex % 5);
+            props.lowerY = 15 - (Math.floor(tileIndex / 5));
+        }
+        else if (tileIndex < 35)
+            props.lowerY -= tileIndex - 24;
+        else if (tileIndex < 45)
+            props.upperY = tileIndex - 34;
+        else if (tileIndex < 55)
+            props.rightX -= tileIndex - 44;
+        else if (tileIndex < 65)
+            props.leftX = tileIndex - 54;
+        return props;
+    }
+    CollisionTiles.getTileCollisionProperties = getTileCollisionProperties;
+    function tileCornerWaypoint(x, y, map) {
+        var tileProps = map[y][x], topLeft = x >= 0 && y >= 0 ? map[x - 1][y - 1] : null, top = y >= 0 ? map[y - 1][x] : null, topRight = x + 1 < map[0].length && y >= 0 ? map[y - 1][x + 1] : null, left = x >= 0 ? map[y][x - 1] : null, right = x + 1 < map[0].length ? map[y][x + 1] : null, bottomLeft = x >= 0 && y + 1 < map.length ? map[y + 1][x - 1] : null, bottom = y + 1 < map.length ? map[y + 1][x] : null, bottomRight = x + 1 < map[0].length && y + 1 < map.length ? map[y + 1][x + 1] : null;
+        var outputCorners = [true, true, true, true];
+        if (top != null && top.lowerY - tileProps.upperY == 15) {
+            if (tileProps.leftX == top.leftX || top.collideXAxis(tileProps.leftX - 1))
+                outputCorners[0] = false;
+            if (tileProps.rightX == top.rightX || top.collideXAxis(tileProps.rightX + 1))
+                outputCorners[1] = false;
+        }
+        if (right != null && tileProps.rightX - right.leftX == 15) {
+            if (tileProps.upperY == right.upperY || right.collideYAxis(tileProps.upperY - 1))
+                outputCorners[1] = false;
+            if (tileProps.lowerY == right.lowerY || right.collideYAxis(tileProps.lowerY + 1))
+                outputCorners[2] = false;
+        }
+        if (bottom != null && tileProps.lowerY - bottom.upperY == 15) {
+            if (tileProps.leftX == bottom.leftX || bottom.collideXAxis(tileProps.leftX - 1))
+                outputCorners[3] = false;
+            if (tileProps.rightX == bottom.rightX || bottom.collideXAxis(tileProps.rightX + 1))
+                outputCorners[2] = false;
+        }
+        if (left != null && left.rightX - tileProps.leftX == 15) {
+            if (tileProps.upperY == left.upperY || left.collideYAxis(tileProps.upperY - 1))
+                outputCorners[0] = false;
+            if (tileProps.lowerY == left.lowerY || left.collideYAxis(tileProps.lowerY + 1))
+                outputCorners[3] = false;
+        }
+        if (outputCorners[0] && topLeft.rightX - tileProps.leftX == 15 && topLeft.lowerY - tileProps.upperY == 15)
+            outputCorners[0] = false;
+        if (outputCorners[1] && tileProps.rightX - topRight.leftX == 15 && topLeft.lowerY - tileProps.upperY == 15)
+            outputCorners[1] = false;
+        if (outputCorners[2] && tileProps.rightX - bottomRight.leftX == 15 && tileProps.lowerY - bottomRight.upperY == 15)
+            outputCorners[2] = false;
+        if (outputCorners[3] && bottomLeft.rightX - tileProps.leftX == 15 && bottomLeft.upperY - tileProps.leftX == 15)
+            outputCorners[3] = false;
+        return outputCorners;
+    }
+    CollisionTiles.tileCornerWaypoint = tileCornerWaypoint;
+})(CollisionTiles || (CollisionTiles = {}));
 var functionFile;
 (function (functionFile) {
     function setupPlayerKeys(game) {
@@ -99,40 +189,6 @@ var functionFile;
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
     }
     functionFile.loadGameLevel = loadGameLevel;
-    function matchCollision(tileIndex, compareTileIndex, direction) {
-        switch (direction) {
-            case 0:
-                var tileProps = getTileCollisionProperties(tileIndex), compareProps = getTileCollisionProperties(compareTileIndex);
-                if (tileProps[0][1] > 0 || tileProps[0][1] + tileProps[1][1] < 16)
-                    return false;
-                break;
-        }
-        return false;
-    }
-    functionFile.matchCollision = matchCollision;
-    function getTileCollisionProperties(tileIndex) {
-        var offsets = [0, 0], size = [16, 16];
-        if (tileIndex < 25) {
-            offsets[0] = tileIndex % 5;
-            offsets[1] = Math.floor(tileIndex / 5);
-            size[0] = 16 - ((tileIndex % 5) * 2);
-            size[1] = 16 - ((Math.floor(tileIndex / 5)) * 2);
-        }
-        else if (tileIndex < 35)
-            size[1] = tileIndex - 24;
-        else if (tileIndex < 45) {
-            offsets[1] = tileIndex - 34;
-            size[1] = 16 - (tileIndex - 34);
-        }
-        else if (tileIndex < 55)
-            size[0] = 16 - (tileIndex - 44);
-        else if (tileIndex < 65) {
-            offsets[0] = tileIndex - 54;
-            size[0] = 16 - (tileIndex - 54);
-        }
-        return [offsets, size];
-    }
-    functionFile.getTileCollisionProperties = getTileCollisionProperties;
 })(functionFile || (functionFile = {}));
 var Manager;
 (function (Manager) {
@@ -380,60 +436,27 @@ var Pathfinding;
         Pathfinding.prototype.setupPathfinding = function (x, y, debug) {
             this.setupNodes();
             this.setupConnections();
-            this.removeUnnecessaryNodes(x, y);
-            this.drawNodes();
+            this.drawNodes(this.graphics);
             this.drawConnections(this.graphics);
         };
         Pathfinding.prototype.setupNodes = function () {
-            var layerWidth = this.layer.size['x'], layerHeight = this.layer.size['y'], tiles = this.layer.tileIds, coordsOutput = [], xCoord, yCoord, nodeOptions;
+            var layerWidth = this.layer.size['x'], layerHeight = this.layer.size['y'], tiles = this.layer.tileIds, coordsOutput = [], map = CollisionTiles.getPropMap(tiles, layerWidth, functionFile.getGidOfSolidTileset(this.map).firstgid), xCoord, yCoord, nodeOptions;
             for (var index = 0; index < tiles.length; index++) {
                 if (tiles[index] != 0) {
                     xCoord = index % layerWidth;
                     yCoord = Math.floor(index / layerWidth);
-                    nodeOptions = [true, true, true, true];
-                    if (xCoord == 0) {
-                        nodeOptions[0] = false;
-                        nodeOptions[1] = false;
+                    nodeOptions = CollisionTiles.tileCornerWaypoint(xCoord, yCoord, map);
+                    if (nodeOptions[0]) {
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX - 1, (yCoord * 16) + map[yCoord][xCoord].upperY - 1, this));
                     }
-                    else if (xCoord == layerWidth - 1) {
-                        nodeOptions[2] = false;
-                        nodeOptions[3] = false;
+                    if (nodeOptions[1]) {
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + 2, (yCoord * 16) + map[yCoord][xCoord].upperY - 1, this));
                     }
-                    if (yCoord == 0) {
-                        nodeOptions[0] = false;
-                        nodeOptions[2] = false;
+                    if (nodeOptions[2]) {
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + 2, (yCoord * 16) + map[yCoord][xCoord].lowerY + 2, this));
                     }
-                    else if (yCoord == layerHeight - 1) {
-                        nodeOptions[1] = false;
-                        nodeOptions[3] = false;
-                    }
-                    if ((nodeOptions[0] || nodeOptions[1]) && tiles[index - 1] != 0) {
-                        nodeOptions[0] = false;
-                        nodeOptions[1] = false;
-                    }
-                    if ((nodeOptions[2] || nodeOptions[3]) && tiles[index + 1] != 0) {
-                        nodeOptions[2] = false;
-                        nodeOptions[3] = false;
-                    }
-                    if ((nodeOptions[0] || nodeOptions[2]) && tiles[index - layerWidth] != 0) {
-                        nodeOptions[0] = false;
-                        nodeOptions[2] = false;
-                    }
-                    if ((nodeOptions[1] || nodeOptions[3]) && tiles[index + layerWidth] != 0) {
-                        nodeOptions[1] = false;
-                        nodeOptions[3] = false;
-                    }
-                    if (nodeOptions[0] && tiles[index - layerWidth - 1] == 0) {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, yCoord * this.map.tileHeight - 1, this));
-                    }
-                    if (nodeOptions[1] && tiles[index + layerWidth - 1] == 0) {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth - 1, (yCoord + 1) * this.map.tileHeight + 1, this));
-                    }
-                    if (nodeOptions[2] && tiles[index - layerWidth + 1] == 0) {
-                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth + 1, yCoord * this.map.tileHeight - 1, this));
-                    }
-                    if (nodeOptions[3] && tiles[index + layerWidth + 1] == 0) {
-                        coordsOutput.push(new Node((xCoord + 1) * this.map.tileWidth + 1, (yCoord + 1) * this.map.tileHeight + 1, this));
+                    if (nodeOptions[3]) {
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX - 1, (yCoord * 16) + map[yCoord][xCoord].lowerY + 2, this));
                     }
                 }
             }
@@ -448,8 +471,7 @@ var Pathfinding;
                 }
             }
         };
-        Pathfinding.prototype.drawNodes = function () {
-            var graphics = this.game.add.graphics(0, 0);
+        Pathfinding.prototype.drawNodes = function (graphics) {
             graphics.lineStyle(0);
             graphics.beginFill(0x71A37D, 0.5);
             for (var i = 0; i < this.nodeList.length; i++) {

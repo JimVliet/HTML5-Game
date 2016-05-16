@@ -1,6 +1,7 @@
 /// <reference path="../lib/phaser.d.ts"/>
 /// <reference path="../lib/phaser-tiled.d.ts"/>
 /// <reference path="utils/Queue.ts"/>
+/// <reference path="utils/CollisionTiles.ts"/>
 
 module Pathfinding
 {
@@ -23,9 +24,9 @@ module Pathfinding
             this.setupConnections();
             //The x and y coords are used for determining the necessary nodes.
             //So the player position for example.
-            this.removeUnnecessaryNodes(x, y);
+            //this.removeUnnecessaryNodes(x, y);
 
-            this.drawNodes();
+            this.drawNodes(this.graphics);
             this.drawConnections(this.graphics);
         }
 
@@ -34,70 +35,39 @@ module Pathfinding
             var layerWidth = this.layer.size['x'],
                 layerHeight = this.layer.size['y'],
                 tiles = this.layer.tileIds, coordsOutput: Array<Node> = [],
+                map = CollisionTiles.getPropMap(tiles, layerWidth, functionFile.getGidOfSolidTileset(this.map).firstgid),
                 xCoord, yCoord, nodeOptions: Array<boolean>;
 
             //Nodeoptions indexes:
-            //02
-            //13
+            //01
+            //32
 
             for(var index = 0; index < tiles.length; index++)
             {
                 if(tiles[index] != 0) {
                     xCoord = index % layerWidth;
                     yCoord = Math.floor(index / layerWidth);
-                    nodeOptions = [true, true, true, true];
+                    nodeOptions = CollisionTiles.tileCornerWaypoint(xCoord, yCoord, map);
 
-                    //This check won't work well if the map is 1 tile wide or 1 tile tall
-                    if (xCoord == 0) {
-                        nodeOptions[0] = false;
-                        nodeOptions[1] = false;
-                    }
-                    else if (xCoord == layerWidth - 1) {
-                        nodeOptions[2] = false;
-                        nodeOptions[3] = false;
-                    }
-                    if (yCoord == 0) {
-                        nodeOptions[0] = false;
-                        nodeOptions[2] = false;
-                    }
-                    else if (yCoord == layerHeight - 1) {
-                        nodeOptions[1] = false;
-                        nodeOptions[3] = false;
-                    }
-
-                    //Check nodes adjacent to the tile
-                    if ((nodeOptions[0] || nodeOptions[1]) && tiles[index - 1] != 0) {
-                        nodeOptions[0] = false;
-                        nodeOptions[1] = false;
-                    }
-                    if ((nodeOptions[2] || nodeOptions[3]) && tiles[index + 1] != 0) {
-                        nodeOptions[2] = false;
-                        nodeOptions[3] = false;
-                    }
-                    if ((nodeOptions[0] || nodeOptions[2]) && tiles[index - layerWidth] != 0) {
-                        nodeOptions[0] = false;
-                        nodeOptions[2] = false;
-                    }
-                    if ((nodeOptions[1] || nodeOptions[3]) && tiles[index + layerWidth] != 0) {
-                        nodeOptions[1] = false;
-                        nodeOptions[3] = false;
-                    }
-
-                    if(nodeOptions[0] && tiles[index - layerWidth -1] == 0)
+                    if(nodeOptions[0])
                     {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth -1, yCoord * this.map.tileHeight -1, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -1,
+                            (yCoord * 16) + map[yCoord][xCoord].upperY -1, this));
                     }
-                    if(nodeOptions[1] && tiles[index + layerWidth -1] == 0)
+                    if(nodeOptions[1])
                     {
-                        coordsOutput.push(new Node(xCoord * this.map.tileWidth -1, (yCoord +1) * this.map.tileHeight +1, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + 2,
+                            (yCoord * 16) + map[yCoord][xCoord].upperY -1, this));
                     }
-                    if(nodeOptions[2] && tiles[index - layerWidth +1] == 0)
+                    if(nodeOptions[2])
                     {
-                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth +1, yCoord * this.map.tileHeight -1, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX +2,
+                            (yCoord * 16) + map[yCoord][xCoord].lowerY +2, this));
                     }
-                    if(nodeOptions[3] && tiles[index + layerWidth +1] == 0)
+                    if(nodeOptions[3])
                     {
-                        coordsOutput.push(new Node((xCoord +1) * this.map.tileWidth +1, (yCoord +1) * this.map.tileHeight +1, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -1,
+                            (yCoord * 16) + map[yCoord][xCoord].lowerY +2, this));
                     }
                 }
             }
@@ -120,11 +90,9 @@ module Pathfinding
             }
         }
 
-        drawNodes()
+        drawNodes(graphics: Phaser.Graphics)
         {
             //Make sure to clear the graphics
-            var graphics = this.game.add.graphics(0,0);
-
             graphics.lineStyle(0);
             graphics.beginFill(0x71A37D, 0.5);
             for(var i = 0; i < this.nodeList.length; i++)

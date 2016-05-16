@@ -6,13 +6,14 @@
 /// <reference path="scripts/SongManager.ts"/>
 /// <reference path="scripts/levels/Level1.ts"/>
 /// <reference path="scripts/levels/SolidTest.ts"/>
-/// <reference path="scripts/utils/Queue.ts"/>
+/// <reference path="scripts/utils/CollisionTiles.ts"/>
 
 
 var gameVar: MyGame.RPGame;
 module MyGame
 {
     import Queue = DataStructures.Queue;
+    import getPropMap = CollisionTiles.getPropMap;
     export class RPGame {
         songManager: SongManager.SongManager;
 
