@@ -136,7 +136,7 @@ module CollisionTiles
             outputCorners[1] = false;
         if(bottomRight != null && tileProps.rightX - bottomRight.leftX == 15 && tileProps.lowerY - bottomRight.upperY == 15)
             outputCorners[2] = false;
-        if(bottomLeft != null && bottomLeft.rightX - tileProps.leftX == 15 && bottomLeft.upperY - tileProps.leftX == 15)
+        if(bottomLeft != null && bottomLeft.rightX - tileProps.leftX == 15 && tileProps.lowerY - bottomLeft.upperY == 15)
             outputCorners[3] = false;
 
         return outputCorners;

@@ -82,7 +82,7 @@ var CollisionTiles;
             outputCorners[1] = false;
         if (bottomRight != null && tileProps.rightX - bottomRight.leftX == 15 && tileProps.lowerY - bottomRight.upperY == 15)
             outputCorners[2] = false;
-        if (bottomLeft != null && bottomLeft.rightX - tileProps.leftX == 15 && bottomLeft.upperY - tileProps.leftX == 15)
+        if (bottomLeft != null && bottomLeft.rightX - tileProps.leftX == 15 && tileProps.lowerY - bottomLeft.upperY == 15)
             outputCorners[3] = false;
         return outputCorners;
     }
@@ -541,21 +541,17 @@ var Pathfinding;
             graphics.endFill();
         };
         Pathfinding.prototype.raycastLine = function (line) {
-            var bodies = this.layer.bodies, currentBody, bodyList = [];
+            var bodies = this.layer.bodies, currentBody, bodyList = [], coords = [];
+            line.coordinatesOnLine(4, coords);
             for (var i = 0; i < bodies.length; i++) {
                 currentBody = bodies[i];
                 var bodyRightX = currentBody.x + (currentBody.data.shapes[0].width / 0.8 * this.map.tileWidth), bodyRightY = currentBody.y + (currentBody.data.shapes[0].height / 0.8 * this.map.tileHeight);
                 if (!(Math.max(line.start.x, line.end.x) < currentBody.x || bodyRightX < Math.min(line.start.x, line.end.x)
                     || Math.max(line.start.y, line.end.y) < currentBody.y || bodyRightY < Math.min(line.start.y, line.end.y))) {
-                    bodyList.push([currentBody.x, currentBody.y, bodyRightX, bodyRightY]);
-                }
-            }
-            var coords = [];
-            line.coordinatesOnLine(4, coords);
-            for (var index = 0; index < bodyList.length; index++) {
-                for (var coordIndex = 0; coordIndex < coords.length; coordIndex++) {
-                    if (this.containsPoint(bodyList[index], coords[coordIndex][0], coords[coordIndex][1]))
-                        return true;
+                    for (var coordIndex = 0; coordIndex < coords.length; coordIndex++) {
+                        if (this.containsPoint([currentBody.x, currentBody.y, bodyRightX, bodyRightY], coords[coordIndex][0], coords[coordIndex][1]))
+                            return true;
+                    }
                 }
             }
             return false;
@@ -850,7 +846,6 @@ var GameLevels;
         };
         Level1.prototype.render = function () {
             this.graphics.clear();
-            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
         };
         return Level1;
     })(Phaser.State);

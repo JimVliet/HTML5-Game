@@ -2,6 +2,7 @@
 /// <reference path="../lib/phaser-tiled.d.ts"/>
 /// <reference path="utils/Queue.ts"/>
 /// <reference path="utils/CollisionTiles.ts"/>
+/// <reference path="functionFile.ts"/>
 
 module Pathfinding
 {
@@ -198,8 +199,10 @@ module Pathfinding
         raycastLine(line: Phaser.Line): boolean
         {
             var bodies: Array<Phaser.Physics.P2.Body> = this.layer.bodies,
-                currentBody, bodyList: Array<[number, number, number, number]> = [];
+                currentBody, bodyList: Array<[number, number, number, number]> = [],
+                coords = [];
 
+            line.coordinatesOnLine(4, coords);
             //Get all relevant bodies
             for (var i = 0; i < bodies.length; i++)
             {
@@ -210,20 +213,14 @@ module Pathfinding
                 if(!(Math.max(line.start.x, line.end.x) < currentBody.x || bodyRightX < Math.min(line.start.x, line.end.x)
                     || Math.max(line.start.y, line.end.y) < currentBody.y || bodyRightY < Math.min(line.start.y, line.end.y)))
                 {
-                    bodyList.push([currentBody.x, currentBody.y, bodyRightX, bodyRightY]);
+                    for(var coordIndex = 0; coordIndex < coords.length; coordIndex++)
+                    {
+                        if(this.containsPoint([currentBody.x, currentBody.y, bodyRightX, bodyRightY], coords[coordIndex][0], coords[coordIndex][1]))
+                            return true;
+                    }
                 }
             }
 
-            var coords = [];
-            line.coordinatesOnLine(4, coords);
-            for(var index = 0; index < bodyList.length; index++)
-            {
-                for(var coordIndex = 0; coordIndex < coords.length; coordIndex++)
-                {
-                    if(this.containsPoint(bodyList[index], coords[coordIndex][0], coords[coordIndex][1]))
-                        return true;
-                }
-            }
             return false;
         }
 

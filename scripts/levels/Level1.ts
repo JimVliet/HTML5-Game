@@ -89,7 +89,7 @@ module GameLevels
         render()
         {
             this.graphics.clear();
-            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y +16, this.graphics);
+            //this.pathFinding.debugVisibleNodes(this.player.x, this.player.y +16, this.graphics);
         }
     }
 }
