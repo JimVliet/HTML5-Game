@@ -51,13 +51,13 @@ module Pathfinding
 
                     if(nodeOptions[0])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -1,
-                            (yCoord * 16) + map[yCoord][xCoord].upperY -1, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -2,
+                            (yCoord * 16) + map[yCoord][xCoord].upperY -2, this));
                     }
                     if(nodeOptions[1])
                     {
                         coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + 2,
-                            (yCoord * 16) + map[yCoord][xCoord].upperY -1, this));
+                            (yCoord * 16) + map[yCoord][xCoord].upperY -2, this));
                     }
                     if(nodeOptions[2])
                     {
@@ -66,7 +66,7 @@ module Pathfinding
                     }
                     if(nodeOptions[3])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -1,
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -2,
                             (yCoord * 16) + map[yCoord][xCoord].lowerY +2, this));
                     }
                 }

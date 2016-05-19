@@ -52,37 +52,37 @@ var CollisionTiles;
     function tileCornerWaypoint(x, y, map) {
         var tileProps = map[y][x], minX = x == 0, maxX = x == map[0].length - 1, minY = y == 0, maxY = y == map.length - 1, topLeft = minX || minY ? null : map[y - 1][x - 1], top = minY ? null : map[y - 1][x], topRight = maxX || minY ? null : map[y - 1][x + 1], left = minX ? null : map[y][x - 1], right = maxX ? null : map[y][x + 1], bottomLeft = minX || maxY ? null : map[y + 1][x - 1], bottom = maxY ? null : map[y + 1][x], bottomRight = maxX || maxY ? null : map[y + 1][x + 1];
         var outputCorners = [!minX && !minY, !maxX && !minY, !maxX && !maxY, !minX && !maxY];
-        if (top != null && top.lowerY - tileProps.upperY == 15) {
+        if (top != null && top.lowerY - tileProps.upperY >= 14) {
             if (tileProps.leftX == top.leftX || top.collideXAxis(tileProps.leftX - 1))
                 outputCorners[0] = false;
             if (tileProps.rightX == top.rightX || top.collideXAxis(tileProps.rightX + 1))
                 outputCorners[1] = false;
         }
-        if (right != null && tileProps.rightX - right.leftX == 15) {
+        if (right != null && tileProps.rightX - right.leftX >= 14) {
             if (tileProps.upperY == right.upperY || right.collideYAxis(tileProps.upperY - 1))
                 outputCorners[1] = false;
             if (tileProps.lowerY == right.lowerY || right.collideYAxis(tileProps.lowerY + 1))
                 outputCorners[2] = false;
         }
-        if (bottom != null && tileProps.lowerY - bottom.upperY == 15) {
+        if (bottom != null && tileProps.lowerY - bottom.upperY >= 14) {
             if (tileProps.leftX == bottom.leftX || bottom.collideXAxis(tileProps.leftX - 1))
                 outputCorners[3] = false;
             if (tileProps.rightX == bottom.rightX || bottom.collideXAxis(tileProps.rightX + 1))
                 outputCorners[2] = false;
         }
-        if (left != null && left.rightX - tileProps.leftX == 15) {
+        if (left != null && left.rightX - tileProps.leftX >= 14) {
             if (tileProps.upperY == left.upperY || left.collideYAxis(tileProps.upperY - 1))
                 outputCorners[0] = false;
             if (tileProps.lowerY == left.lowerY || left.collideYAxis(tileProps.lowerY + 1))
                 outputCorners[3] = false;
         }
-        if (topLeft != null && topLeft.rightX - tileProps.leftX == 15 && topLeft.lowerY - tileProps.upperY == 15)
+        if (topLeft != null && topLeft.rightX - tileProps.leftX >= 14 && topLeft.lowerY - tileProps.upperY >= 14)
             outputCorners[0] = false;
-        if (topRight != null && tileProps.rightX - topRight.leftX == 15 && topRight.lowerY - tileProps.upperY == 15)
+        if (topRight != null && tileProps.rightX - topRight.leftX >= 14 && topRight.lowerY - tileProps.upperY >= 14)
             outputCorners[1] = false;
-        if (bottomRight != null && tileProps.rightX - bottomRight.leftX == 15 && tileProps.lowerY - bottomRight.upperY == 15)
+        if (bottomRight != null && tileProps.rightX - bottomRight.leftX >= 14 && tileProps.lowerY - bottomRight.upperY >= 14)
             outputCorners[2] = false;
-        if (bottomLeft != null && bottomLeft.rightX - tileProps.leftX == 15 && tileProps.lowerY - bottomLeft.upperY == 15)
+        if (bottomLeft != null && bottomLeft.rightX - tileProps.leftX >= 14 && tileProps.lowerY - bottomLeft.upperY >= 14)
             outputCorners[3] = false;
         return outputCorners;
     }
@@ -124,7 +124,7 @@ var functionFile;
                     curY++;
                 }
                 var xPixel = curBestRect[1] * map.tileWidth, yPixel = curBestRect[2] * map.tileHeight, xEndPixel = (curBestRect[3] + 1) * map.tileWidth, yEndPixel = (curBestRect[4] + 1) * map.tileHeight, body = game.physics.p2.createBody(xPixel, yPixel, 0, false);
-                body.addRectangle(xEndPixel - xPixel + 0.2, yEndPixel - yPixel + 0.2, (xEndPixel - xPixel) / 2, (yEndPixel - yPixel) / 2, 0);
+                body.addRectangle(xEndPixel - xPixel, yEndPixel - yPixel, (xEndPixel - xPixel) / 2, (yEndPixel - yPixel) / 2, 0);
                 body.debug = debug;
                 game.physics.p2.addBody(body);
                 layer.bodies.push(body);
@@ -448,16 +448,16 @@ var Pathfinding;
                     yCoord = Math.floor(index / layerWidth);
                     nodeOptions = CollisionTiles.tileCornerWaypoint(xCoord, yCoord, map);
                     if (nodeOptions[0]) {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX - 1, (yCoord * 16) + map[yCoord][xCoord].upperY - 1, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX - 2, (yCoord * 16) + map[yCoord][xCoord].upperY - 2, this));
                     }
                     if (nodeOptions[1]) {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + 2, (yCoord * 16) + map[yCoord][xCoord].upperY - 1, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + 2, (yCoord * 16) + map[yCoord][xCoord].upperY - 2, this));
                     }
                     if (nodeOptions[2]) {
                         coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + 2, (yCoord * 16) + map[yCoord][xCoord].lowerY + 2, this));
                     }
                     if (nodeOptions[3]) {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX - 1, (yCoord * 16) + map[yCoord][xCoord].lowerY + 2, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX - 2, (yCoord * 16) + map[yCoord][xCoord].lowerY + 2, this));
                     }
                 }
             }
@@ -846,6 +846,7 @@ var GameLevels;
         };
         Level1.prototype.render = function () {
             this.graphics.clear();
+            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
         };
         return Level1;
     })(Phaser.State);

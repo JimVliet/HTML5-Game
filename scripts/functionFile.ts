@@ -76,7 +76,7 @@ module functionFile
                     yEndPixel = (curBestRect[4]+1) * map.tileHeight,
                     body = game.physics.p2.createBody(xPixel, yPixel, 0, false);
 
-                body.addRectangle(xEndPixel - xPixel +0.2, yEndPixel - yPixel +0.2, (xEndPixel - xPixel)/2, (yEndPixel - yPixel)/2, 0);
+                body.addRectangle(xEndPixel - xPixel, yEndPixel - yPixel, (xEndPixel - xPixel)/2, (yEndPixel - yPixel)/2, 0);
                 body.debug = debug;
                 game.physics.p2.addBody(body);
                 layer.bodies.push(body);
