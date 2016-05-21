@@ -2,26 +2,22 @@
 /// <reference path="lib/phaser-tiled.d.ts"/>
 /// <reference path="scripts/GameStates.ts"/>
 /// <reference path="scripts/GameObjects.ts"/>
-/// <reference path="scripts/functionFile.ts"/>
+/// <reference path="scripts/utils/UtilFunctions.ts"/>
 /// <reference path="scripts/SongManager.ts"/>
-/// <reference path="scripts/levels/Level1.ts"/>
-/// <reference path="scripts/levels/SolidTest.ts"/>
-/// <reference path="scripts/utils/CollisionTiles.ts"/>
+/// <reference path="scripts/levels/Level.ts"/>
+/// <reference path="scripts/Collision/CollisionTiles.ts"/>
 
-
-var gameVar: MyGame.RPGame;
+var gameVar: MyGame.Game;
 module MyGame
 {
-    import Queue = DataStructures.Queue;
-    import getPropMap = CollisionTiles.getPropMap;
-    export class RPGame {
+    export class Game {
         songManager: SongManager.SongManager;
+        game: Phaser.Game;
 
         constructor(width: number, height: number) {
             this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create}, false, false);
+            this.songManager = null;
         }
-
-        game: Phaser.Game;
 
         preload()
         {
@@ -31,14 +27,21 @@ module MyGame
 
         create()
         {
-            if(window.location.href.indexOf('objectConverter') != -1)
+            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Level4")));
+        }
+
+        static getNextLevel(name: string): string
+        {
+            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5"];
+            if(name == "Start")
+                return levelList[0];
+
+            for(var i = 0; i < levelList.length-1; i++)
             {
-                functionFile.loadGameLevel(this.game, new GameLevels.SolidTest());
+                if(levelList[i] == name)
+                    return levelList[i+1];
             }
-            else
-            {
-                functionFile.loadGameLevel(this.game, new GameLevels.Level1());
-            }
+            return null;
         }
     }
 }
@@ -52,5 +55,5 @@ window.onload = () => {
 
     var aspectMultiplier = Math.min(winW/widthAspectRatio, winH/heightAspectRatio);
 
-    gameVar = new MyGame.RPGame(aspectMultiplier*widthAspectRatio, aspectMultiplier*heightAspectRatio);
+    gameVar = new MyGame.Game(aspectMultiplier*widthAspectRatio, aspectMultiplier*heightAspectRatio);
 };

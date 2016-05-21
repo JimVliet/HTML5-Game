@@ -1,7 +1,7 @@
 /// <reference path="../../lib/phaser.d.ts"/>
 /// <reference path="../../lib/phaser-tiled.d.ts"/>
 
-module CollisionTiles
+module Collision
 {
     export class ColTileProps
     {
@@ -95,6 +95,9 @@ module CollisionTiles
             bottom: ColTileProps = maxY ? null: map[y+1][x],
             bottomRight: ColTileProps = maxX || maxY? null: map[y+1][x+1];
 
+        if(tileProps == null)
+            return [false, false, false, false];
+
         var outputCorners: [boolean, boolean, boolean, boolean] =
             [!minX && !minY, !maxX && !minY, !maxX && !maxY, !minX && !maxY];
 
@@ -141,4 +144,5 @@ module CollisionTiles
 
         return outputCorners;
     }
+
 }

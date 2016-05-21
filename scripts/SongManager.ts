@@ -11,9 +11,10 @@ module SongManager
         constructor(game: Phaser.Game)
         {
             this.game = game;
-            this.currentSongNumb = 0;
+            this.currentSongNumb = 1;
             this.playList = [];
             this.playList[0] = game.add.audio('Pershdal-Dung', 0.3, false);
+            this.playList[0].play().onStop.add(this.next, this);
             this.playList[1] = game.add.audio('Vines', 0.45, false);
             this.playList[2] = game.add.audio('The-Final-Choice', 0.3, false);
             this.playList[3] = game.add.audio('An-Alternate-Demonsion', 0.3, false);

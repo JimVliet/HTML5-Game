@@ -1,5 +1,5 @@
-var CollisionTiles;
-(function (CollisionTiles) {
+var Collision;
+(function (Collision) {
     var ColTileProps = (function () {
         function ColTileProps() {
             this.leftX = 0;
@@ -15,7 +15,7 @@ var CollisionTiles;
         };
         return ColTileProps;
     })();
-    CollisionTiles.ColTileProps = ColTileProps;
+    Collision.ColTileProps = ColTileProps;
     function getPropMap(tiles, width, firstGid) {
         var map = [], y, x;
         for (var i = 0; i < tiles.length; i++) {
@@ -27,7 +27,7 @@ var CollisionTiles;
         }
         return map;
     }
-    CollisionTiles.getPropMap = getPropMap;
+    Collision.getPropMap = getPropMap;
     function getTileCollisionProperties(tileIndex) {
         if (tileIndex < 0 || tileIndex >= 65)
             return null;
@@ -48,9 +48,11 @@ var CollisionTiles;
             props.leftX = tileIndex - 54;
         return props;
     }
-    CollisionTiles.getTileCollisionProperties = getTileCollisionProperties;
+    Collision.getTileCollisionProperties = getTileCollisionProperties;
     function tileCornerWaypoint(x, y, map) {
         var tileProps = map[y][x], minX = x == 0, maxX = x == map[0].length - 1, minY = y == 0, maxY = y == map.length - 1, topLeft = minX || minY ? null : map[y - 1][x - 1], top = minY ? null : map[y - 1][x], topRight = maxX || minY ? null : map[y - 1][x + 1], left = minX ? null : map[y][x - 1], right = maxX ? null : map[y][x + 1], bottomLeft = minX || maxY ? null : map[y + 1][x - 1], bottom = maxY ? null : map[y + 1][x], bottomRight = maxX || maxY ? null : map[y + 1][x + 1];
+        if (tileProps == null)
+            return [false, false, false, false];
         var outputCorners = [!minX && !minY, !maxX && !minY, !maxX && !maxY, !minX && !maxY];
         if (top != null && top.lowerY - tileProps.upperY >= 14) {
             if (tileProps.leftX == top.leftX || top.collideXAxis(tileProps.leftX - 1))
@@ -86,10 +88,10 @@ var CollisionTiles;
             outputCorners[3] = false;
         return outputCorners;
     }
-    CollisionTiles.tileCornerWaypoint = tileCornerWaypoint;
-})(CollisionTiles || (CollisionTiles = {}));
-var functionFile;
-(function (functionFile) {
+    Collision.tileCornerWaypoint = tileCornerWaypoint;
+})(Collision || (Collision = {}));
+var UtilFunctions;
+(function (UtilFunctions) {
     function setupPlayerKeys(game) {
         var keyLib = {};
         keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
@@ -99,97 +101,12 @@ var functionFile;
         keyLib['space'] = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
         return keyLib;
     }
-    functionFile.setupPlayerKeys = setupPlayerKeys;
-    function setupSolidLayer(game, layer, map, debug) {
-        layer.visible = false;
-        var layerTiles = layer.tileIds, layerlength = layerTiles.length, mapWidth = layer.size['x'], mapHeight = layer.size['y'], solidTileset = functionFile.getGidOfSolidTileset(map), usedTiles = {}, x, y;
-        if (solidTileset == null)
-            return console.log('There is no collision tileset');
-        var solidFirstGid = solidTileset.firstgid, solidLastGid = solidTileset.lastgid;
-        for (var index = 0; index < layerlength; index++) {
-            if (layerTiles[index] == solidFirstGid && !(index in usedTiles)) {
-                x = index % mapWidth;
-                y = Math.floor(index / mapWidth);
-                var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
-                while (curY < mapHeight && layerTiles[curY * mapWidth + x] == solidFirstGid && !(curY * mapWidth + x in usedTiles)) {
-                    var curX = x, curYIndex = curY * mapWidth, surface;
-                    while (curX < maxWidth && layerTiles[curYIndex + curX + 1] == solidFirstGid && !(curYIndex + curX + 1 in usedTiles)) {
-                        curX++;
-                    }
-                    maxWidth = curX;
-                    surface = (curX - x + 1) * (curY - y + 1);
-                    if (surface > curBestRect[0]) {
-                        curBestRect = [surface, x, y, curX, curY];
-                    }
-                    curY++;
-                }
-                var xPixel = curBestRect[1] * map.tileWidth, yPixel = curBestRect[2] * map.tileHeight, xEndPixel = (curBestRect[3] + 1) * map.tileWidth, yEndPixel = (curBestRect[4] + 1) * map.tileHeight, body = game.physics.p2.createBody(xPixel, yPixel, 0, false);
-                body.addRectangle(xEndPixel - xPixel, yEndPixel - yPixel, (xEndPixel - xPixel) / 2, (yEndPixel - yPixel) / 2, 0);
-                body.debug = debug;
-                game.physics.p2.addBody(body);
-                layer.bodies.push(body);
-                for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
-                    var yIndex = mapWidth * usedY;
-                    for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
-                        usedTiles[yIndex + usedX] = null;
-                    }
-                }
-            }
-            else if (layerTiles[index] >= solidFirstGid && layerTiles[index] <= solidLastGid && !(index in usedTiles)) {
-                createCustomBody(game, layer, map, debug, layerTiles[index] - solidFirstGid, index);
-            }
-        }
-    }
-    functionFile.setupSolidLayer = setupSolidLayer;
-    function createCustomBody(game, layer, map, debug, tileIndex, index) {
-        var mapWidth = layer.size['x'], mapHeight = layer.size['y'], x = (index % mapWidth) * map.tileWidth, y = Math.floor(index / mapWidth) * map.tileHeight, tileSetX = tileIndex % 5, tileSetY = Math.floor(tileIndex / 5), body;
-        if (tileIndex < 25) {
-            body = game.physics.p2.createBody(x + tileSetX, y + tileSetY, 0, false);
-            body.addRectangle(map.tileWidth - (tileSetX * 2), map.tileHeight - (tileSetY * 2), (map.tileWidth - (tileSetX * 2)) / 2, (map.tileHeight - (tileSetY * 2)) / 2, 0);
-            body.debug = debug;
-        }
-        else if (tileIndex < 35) {
-            body = game.physics.p2.createBody(x, y, 0, false);
-            var bodyHeight = map.tileHeight - tileIndex + 24;
-            body.addRectangle(map.tileWidth, bodyHeight, map.tileWidth / 2, bodyHeight / 2, 0);
-        }
-        else if (tileIndex < 45) {
-            var bodyHeightOffset = tileIndex - 34;
-            body = game.physics.p2.createBody(x, y + bodyHeightOffset, 0, false);
-            body.addRectangle(map.tileWidth, map.tileHeight - bodyHeightOffset, map.tileWidth / 2, (map.tileHeight - bodyHeightOffset) / 2, 0);
-        }
-        else if (tileIndex < 55) {
-            var bodyWidthOffset = tileIndex - 44;
-            body = game.physics.p2.createBody(x, y, 0, false);
-            body.addRectangle(map.tileWidth - bodyWidthOffset, map.tileHeight, (map.tileWidth - bodyWidthOffset) / 2, map.tileHeight / 2, 0);
-        }
-        else if (tileIndex < 65) {
-            var bodyWidthOffset = tileIndex - 54;
-            body = game.physics.p2.createBody(x + bodyWidthOffset, y, 0, false);
-            body.addRectangle(map.tileWidth - bodyWidthOffset, map.tileHeight, (map.tileWidth - bodyWidthOffset) / 2, map.tileHeight / 2, 0);
-        }
-        else {
-            return console.log('invalid tile');
-        }
-        body.debug = debug;
-        game.physics.p2.addBody(body);
-        layer.bodies.push(body);
-    }
-    functionFile.createCustomBody = createCustomBody;
-    function getGidOfSolidTileset(map) {
-        for (var tilesetId = 0; tilesetId < map.tilesets.length; tilesetId++) {
-            if (map.tilesets[tilesetId].name == "Collision") {
-                return map.tilesets[tilesetId];
-            }
-        }
-        return null;
-    }
-    functionFile.getGidOfSolidTileset = getGidOfSolidTileset;
+    UtilFunctions.setupPlayerKeys = setupPlayerKeys;
     function loadGameLevel(game, levelToLoad) {
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
     }
-    functionFile.loadGameLevel = loadGameLevel;
-})(functionFile || (functionFile = {}));
+    UtilFunctions.loadGameLevel = loadGameLevel;
+})(UtilFunctions || (UtilFunctions = {}));
 var Manager;
 (function (Manager) {
     (function (AnimType) {
@@ -305,16 +222,21 @@ var GameStates;
             this.mapCacheKey = Phaser.Plugin.Tiled.utils.cacheKey(this.mapName, 'tiledmap');
         }
         TiledMapLoader.prototype.preload = function () {
+            if (gameVar.songManager == null) {
+                SongManager.SongManager.load(this.game);
+            }
             this.game.camera.scale.setTo(1, 1);
             this.MainText = this.game.add.text(this.game.width / 2, this.game.height / 2 - 80, 'Loading ' + this.mapName + " 0%", { fill: '#ffffff' });
             this.MainText.anchor.x = 0.5;
             this.SubText = this.game.add.text(this.game.width / 2, this.game.height / 2 + 80, 'Completed loading: ', { fill: '#ffffff' });
             this.SubText.anchor.x = 0.5;
             this.game.load.tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
-            this.StateToStart.customPreload(this.game);
+            this.StateToStart.customPreload();
             this.game.load.onFileComplete.add(this.fileCompleted, this);
         };
         TiledMapLoader.prototype.create = function () {
+            if (gameVar.songManager == null)
+                gameVar.songManager = new SongManager.SongManager(this.game);
             this.game.state.add(this.StateToStart.mapName, this.StateToStart, false);
             this.game.state.start(this.StateToStart.mapName, true, false);
         };
@@ -343,9 +265,10 @@ var SongManager;
     var SongManager = (function () {
         function SongManager(game) {
             this.game = game;
-            this.currentSongNumb = 0;
+            this.currentSongNumb = 1;
             this.playList = [];
             this.playList[0] = game.add.audio('Pershdal-Dung', 0.3, false);
+            this.playList[0].play().onStop.add(this.next, this);
             this.playList[1] = game.add.audio('Vines', 0.45, false);
             this.playList[2] = game.add.audio('The-Final-Choice', 0.3, false);
             this.playList[3] = game.add.audio('An-Alternate-Demonsion', 0.3, false);
@@ -426,27 +349,30 @@ var Pathfinding;
 (function (Pathfinding_1) {
     var Queue = DataStructures.Queue;
     var Pathfinding = (function () {
-        function Pathfinding(game, map, layer) {
+        function Pathfinding(game, map, layer, parent) {
             this.game = game;
             this.map = map;
             this.layer = layer;
+            this.parent = parent;
             this.nodeIDCounter = 0;
             this.graphics = this.game.add.graphics(0, 0);
+            this.stepRate = 4;
         }
-        Pathfinding.prototype.setupPathfinding = function (x, y, debug) {
+        Pathfinding.prototype.setupPathfinding = function (x, y) {
             this.setupNodes();
+            this.stepRate = 1;
             this.setupConnections();
+            this.stepRate = 4;
             this.removeUnnecessaryNodes(x, y);
-            this.drawNodes(this.graphics);
-            this.drawConnections(this.graphics);
+            console.log(this.nodeList);
         };
         Pathfinding.prototype.setupNodes = function () {
-            var layerWidth = this.layer.size['x'], tiles = this.layer.tileIds, coordsOutput = [], map = CollisionTiles.getPropMap(tiles, layerWidth, functionFile.getGidOfSolidTileset(this.map).firstgid), xCoord, yCoord, nodeOptions;
+            var layerWidth = this.layer.size['x'], tiles = this.layer.tileIds, coordsOutput = [], map = Collision.getPropMap(tiles, layerWidth, this.parent.getGidOfTileset("Collision").firstgid), xCoord, yCoord, nodeOptions;
             for (var index = 0; index < tiles.length; index++) {
                 if (tiles[index] != 0) {
                     xCoord = index % layerWidth;
                     yCoord = Math.floor(index / layerWidth);
-                    nodeOptions = CollisionTiles.tileCornerWaypoint(xCoord, yCoord, map);
+                    nodeOptions = Collision.tileCornerWaypoint(xCoord, yCoord, map);
                     if (nodeOptions[0]) {
                         coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX - 2, (yCoord * 16) + map[yCoord][xCoord].upperY - 2, this));
                     }
@@ -541,15 +467,17 @@ var Pathfinding;
             graphics.endFill();
         };
         Pathfinding.prototype.raycastLine = function (line) {
-            var bodies = this.layer.bodies, currentBody, bodyList = [], coords = [];
+            var bodies = this.layer.bodies, currentBody, coords = [];
             line.coordinatesOnLine(4, coords);
             for (var i = 0; i < bodies.length; i++) {
                 currentBody = bodies[i];
-                var bodyRightX = currentBody.x + (currentBody.data.shapes[0].width / 0.8 * this.map.tileWidth), bodyRightY = currentBody.y + (currentBody.data.shapes[0].height / 0.8 * this.map.tileHeight);
-                if (!(Math.max(line.start.x, line.end.x) < currentBody.x || bodyRightX < Math.min(line.start.x, line.end.x)
-                    || Math.max(line.start.y, line.end.y) < currentBody.y || bodyRightY < Math.min(line.start.y, line.end.y))) {
+                if (currentBody.data.concavePath == null)
+                    continue;
+                var halfWidth = currentBody.data.concavePath[0][0] / 0.05, halfHeight = currentBody.data.concavePath[0][1] / 0.05, minX = currentBody.x - halfWidth, maxX = currentBody.x + halfWidth, minY = currentBody.y - halfHeight, maxY = currentBody.y + halfHeight;
+                if (!(Math.max(line.start.x, line.end.x) < minX || maxX < Math.min(line.start.x, line.end.x)
+                    || Math.max(line.start.y, line.end.y) < minY || maxY < Math.min(line.start.y, line.end.y))) {
                     for (var coordIndex = 0; coordIndex < coords.length; coordIndex++) {
-                        if (this.containsPoint([currentBody.x, currentBody.y, bodyRightX, bodyRightY], coords[coordIndex][0], coords[coordIndex][1]))
+                        if (this.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
                             return true;
                     }
                 }
@@ -620,7 +548,7 @@ var Entities;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
-            this.keyListener = functionFile.setupPlayerKeys(this.game);
+            this.keyListener = UtilFunctions.setupPlayerKeys(this.game);
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
             this.body.clearShapes();
@@ -713,196 +641,194 @@ var Entities;
     })(Phaser.Sprite);
     Entities.Player = Player;
 })(Entities || (Entities = {}));
-var GameLevels;
-(function (GameLevels) {
-    var Level3 = (function (_super) {
-        __extends(Level3, _super);
-        function Level3() {
-            _super.call(this);
-            this.mapName = 'Level3';
-            this.mapURL = 'maps/Level3.json';
+var Collision;
+(function (Collision) {
+    var CollisionManager = (function () {
+        function CollisionManager(parent, map, layer) {
+            this.parent = parent;
+            this.map = map;
+            this.layer = layer;
+            this.game = parent.game;
+            this.startPos = [0, 0];
         }
-        Level3.prototype.customPreload = function (game) {
-            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
-            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+        CollisionManager.prototype.start = function (debug) {
+            this.setupSolidLayer(debug);
+            this.triggerSetup(debug);
         };
-        Level3.prototype.create = function () {
-            this.setupCurrentLevel();
-            this.graphics = this.game.add.graphics(0, 0);
-            this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
-            this.pathFinding.setupPathfinding(this.player.x, this.player.y + 16, true);
-        };
-        Level3.prototype.setupCurrentLevel = function () {
-            this.game.physics.startSystem(Phaser.Physics.P2JS);
-            this.map = this.game.add.tiledmap(this.mapName);
-            this.game.time.advancedTiming = true;
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
-            this.player = new Entities.Player(this.game, 424, 722, this, 'PlayerTileset', 0);
-            this.map.getTilelayer('Player').add(this.player);
-            this.game.camera.follow(this.player);
-            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
-        };
-        Level3.prototype.render = function () {
-            this.graphics.clear();
-            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
-        };
-        return Level3;
-    })(Phaser.State);
-    GameLevels.Level3 = Level3;
-})(GameLevels || (GameLevels = {}));
-var GameLevels;
-(function (GameLevels) {
-    var Level2 = (function (_super) {
-        __extends(Level2, _super);
-        function Level2() {
-            _super.call(this);
-            this.mapName = 'Level2';
-            this.mapURL = 'maps/Level2.json';
-        }
-        Level2.prototype.customPreload = function (game) {
-            game.load.audio('Pershdal-Dung', 'sounds/mp3/Pershdal Dungeons.mp3');
-            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-        };
-        Level2.prototype.create = function () {
-            this.setupCurrentLevel();
-            this.graphics = this.game.add.graphics(0, 0);
-            this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
-            this.pathFinding.setupPathfinding(this.player.x, this.player.y + 16, true);
-            this.setupNextLevel();
-        };
-        Level2.prototype.setupCurrentLevel = function () {
-            this.game.physics.startSystem(Phaser.Physics.P2JS);
-            this.map = this.game.add.tiledmap(this.mapName);
-            this.game.time.advancedTiming = true;
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
-            this.player = new Entities.Player(this.game, 80, 744, this, 'PlayerTileset', 0);
-            this.map.getTilelayer('Player').add(this.player);
-            this.game.camera.follow(this.player);
-            this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
-        };
-        Level2.prototype.setupNextLevel = function () {
-            var nextLevelBody = this.game.physics.p2.createBody(848, 42, 0, false);
-            nextLevelBody.addRectangle(this.map.tileWidth / 8, this.map.tileHeight / 4, this.map.tileWidth / 2, this.map.tileHeight / 4, 0);
-            nextLevelBody.onBeginContact.add(this.nextLevel, this);
-            this.game.physics.p2.addBody(nextLevelBody);
-            this.map.getTilelayer('Solid').bodies.push(nextLevelBody);
-        };
-        Level2.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
-            if (!contactShape.sensor) {
-                functionFile.loadGameLevel(this.game, new GameLevels.Level3());
+        CollisionManager.prototype.startPathfinding = function (debug) {
+            this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.layer, this);
+            this.pathFinding.setupPathfinding(this.parent.player.x, this.parent.player.y + 16);
+            if (debug) {
+                this.pathFinding.drawNodes(this.pathFinding.graphics);
+                this.pathFinding.drawConnections(this.pathFinding.graphics);
             }
         };
-        Level2.prototype.render = function () {
-            this.graphics.clear();
-            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
+        CollisionManager.prototype.setupSolidLayer = function (debug) {
+            if (this.layer == null)
+                return;
+            this.layer.visible = false;
+            var layerTiles = this.layer.tileIds, layerlength = layerTiles.length, mapWidth = this.layer.size['x'], mapHeight = this.layer.size['y'], solidTileset = this.getGidOfTileset("Collision"), usedTiles = {}, x, y;
+            if (solidTileset == null)
+                return console.log('There is no collision tileset');
+            var solidFirstGid = solidTileset.firstgid, solidLastGid = solidTileset.lastgid, propsMap = Collision.getPropMap(layerTiles, mapWidth, solidFirstGid);
+            for (var index = 0; index < layerlength; index++) {
+                if (layerTiles[index] == solidFirstGid && !(index in usedTiles)) {
+                    x = index % mapWidth;
+                    y = Math.floor(index / mapWidth);
+                    var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
+                    while (curY < mapHeight && layerTiles[curY * mapWidth + x] == solidFirstGid && !(curY * mapWidth + x in usedTiles)) {
+                        var curX = x, curYIndex = curY * mapWidth, surface;
+                        while (curX < maxWidth && layerTiles[curYIndex + curX + 1] == solidFirstGid && !(curYIndex + curX + 1 in usedTiles)) {
+                            curX++;
+                        }
+                        maxWidth = curX;
+                        surface = (curX - x + 1) * (curY - y + 1);
+                        if (surface > curBestRect[0]) {
+                            curBestRect = [surface, x, y, curX, curY];
+                        }
+                        curY++;
+                    }
+                    var xPixel = curBestRect[1] * this.map.tileWidth, yPixel = curBestRect[2] * this.map.tileHeight, xEndPixel = (curBestRect[3] + 1) * this.map.tileWidth, yEndPixel = (curBestRect[4] + 1) * this.map.tileHeight, body = this.game.physics.p2.createBody(xPixel, yPixel, 0, false);
+                    body.addPolygon({}, [[0, 0], [xEndPixel - xPixel, 0], [xEndPixel - xPixel, yEndPixel - yPixel], [0, yEndPixel - yPixel]]);
+                    body.debug = debug;
+                    this.game.physics.p2.addBody(body);
+                    this.layer.bodies.push(body);
+                    for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
+                        var yIndex = mapWidth * usedY;
+                        for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
+                            usedTiles[yIndex + usedX] = null;
+                        }
+                    }
+                }
+                else if (layerTiles[index] >= solidFirstGid && layerTiles[index] <= solidLastGid && !(index in usedTiles)) {
+                    x = index % mapWidth;
+                    y = Math.floor(index / mapWidth);
+                    this.customBody(debug, x, y, propsMap);
+                }
+            }
         };
-        return Level2;
-    })(Phaser.State);
-    GameLevels.Level2 = Level2;
-})(GameLevels || (GameLevels = {}));
+        CollisionManager.prototype.customBody = function (debug, x, y, propMap) {
+            var xPixel = x * this.map.tileWidth, yPixel = y * this.map.tileHeight, props = propMap[y][x], body = this.game.physics.p2.createBody(xPixel + props.leftX, yPixel + props.upperY, 0, false);
+            body.addPolygon({}, [[0, 0], [props.rightX - props.leftX, 0],
+                [props.rightX - props.leftX, props.lowerY - props.upperY], [0, props.lowerY - props.upperY]]);
+            body.debug = debug;
+            this.game.physics.p2.addBody(body);
+            this.layer.bodies.push(body);
+        };
+        CollisionManager.prototype.getGidOfTileset = function (name) {
+            for (var tilesetId = 0; tilesetId < this.map.tilesets.length; tilesetId++) {
+                if (this.map.tilesets[tilesetId].name == name) {
+                    return this.map.tilesets[tilesetId];
+                }
+            }
+            return null;
+        };
+        CollisionManager.prototype.triggerSetup = function (debug) {
+            var tLayer = this.map.getTilelayer("Trigger");
+            if (tLayer == null)
+                return;
+            tLayer.visible = false;
+            var tiles = tLayer.tileIds, layerlength = tiles.length, mapWidth = tLayer.size['x'], tTileSet = this.getGidOfTileset("Trigger"), curID, x, y;
+            if (tTileSet == null)
+                return;
+            var fGid = tTileSet.firstgid, lGid = tTileSet.lastgid;
+            for (var i = 0; i < layerlength; i++) {
+                if (tiles[i] < fGid && tiles[i] > lGid)
+                    continue;
+                curID = tiles[i] - fGid;
+                switch (curID) {
+                    case 0:
+                        x = i % mapWidth;
+                        y = Math.floor(i / mapWidth);
+                        var nextLevelBody = this.game.physics.p2.createBody(x * this.map.tileWidth, y * this.map.tileHeight, 0, false);
+                        nextLevelBody.addPolygon({}, [[0, 0], [this.map.tileWidth - 1, 0],
+                            [this.map.tileWidth - 1, this.map.tileHeight - 1], [0, this.map.tileHeight - 1]]);
+                        nextLevelBody.onBeginContact.add(this.parent.nextLevel, this.parent);
+                        nextLevelBody.debug = debug;
+                        this.game.physics.p2.addBody(nextLevelBody);
+                        this.layer.bodies.push(nextLevelBody);
+                        break;
+                    case 1:
+                        x = i % mapWidth;
+                        y = Math.floor(i / mapWidth);
+                        this.startPos = [x * this.map.tileWidth + 8, y * this.map.tileHeight - 15];
+                }
+            }
+        };
+        return CollisionManager;
+    })();
+    Collision.CollisionManager = CollisionManager;
+})(Collision || (Collision = {}));
 var GameLevels;
 (function (GameLevels) {
-    var Level1 = (function (_super) {
-        __extends(Level1, _super);
-        function Level1() {
+    var Level = (function (_super) {
+        __extends(Level, _super);
+        function Level(game, map) {
             _super.call(this);
-            this.mapName = 'Level1';
-            this.mapURL = 'maps/Level1.json';
+            this.game = game;
+            this.mapName = map;
+            this.mapURL = 'maps/' + map + '.json';
         }
-        Level1.prototype.customPreload = function (game) {
-            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-            SongManager.SongManager.load(gameVar.game);
+        Level.prototype.customPreload = function () {
+            this.game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
         };
-        Level1.prototype.create = function () {
-            this.setupCurrentLevel();
-            this.graphics = this.game.add.graphics(0, 0);
-            this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.map.getTilelayer('Solid'));
-            this.pathFinding.setupPathfinding(this.player.x, this.player.y + 16, true);
-            this.setupNextLevel();
-            gameVar.songManager = new SongManager.SongManager(this.game);
-            gameVar.songManager.next();
-        };
-        Level1.prototype.setupCurrentLevel = function () {
+        Level.prototype.create = function () {
             this.game.physics.startSystem(Phaser.Physics.P2JS);
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, false);
-            this.player = new Entities.Player(this.game, 408, 280, this, 'PlayerTileset', 0);
+            this.colManager = new Collision.CollisionManager(this, this.map, this.map.getTilelayer('Solid'));
+            this.colManager.start(false);
+            this.player = new Entities.Player(this.game, this.colManager.startPos[0], this.colManager.startPos[1], this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
+            this.graphics = this.game.add.graphics(0, 0);
+            this.colManager.startPathfinding(true);
         };
-        Level1.prototype.setupNextLevel = function () {
-            var nextLevelBody = this.game.physics.p2.createBody(128, 74, 0, false);
-            nextLevelBody.addRectangle(this.map.tileWidth / 8, this.map.tileHeight / 4, this.map.tileWidth / 2, this.map.tileHeight / 4, 0);
-            nextLevelBody.onBeginContact.add(this.nextLevel, this);
-            this.game.physics.p2.addBody(nextLevelBody);
-            this.map.getTilelayer('Solid').bodies.push(nextLevelBody);
-        };
-        Level1.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
+        Level.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
             if (!contactShape.sensor) {
-                functionFile.loadGameLevel(this.game, new GameLevels.Level2());
+                var nextLvl = MyGame.Game.getNextLevel(this.mapName);
+                if (nextLvl == null)
+                    return;
+                UtilFunctions.loadGameLevel(this.game, new Level(this.game, nextLvl));
             }
         };
-        Level1.prototype.render = function () {
+        Level.prototype.render = function () {
             this.graphics.clear();
-            this.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
+            this.colManager.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
         };
-        return Level1;
+        return Level;
     })(Phaser.State);
-    GameLevels.Level1 = Level1;
-})(GameLevels || (GameLevels = {}));
-var GameLevels;
-(function (GameLevels) {
-    var SolidTest = (function (_super) {
-        __extends(SolidTest, _super);
-        function SolidTest() {
-            _super.call(this);
-            this.mapName = 'SolidTestMap';
-            this.mapURL = 'maps/SolidTestMap.json';
-        }
-        SolidTest.prototype.customPreload = function (game) {
-            game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
-        };
-        SolidTest.prototype.create = function () {
-            this.setupCurrentLevel();
-        };
-        SolidTest.prototype.setupCurrentLevel = function () {
-            this.game.physics.startSystem(Phaser.Physics.P2JS);
-            this.map = this.game.add.tiledmap(this.mapName);
-            this.game.time.advancedTiming = true;
-            this.game.camera.scale.set(1);
-            functionFile.setupSolidLayer(this.game, this.map.getTilelayer('Solid'), this.map, true);
-        };
-        SolidTest.prototype.render = function () {
-            this.game.debug.text(this.game.time.fps.toString(), 32, 32, '#00ff00');
-        };
-        return SolidTest;
-    })(Phaser.State);
-    GameLevels.SolidTest = SolidTest;
+    GameLevels.Level = Level;
 })(GameLevels || (GameLevels = {}));
 var gameVar;
 var MyGame;
 (function (MyGame) {
-    var RPGame = (function () {
-        function RPGame(width, height) {
+    var Game = (function () {
+        function Game(width, height) {
             this.game = new Phaser.Game(width, height, Phaser.AUTO, 'content', { preload: this.preload, create: this.create }, false, false);
+            this.songManager = null;
         }
-        RPGame.prototype.preload = function () {
+        Game.prototype.preload = function () {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
             this.game.add.plugin(new Phaser.Plugin.Debug(this.game, this.game.stage));
         };
-        RPGame.prototype.create = function () {
-            if (window.location.href.indexOf('objectConverter') != -1) {
-                functionFile.loadGameLevel(this.game, new GameLevels.SolidTest());
-            }
-            else {
-                functionFile.loadGameLevel(this.game, new GameLevels.Level1());
-            }
+        Game.prototype.create = function () {
+            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Level4")));
         };
-        return RPGame;
+        Game.getNextLevel = function (name) {
+            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5"];
+            if (name == "Start")
+                return levelList[0];
+            for (var i = 0; i < levelList.length - 1; i++) {
+                if (levelList[i] == name)
+                    return levelList[i + 1];
+            }
+            return null;
+        };
+        return Game;
     })();
-    MyGame.RPGame = RPGame;
+    MyGame.Game = Game;
 })(MyGame || (MyGame = {}));
 window.onload = function () {
     var winW = window.innerWidth;
@@ -910,6 +836,6 @@ window.onload = function () {
     var widthAspectRatio = 16;
     var heightAspectRatio = 9;
     var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
-    gameVar = new MyGame.RPGame(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
+    gameVar = new MyGame.Game(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
 };
 //# sourceMappingURL=generated.js.map

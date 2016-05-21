@@ -6,18 +6,19 @@
 module GameStates
 {
     import Tiled = Phaser.Plugin.Tiled;
+    import Level = GameLevels.Level;
 
     export class TiledMapLoader extends Phaser.State
     {
         game: Phaser.Game;
         mapName: string;
         mapURL: string;
-        StateToStart: GameLevel & Phaser.State;
+        StateToStart: Level;
         MainText: Phaser.Text;
         SubText: Phaser.Text;
         mapCacheKey: string;
 
-        constructor(game: Phaser.Game, state: GameLevel & Phaser.State)
+        constructor(game: Phaser.Game, state: Level)
         {
             super();
             this.game = game;
@@ -29,6 +30,10 @@ module GameStates
 
         preload()
         {
+            if(gameVar.songManager == null)
+            {
+                SongManager.SongManager.load(this.game);
+            }
             this.game.camera.scale.setTo(1, 1);
             this.MainText = this.game.add.text(this.game.width/2, this.game.height/2 - 80, 'Loading ' + this.mapName + " 0%", {fill: '#ffffff'});
             this.MainText.anchor.x = 0.5;
@@ -38,12 +43,16 @@ module GameStates
             (<any>this.game.load).tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
 
             //Load the custom assets needed for the state
-            this.StateToStart.customPreload(this.game);
+            this.StateToStart.customPreload();
             this.game.load.onFileComplete.add(this.fileCompleted, this);
         }
 
         create()
         {
+            //Play music
+            if(gameVar.songManager == null)
+                gameVar.songManager = new SongManager.SongManager(this.game);
+
             this.game.state.add(this.StateToStart.mapName, this.StateToStart, false);
             this.game.state.start(this.StateToStart.mapName, true, false);
         }
@@ -71,16 +80,5 @@ module GameStates
             this.game.load.onFileComplete.remove(this.fileCompleted, this);
             this.game.state.remove('TiledMapLoader');
         }
-    }
-
-    export interface GameLevel
-    {
-        mapName: string;
-        mapURL: string;
-        map: Tiled.Tilemap;
-        player: GameObjects.GameObject & Phaser.Sprite;
-
-        customPreload(game: Phaser.Game): void;
-        setupCurrentLevel(): void;
     }
 }

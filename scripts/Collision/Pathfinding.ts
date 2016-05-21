@@ -1,41 +1,45 @@
-/// <reference path="../lib/phaser.d.ts"/>
-/// <reference path="../lib/phaser-tiled.d.ts"/>
-/// <reference path="utils/Queue.ts"/>
-/// <reference path="utils/CollisionTiles.ts"/>
-/// <reference path="functionFile.ts"/>
+/// <reference path="../../lib/phaser.d.ts"/>
+/// <reference path="../../lib/phaser-tiled.d.ts"/>
+/// <reference path="../utils/Queue.ts"/>
+/// <reference path="CollisionTiles.ts"/>
+/// <reference path="../utils/UtilFunctions.ts"/>
 
 module Pathfinding
 {
     import Queue = DataStructures.Queue;
+    import CollisionManager = Collision.CollisionManager;
     export class Pathfinding
     {
         nodeList: Array<Node>;
         nodeIDCounter: number;
         graphics: Phaser.Graphics;
+        stepRate: number;
 
-        constructor(public game: Phaser.Game, public map: Phaser.Plugin.Tiled.Tilemap, public layer: Phaser.Plugin.Tiled.Tilelayer)
+        constructor(public game: Phaser.Game, public map: Phaser.Plugin.Tiled.Tilemap,
+                    public layer: Phaser.Plugin.Tiled.Tilelayer, public parent: CollisionManager)
         {
             this.nodeIDCounter = 0;
             this.graphics = this.game.add.graphics(0,0);
+            this.stepRate = 4;
         }
 
-        setupPathfinding(x: number, y:number, debug: boolean)
+        setupPathfinding(x: number, y:number)
         {
             this.setupNodes();
+            this.stepRate = 1;
             this.setupConnections();
+            this.stepRate = 4;
             //The x and y coords are used for determining the necessary nodes.
             //So the player position for example.
             this.removeUnnecessaryNodes(x, y);
-
-            this.drawNodes(this.graphics);
-            this.drawConnections(this.graphics);
+            console.log(this.nodeList);
         }
 
         setupNodes()
         {
             var layerWidth = this.layer.size['x'],
                 tiles = this.layer.tileIds, coordsOutput: Array<Node> = [],
-                map = CollisionTiles.getPropMap(tiles, layerWidth, functionFile.getGidOfSolidTileset(this.map).firstgid),
+                map = Collision.getPropMap(tiles, layerWidth, this.parent.getGidOfTileset("Collision").firstgid),
                 xCoord, yCoord, nodeOptions: Array<boolean>;
 
             //Nodeoptions indexes:
@@ -47,7 +51,7 @@ module Pathfinding
                 if(tiles[index] != 0) {
                     xCoord = index % layerWidth;
                     yCoord = Math.floor(index / layerWidth);
-                    nodeOptions = CollisionTiles.tileCornerWaypoint(xCoord, yCoord, map);
+                    nodeOptions = Collision.tileCornerWaypoint(xCoord, yCoord, map);
 
                     if(nodeOptions[0])
                     {
@@ -199,23 +203,27 @@ module Pathfinding
         raycastLine(line: Phaser.Line): boolean
         {
             var bodies: Array<Phaser.Physics.P2.Body> = this.layer.bodies,
-                currentBody, bodyList: Array<[number, number, number, number]> = [],
-                coords = [];
+                currentBody, coords = [];
 
             line.coordinatesOnLine(4, coords);
             //Get all relevant bodies
             for (var i = 0; i < bodies.length; i++)
             {
                 currentBody = bodies[i];
-                var bodyRightX = currentBody.x + (currentBody.data.shapes[0].width / 0.8 * this.map.tileWidth),
-                    bodyRightY = currentBody.y + (currentBody.data.shapes[0].height / 0.8 * this.map.tileHeight);
+                if(currentBody.data.concavePath == null)
+                    continue;
 
-                if(!(Math.max(line.start.x, line.end.x) < currentBody.x || bodyRightX < Math.min(line.start.x, line.end.x)
-                    || Math.max(line.start.y, line.end.y) < currentBody.y || bodyRightY < Math.min(line.start.y, line.end.y)))
+                var halfWidth = currentBody.data.concavePath[0][0] / 0.05,
+                    halfHeight = currentBody.data.concavePath[0][1] / 0.05,
+                    minX = currentBody.x - halfWidth, maxX = currentBody.x + halfWidth,
+                    minY = currentBody.y - halfHeight, maxY = currentBody.y + halfHeight;
+
+                if(!(Math.max(line.start.x, line.end.x) < minX || maxX < Math.min(line.start.x, line.end.x)
+                    || Math.max(line.start.y, line.end.y) < minY || maxY < Math.min(line.start.y, line.end.y)))
                 {
                     for(var coordIndex = 0; coordIndex < coords.length; coordIndex++)
                     {
-                        if(this.containsPoint([currentBody.x, currentBody.y, bodyRightX, bodyRightY], coords[coordIndex][0], coords[coordIndex][1]))
+                        if(this.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
                             return true;
                     }
                 }

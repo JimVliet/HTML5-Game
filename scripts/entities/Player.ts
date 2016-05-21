@@ -1,9 +1,9 @@
 /// <reference path="../../lib/phaser.d.ts"/>
 /// <reference path="../../lib/phaser-tiled.d.ts"/>
 /// <reference path="../../app.ts"/>
-/// <reference path="../functionFile.ts"/>
+/// <reference path="../utils/UtilFunctions.ts"/>
 /// <reference path="../AnimationManager.ts"/>
-/// <reference path="../PathFinding.ts"/>
+/// <reference path="../Collision/Pathfinding.ts"/>
 
 module Entities
 {
@@ -11,11 +11,12 @@ module Entities
     import GameObjectType = GameObjects.GameObjectType;
     import AnimManager = Manager.AnimManager;
     import AnimType = Manager.AnimType;
+    import Level = GameLevels.Level;
 
     export class Player extends Phaser.Sprite implements MobEntity
     {
         objectType: GameObjectType;
-        currentLevel: GameStates.GameLevel & Phaser.State;
+        currentLevel: Level;
         moveSpeed: number;
         baseMoveSpeed: number;
         moveSpeedMod: number;
@@ -26,7 +27,7 @@ module Entities
         attackDelay: number;
         hitBox: p2.Rectangle;
 
-        constructor(game: Phaser.Game, x: number, y: number, currentLevel: GameStates.GameLevel & Phaser.State, key?: string | Phaser.RenderTexture | Phaser.BitmapData | PIXI.Texture, frame?: string | number)
+        constructor(game: Phaser.Game, x: number, y: number, currentLevel: Level, key?: string | Phaser.RenderTexture | Phaser.BitmapData | PIXI.Texture, frame?: string | number)
         {
             super(game, x, y,  key, frame);
             this.objectType = GameObjectType.PLAYER;
@@ -35,7 +36,7 @@ module Entities
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
-            this.keyListener = functionFile.setupPlayerKeys(this.game);
+            this.keyListener = UtilFunctions.setupPlayerKeys(this.game);
 
             //Setup physics and the player body
             this.game.physics.p2.enable(this);
