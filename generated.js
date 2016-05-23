@@ -783,7 +783,7 @@ var GameLevels;
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
             this.graphics = this.game.add.graphics(0, 0);
-            this.colManager.startPathfinding(true);
+            this.colManager.startPathfinding(false);
         };
         Level.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
             if (!contactShape.sensor) {
@@ -814,10 +814,10 @@ var MyGame;
             this.game.add.plugin(new Phaser.Plugin.Debug(this.game, this.game.stage));
         };
         Game.prototype.create = function () {
-            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Level4")));
+            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
         };
         Game.getNextLevel = function (name) {
-            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5"];
+            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6"];
             if (name == "Start")
                 return levelList[0];
             for (var i = 0; i < levelList.length - 1; i++) {

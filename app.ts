@@ -27,12 +27,12 @@ module MyGame
 
         create()
         {
-            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Level4")));
+            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
         }
 
         static getNextLevel(name: string): string
         {
-            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5"];
+            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6"];
             if(name == "Start")
                 return levelList[0];
 
