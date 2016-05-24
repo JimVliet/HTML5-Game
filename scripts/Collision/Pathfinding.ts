@@ -25,9 +25,9 @@ module Pathfinding
 
         setupPathfinding(x: number, y:number)
         {
-            this.setupNodes();
+            this.setupNodes(2, 2);
             this.stepRate = 1;
-            this.setupConnections();
+            this.setupConnections(0, 0);
             this.stepRate = 4;
             //The x and y coords are used for determining the necessary nodes.
             //So the player position for example.
@@ -35,7 +35,7 @@ module Pathfinding
             console.log(this.nodeList);
         }
 
-        setupNodes()
+        setupNodes(deltaX: number, deltaY: number)
         {
             var layerWidth = this.layer.size['x'],
                 tiles = this.layer.tileIds, coordsOutput: Array<Node> = [],
@@ -55,30 +55,30 @@ module Pathfinding
 
                     if(nodeOptions[0])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -2,
-                            (yCoord * 16) + map[yCoord][xCoord].upperY -2, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -deltaX,
+                            (yCoord * 16) + map[yCoord][xCoord].upperY -deltaY, this));
                     }
                     if(nodeOptions[1])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + 2,
-                            (yCoord * 16) + map[yCoord][xCoord].upperY -2, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX,
+                            (yCoord * 16) + map[yCoord][xCoord].upperY -deltaY, this));
                     }
                     if(nodeOptions[2])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX +2,
-                            (yCoord * 16) + map[yCoord][xCoord].lowerY +2, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX +deltaX,
+                            (yCoord * 16) + map[yCoord][xCoord].lowerY +deltaY, this));
                     }
                     if(nodeOptions[3])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -2,
-                            (yCoord * 16) + map[yCoord][xCoord].lowerY +2, this));
+                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -deltaX,
+                            (yCoord * 16) + map[yCoord][xCoord].lowerY +deltaY, this));
                     }
                 }
             }
             this.nodeList = coordsOutput;
         }
 
-        setupConnections()
+        setupConnections(deltaX: number, deltaY: number)
         {
             for(var i = 0; i < this.nodeList.length; i++)
             {
@@ -86,7 +86,8 @@ module Pathfinding
                 //j = i+1, because if it's the same it will check itself
                 for(var j = i+1; j < this.nodeList.length; j++)
                 {
-                    if(!this.raycastLine(new Phaser.Line(this.nodeList[i].x, this.nodeList[i].y, this.nodeList[j].x, this.nodeList[j].y)))
+                    if(!this.raycastLine(new Phaser.Line(this.nodeList[i].x, this.nodeList[i].y, this.nodeList[j].x,
+                            this.nodeList[j].y), deltaX, deltaY))
                     {
                         this.nodeList[i].connectTo(this.nodeList[j]);
                     }
@@ -136,7 +137,7 @@ module Pathfinding
 
             for(var startNodeIndex = 0; startNodeIndex < this.nodeList.length; startNodeIndex++)
             {
-                if(!this.raycastLine(new Phaser.Line(x,y, this.nodeList[startNodeIndex].x, this.nodeList[startNodeIndex].y)))
+                if(!this.raycastLine(new Phaser.Line(x,y, this.nodeList[startNodeIndex].x, this.nodeList[startNodeIndex].y), 0, 0))
                 {
                     startingNode = this.nodeList[startNodeIndex];
                     break;
@@ -200,7 +201,7 @@ module Pathfinding
             graphics.endFill();
         }
 
-        raycastLine(line: Phaser.Line): boolean
+        raycastLine(line: Phaser.Line, deltaX: number, deltaY: number): boolean
         {
             var bodies: Array<Phaser.Physics.P2.Body> = this.layer.bodies,
                 currentBody, coords = [];
@@ -215,8 +216,8 @@ module Pathfinding
 
                 var halfWidth = currentBody.data.concavePath[0][0] / 0.05,
                     halfHeight = currentBody.data.concavePath[0][1] / 0.05,
-                    minX = currentBody.x - halfWidth, maxX = currentBody.x + halfWidth,
-                    minY = currentBody.y - halfHeight, maxY = currentBody.y + halfHeight;
+                    minX = currentBody.x - halfWidth - deltaX, maxX = currentBody.x + halfWidth + deltaX,
+                    minY = currentBody.y - halfHeight - deltaY, maxY = currentBody.y + halfHeight + deltaY;
 
                 if(!(Math.max(line.start.x, line.end.x) < minX || maxX < Math.min(line.start.x, line.end.x)
                     || Math.max(line.start.y, line.end.y) < minY || maxY < Math.min(line.start.y, line.end.y)))
@@ -241,7 +242,7 @@ module Pathfinding
             {
                 line.start.setTo(this.nodeList[i].x, this.nodeList[i].y);
                 line.end.setTo(x, y);
-                if(!this.raycastLine(line))
+                if(!this.raycastLine(line, 0, 0))
                 {
                     graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
                     graphics.lineTo(x, y);

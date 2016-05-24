@@ -56,7 +56,7 @@ module GameLevels
 
             this.graphics = this.game.add.graphics(0,0);
 
-            this.colManager.startPathfinding(false);
+            this.colManager.startPathfinding(true);
         }
 
         nextLevel(body: any, bodyB: any, collidedShape: p2.Shape, contactShape: p2.Shape)
@@ -72,8 +72,8 @@ module GameLevels
 
         render()
         {
-            //this.graphics.clear();
-            //this.colManager.pathFinding.debugVisibleNodes(this.player.x, this.player.y +16, this.graphics);
+            this.graphics.clear();
+            this.colManager.pathFinding.debugVisibleNodes(this.player.x, this.player.y +16, this.graphics);
         }
     }
 }
