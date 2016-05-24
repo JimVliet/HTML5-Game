@@ -794,8 +794,6 @@ var GameLevels;
             }
         };
         Level.prototype.render = function () {
-            this.graphics.clear();
-            this.colManager.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
         };
         return Level;
     })(Phaser.State);

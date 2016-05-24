@@ -78,7 +78,7 @@
         {
          "columns":30,
          "firstgid":1,
-         "image":"..\/Git\/dungeon tileset calciumtrice.png",
+         "image":"..\/images\/dungeon\/dungeon tileset.png",
          "imageheight":560,
          "imagewidth":480,
          "margin":0,
@@ -130,7 +130,7 @@
         {
          "columns":5,
          "firstgid":1051,
-         "image":"..\/HTML5-Game-master (1)\/HTML5-Game-master\/images\/dungeon\/Collision.png",
+         "image":"..\/images\/dungeon\/Collision.png",
          "imageheight":208,
          "imagewidth":80,
          "margin":0,
