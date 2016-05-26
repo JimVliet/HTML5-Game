@@ -193,6 +193,7 @@ module Collision
                         x = i % mapWidth;
                         y = Math.floor(i / mapWidth);
                         this.startPos = [x*this.map.tileWidth +8, y*this.map.tileHeight-15];
+                        break;
                 }
             }
         }

@@ -364,7 +364,6 @@ var Pathfinding;
             this.setupConnections(0, 0);
             this.stepRate = 4;
             this.removeUnnecessaryNodes(x, y);
-            console.log(this.nodeList);
         };
         Pathfinding.prototype.setupNodes = function (deltaX, deltaY) {
             var layerWidth = this.layer.size['x'], tiles = this.layer.tileIds, coordsOutput = [], map = Collision.getPropMap(tiles, layerWidth, this.parent.getGidOfTileset("Collision").firstgid), xCoord, yCoord, nodeOptions;
@@ -752,6 +751,7 @@ var Collision;
                         x = i % mapWidth;
                         y = Math.floor(i / mapWidth);
                         this.startPos = [x * this.map.tileWidth + 8, y * this.map.tileHeight - 15];
+                        break;
                 }
             }
         };
@@ -843,14 +843,20 @@ var Collision;
     var CollisionBlock = (function () {
         function CollisionBlock(childBody) {
             this.childBody = childBody;
-            if (childBody.data.concavePath == null) {
-            }
             var halfWidth = childBody.data.concavePath[0][0] / 0.05, halfHeight = childBody.data.concavePath[0][1] / 0.05;
             this.minX = childBody.x - halfWidth;
             this.maxX = childBody.x + halfWidth;
             this.minY = childBody.y - halfHeight;
             this.maxY = childBody.y + halfHeight;
+            this.centerX = childBody.x;
+            this.centerY = childBody.y;
+            this.nodes = [];
         }
+        CollisionBlock.create = function (childBody) {
+            if (childBody.data.concavePath == null)
+                return null;
+            return new CollisionBlock(childBody);
+        };
         return CollisionBlock;
     })();
     Collision.CollisionBlock = CollisionBlock;

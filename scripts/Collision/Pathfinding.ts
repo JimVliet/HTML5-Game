@@ -32,7 +32,6 @@ module Pathfinding
             //The x and y coords are used for determining the necessary nodes.
             //So the player position for example.
             this.removeUnnecessaryNodes(x, y);
-            console.log(this.nodeList);
         }
 
         setupNodes(deltaX: number, deltaY: number)
