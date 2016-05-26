@@ -125,11 +125,11 @@
         {
          "columns":30,
          "firstgid":377,
-         "image":"dungeon tileset calciumtrice.png",
+         "image":"..\/images\/dungeon\/dungeon tileset.png",
          "imageheight":560,
          "imagewidth":480,
          "margin":0,
-         "name":"dungeon tileset calciumtrice",
+         "name":"dungeon tileset",
          "properties":
             {
 
@@ -142,11 +142,11 @@
         {
          "columns":5,
          "firstgid":1427,
-         "image":"SolidTileset.png",
+         "image":"..\/images\/dungeon\/SolidTileset.png",
          "imageheight":208,
          "imagewidth":80,
          "margin":0,
-         "name":"SolidTileset",
+         "name":"Collision",
          "properties":
             {
 
@@ -159,11 +159,11 @@
         {
          "columns":5,
          "firstgid":1492,
-         "image":"Triggers.png",
+         "image":"..\/images\/dungeon\/Triggers.png",
          "imageheight":80,
          "imagewidth":80,
          "margin":0,
-         "name":"Triggers",
+         "name":"Trigger",
          "properties":
             {
 
