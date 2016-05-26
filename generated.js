@@ -838,4 +838,21 @@ window.onload = function () {
     var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
     gameVar = new MyGame.Game(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
 };
+var Collision;
+(function (Collision) {
+    var CollisionBlock = (function () {
+        function CollisionBlock(childBody) {
+            this.childBody = childBody;
+            if (childBody.data.concavePath == null) {
+            }
+            var halfWidth = childBody.data.concavePath[0][0] / 0.05, halfHeight = childBody.data.concavePath[0][1] / 0.05;
+            this.minX = childBody.x - halfWidth;
+            this.maxX = childBody.x + halfWidth;
+            this.minY = childBody.y - halfHeight;
+            this.maxY = childBody.y + halfHeight;
+        }
+        return CollisionBlock;
+    })();
+    Collision.CollisionBlock = CollisionBlock;
+})(Collision || (Collision = {}));
 //# sourceMappingURL=generated.js.map
