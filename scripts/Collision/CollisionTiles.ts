@@ -73,7 +73,7 @@ module Collision
         return props;
     }
 
-    export function tileCornerWaypoint(x: number, y: number, map: Array<Array<ColTileProps>>)
+    export function tileCornerWaypoint(x: number, y: number, map: Array<Array<ColTileProps>>, deltaX: number, deltaY: number)
     :[boolean, boolean, boolean, boolean]
     {
         //Indexcorners
@@ -82,6 +82,7 @@ module Collision
         //3-2
 
         var tileProps = map[y][x],
+            xDif = 16 - deltaX, yDif = 16-deltaY,
             minX = x == 0,
             maxX = x == map[0].length - 1,
             minY = y == 0,
@@ -102,7 +103,7 @@ module Collision
             [!minX && !minY, !maxX && !minY, !maxX && !maxY, !minX && !maxY];
 
         //Check if there is a node above the tileProps and check if they touch each other
-        if(top != null && top.lowerY - tileProps.upperY >= 14)
+        if(top != null && top.lowerY - tileProps.upperY >= yDif)
         {
             //The topleft corner will be moved one to the left on the x axis
             //So you need to subtract 1
@@ -111,21 +112,21 @@ module Collision
             if(tileProps.rightX == top.rightX || top.collideXAxis(tileProps.rightX+1))
                 outputCorners[1] = false;
         }
-        if(right!= null && tileProps.rightX - right.leftX >= 14)
+        if(right!= null && tileProps.rightX - right.leftX >= xDif)
         {
             if(tileProps.upperY == right.upperY || right.collideYAxis(tileProps.upperY-1))
                 outputCorners[1] = false;
             if(tileProps.lowerY == right.lowerY || right.collideYAxis(tileProps.lowerY+1))
                 outputCorners[2] = false;
         }
-        if(bottom != null && tileProps.lowerY - bottom.upperY >= 14)
+        if(bottom != null && tileProps.lowerY - bottom.upperY >= yDif)
         {
             if(tileProps.leftX == bottom.leftX || bottom.collideXAxis(tileProps.leftX-1))
                 outputCorners[3] = false;
             if(tileProps.rightX == bottom.rightX || bottom.collideXAxis(tileProps.rightX+1))
                 outputCorners[2] = false;
         }
-        if(left != null && left.rightX - tileProps.leftX >= 14)
+        if(left != null && left.rightX - tileProps.leftX >= xDif)
         {
             if(tileProps.upperY == left.upperY || left.collideYAxis(tileProps.upperY-1))
                 outputCorners[0] = false;
@@ -133,13 +134,13 @@ module Collision
                 outputCorners[3] = false;
         }
 
-        if(topLeft != null && topLeft.rightX - tileProps.leftX >= 14 && topLeft.lowerY - tileProps.upperY >= 14)
+        if(topLeft != null && topLeft.rightX - tileProps.leftX >= xDif && topLeft.lowerY - tileProps.upperY >= yDif)
             outputCorners[0] = false;
-        if(topRight != null && tileProps.rightX - topRight.leftX >= 14 && topRight.lowerY - tileProps.upperY >= 14)
+        if(topRight != null && tileProps.rightX - topRight.leftX >= xDif && topRight.lowerY - tileProps.upperY >= yDif)
             outputCorners[1] = false;
-        if(bottomRight != null && tileProps.rightX - bottomRight.leftX >= 14 && tileProps.lowerY - bottomRight.upperY >= 14)
+        if(bottomRight != null && tileProps.rightX - bottomRight.leftX >= xDif && tileProps.lowerY - bottomRight.upperY >= yDif)
             outputCorners[2] = false;
-        if(bottomLeft != null && bottomLeft.rightX - tileProps.leftX >= 14 && tileProps.lowerY - bottomLeft.upperY >= 14)
+        if(bottomLeft != null && bottomLeft.rightX - tileProps.leftX >= xDif && tileProps.lowerY - bottomLeft.upperY >= yDif)
             outputCorners[3] = false;
 
         return outputCorners;

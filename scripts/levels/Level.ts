@@ -46,7 +46,7 @@ module GameLevels
 
             //Setup collision and pathFinding
             this.colManager = new Collision.CollisionManager(this, this.map, this.map.getTilelayer('Solid'));
-            this.colManager.start(false);
+            this.colManager.start(true);
 
             //Add player object and setup camera
             this.player = new Entities.Player(this.game, this.colManager.startPos[0], this.colManager.startPos[1], this, 'PlayerTileset', 0);

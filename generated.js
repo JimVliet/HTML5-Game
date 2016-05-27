@@ -49,42 +49,42 @@ var Collision;
         return props;
     }
     Collision.getTileCollisionProperties = getTileCollisionProperties;
-    function tileCornerWaypoint(x, y, map) {
-        var tileProps = map[y][x], minX = x == 0, maxX = x == map[0].length - 1, minY = y == 0, maxY = y == map.length - 1, topLeft = minX || minY ? null : map[y - 1][x - 1], top = minY ? null : map[y - 1][x], topRight = maxX || minY ? null : map[y - 1][x + 1], left = minX ? null : map[y][x - 1], right = maxX ? null : map[y][x + 1], bottomLeft = minX || maxY ? null : map[y + 1][x - 1], bottom = maxY ? null : map[y + 1][x], bottomRight = maxX || maxY ? null : map[y + 1][x + 1];
+    function tileCornerWaypoint(x, y, map, deltaX, deltaY) {
+        var tileProps = map[y][x], xDif = 16 - deltaX, yDif = 16 - deltaY, minX = x == 0, maxX = x == map[0].length - 1, minY = y == 0, maxY = y == map.length - 1, topLeft = minX || minY ? null : map[y - 1][x - 1], top = minY ? null : map[y - 1][x], topRight = maxX || minY ? null : map[y - 1][x + 1], left = minX ? null : map[y][x - 1], right = maxX ? null : map[y][x + 1], bottomLeft = minX || maxY ? null : map[y + 1][x - 1], bottom = maxY ? null : map[y + 1][x], bottomRight = maxX || maxY ? null : map[y + 1][x + 1];
         if (tileProps == null)
             return [false, false, false, false];
         var outputCorners = [!minX && !minY, !maxX && !minY, !maxX && !maxY, !minX && !maxY];
-        if (top != null && top.lowerY - tileProps.upperY >= 14) {
+        if (top != null && top.lowerY - tileProps.upperY >= yDif) {
             if (tileProps.leftX == top.leftX || top.collideXAxis(tileProps.leftX - 1))
                 outputCorners[0] = false;
             if (tileProps.rightX == top.rightX || top.collideXAxis(tileProps.rightX + 1))
                 outputCorners[1] = false;
         }
-        if (right != null && tileProps.rightX - right.leftX >= 14) {
+        if (right != null && tileProps.rightX - right.leftX >= xDif) {
             if (tileProps.upperY == right.upperY || right.collideYAxis(tileProps.upperY - 1))
                 outputCorners[1] = false;
             if (tileProps.lowerY == right.lowerY || right.collideYAxis(tileProps.lowerY + 1))
                 outputCorners[2] = false;
         }
-        if (bottom != null && tileProps.lowerY - bottom.upperY >= 14) {
+        if (bottom != null && tileProps.lowerY - bottom.upperY >= yDif) {
             if (tileProps.leftX == bottom.leftX || bottom.collideXAxis(tileProps.leftX - 1))
                 outputCorners[3] = false;
             if (tileProps.rightX == bottom.rightX || bottom.collideXAxis(tileProps.rightX + 1))
                 outputCorners[2] = false;
         }
-        if (left != null && left.rightX - tileProps.leftX >= 14) {
+        if (left != null && left.rightX - tileProps.leftX >= xDif) {
             if (tileProps.upperY == left.upperY || left.collideYAxis(tileProps.upperY - 1))
                 outputCorners[0] = false;
             if (tileProps.lowerY == left.lowerY || left.collideYAxis(tileProps.lowerY + 1))
                 outputCorners[3] = false;
         }
-        if (topLeft != null && topLeft.rightX - tileProps.leftX >= 14 && topLeft.lowerY - tileProps.upperY >= 14)
+        if (topLeft != null && topLeft.rightX - tileProps.leftX >= xDif && topLeft.lowerY - tileProps.upperY >= yDif)
             outputCorners[0] = false;
-        if (topRight != null && tileProps.rightX - topRight.leftX >= 14 && topRight.lowerY - tileProps.upperY >= 14)
+        if (topRight != null && tileProps.rightX - topRight.leftX >= xDif && topRight.lowerY - tileProps.upperY >= yDif)
             outputCorners[1] = false;
-        if (bottomRight != null && tileProps.rightX - bottomRight.leftX >= 14 && tileProps.lowerY - bottomRight.upperY >= 14)
+        if (bottomRight != null && tileProps.rightX - bottomRight.leftX >= xDif && tileProps.lowerY - bottomRight.upperY >= yDif)
             outputCorners[2] = false;
-        if (bottomLeft != null && bottomLeft.rightX - tileProps.leftX >= 14 && tileProps.lowerY - bottomLeft.upperY >= 14)
+        if (bottomLeft != null && bottomLeft.rightX - tileProps.leftX >= xDif && tileProps.lowerY - bottomLeft.upperY >= yDif)
             outputCorners[3] = false;
         return outputCorners;
     }
@@ -357,8 +357,15 @@ var Pathfinding;
             this.nodeIDCounter = 0;
             this.graphics = this.game.add.graphics(0, 0);
             this.stepRate = 4;
+            this.blocks = [];
         }
         Pathfinding.prototype.setupPathfinding = function (x, y) {
+            for (var i = 0; i < this.layer.bodies.length; i++) {
+                var block = Collision.CollisionBlock.createFromBody(this.layer.bodies[i]);
+                if (block != null) {
+                    this.blocks.push(block);
+                }
+            }
             this.setupNodes(2, 2);
             this.stepRate = 1;
             this.setupConnections(0, 0);
@@ -366,23 +373,38 @@ var Pathfinding;
             this.removeUnnecessaryNodes(x, y);
         };
         Pathfinding.prototype.setupNodes = function (deltaX, deltaY) {
-            var layerWidth = this.layer.size['x'], tiles = this.layer.tileIds, coordsOutput = [], map = Collision.getPropMap(tiles, layerWidth, this.parent.getGidOfTileset("Collision").firstgid), xCoord, yCoord, nodeOptions;
+            var layerWidth = this.layer.size['x'], tiles = this.layer.tileIds, coordsOutput = [], map = Collision.getPropMap(tiles, layerWidth, this.parent.getGidOfTileset("Collision").firstgid), xCoord, yCoord, nodeOptions, newNode, curBlock;
             for (var index = 0; index < tiles.length; index++) {
                 if (tiles[index] != 0) {
                     xCoord = index % layerWidth;
                     yCoord = Math.floor(index / layerWidth);
-                    nodeOptions = Collision.tileCornerWaypoint(xCoord, yCoord, map);
+                    nodeOptions = Collision.tileCornerWaypoint(xCoord, yCoord, map, deltaX, deltaY);
+                    curBlock = null;
+                    for (var i = 0; i < this.blocks.length; i++) {
+                        if (this.blocks[i].AABB(xCoord * 16, yCoord * 16, xCoord * 16 + 15, yCoord * 16 + 15))
+                            curBlock = this.blocks[i];
+                    }
+                    if (curBlock == null)
+                        throw new Error("woops this place shouldn't exist");
                     if (nodeOptions[0]) {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this));
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 0);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes.push(newNode);
                     }
                     if (nodeOptions[1]) {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this));
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 1);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes.push(newNode);
                     }
                     if (nodeOptions[2]) {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this));
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 2);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes.push(newNode);
                     }
                     if (nodeOptions[3]) {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this));
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 3);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes.push(newNode);
                     }
                 }
             }
@@ -466,13 +488,11 @@ var Pathfinding;
             graphics.endFill();
         };
         Pathfinding.prototype.raycastLine = function (line, deltaX, deltaY) {
-            var bodies = this.layer.bodies, currentBody, coords = [];
+            var currentBody, coords = [];
             line.coordinatesOnLine(4, coords);
-            for (var i = 0; i < bodies.length; i++) {
-                currentBody = bodies[i];
-                if (currentBody.data.concavePath == null)
-                    continue;
-                var halfWidth = currentBody.data.concavePath[0][0] / 0.05, halfHeight = currentBody.data.concavePath[0][1] / 0.05, minX = currentBody.x - halfWidth - deltaX, maxX = currentBody.x + halfWidth + deltaX, minY = currentBody.y - halfHeight - deltaY, maxY = currentBody.y + halfHeight + deltaY;
+            for (var i = 0; i < this.blocks.length; i++) {
+                currentBody = this.blocks[i];
+                var minX = currentBody.minX - deltaX, maxX = currentBody.maxX + deltaX, minY = currentBody.minY - deltaY, maxY = currentBody.maxY + deltaY;
                 if (!(Math.max(line.start.x, line.end.x) < minX || maxX < Math.min(line.start.x, line.end.x)
                     || Math.max(line.start.y, line.end.y) < minY || maxY < Math.min(line.start.y, line.end.y))) {
                     for (var coordIndex = 0; coordIndex < coords.length; coordIndex++) {
@@ -504,12 +524,14 @@ var Pathfinding;
     })();
     Pathfinding_1.Pathfinding = Pathfinding;
     var Node = (function () {
-        function Node(x, y, pathFinder) {
+        function Node(x, y, pathFinder, block, direction) {
             this.x = x;
             this.y = y;
             this.connections = [];
             this.nodeID = pathFinder.nodeIDCounter;
             pathFinder.nodeIDCounter++;
+            this.block = block;
+            this.direction = direction;
         }
         Node.prototype.connectTo = function (node) {
             this.connections.push(node);
@@ -745,7 +767,7 @@ var Collision;
                         nextLevelBody.onBeginContact.add(this.parent.nextLevel, this.parent);
                         nextLevelBody.debug = debug;
                         this.game.physics.p2.addBody(nextLevelBody);
-                        this.layer.bodies.push(nextLevelBody);
+                        tLayer.bodies.push(nextLevelBody);
                         break;
                     case 1:
                         x = i % mapWidth;
@@ -777,7 +799,7 @@ var GameLevels;
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
             this.colManager = new Collision.CollisionManager(this, this.map, this.map.getTilelayer('Solid'));
-            this.colManager.start(false);
+            this.colManager.start(true);
             this.player = new Entities.Player(this.game, this.colManager.startPos[0], this.colManager.startPos[1], this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
@@ -817,7 +839,7 @@ var MyGame;
             UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
         };
         Game.getNextLevel = function (name) {
-            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6"];
+            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "Level8", "LevelEnd"];
             if (name == "Start")
                 return levelList[0];
             for (var i = 0; i < levelList.length - 1; i++) {
@@ -841,21 +863,23 @@ window.onload = function () {
 var Collision;
 (function (Collision) {
     var CollisionBlock = (function () {
-        function CollisionBlock(childBody) {
-            this.childBody = childBody;
-            var halfWidth = childBody.data.concavePath[0][0] / 0.05, halfHeight = childBody.data.concavePath[0][1] / 0.05;
-            this.minX = childBody.x - halfWidth;
-            this.maxX = childBody.x + halfWidth;
-            this.minY = childBody.y - halfHeight;
-            this.maxY = childBody.y + halfHeight;
-            this.centerX = childBody.x;
-            this.centerY = childBody.y;
+        function CollisionBlock(minX, maxX, minY, maxY, x, y) {
+            this.minX = minX;
+            this.maxX = maxX;
+            this.minY = minY;
+            this.maxY = maxY;
+            this.x = x;
+            this.y = y;
             this.nodes = [];
         }
-        CollisionBlock.create = function (childBody) {
+        CollisionBlock.prototype.AABB = function (xMin, yMin, xMax, yMax) {
+            return !(xMax < this.minX || yMax < this.minY || xMin > this.maxX || yMin > this.maxY);
+        };
+        CollisionBlock.createFromBody = function (childBody) {
             if (childBody.data.concavePath == null)
                 return null;
-            return new CollisionBlock(childBody);
+            var halfWidth = childBody.data.concavePath[0][0] / 0.05, halfHeight = childBody.data.concavePath[0][1] / 0.05;
+            return new CollisionBlock(childBody.x - halfWidth, childBody.x + halfWidth, childBody.y - halfHeight, childBody.y + halfHeight, childBody.x, childBody.y);
         };
         return CollisionBlock;
     })();

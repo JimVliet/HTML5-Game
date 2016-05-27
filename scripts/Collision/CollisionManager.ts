@@ -187,7 +187,7 @@ module Collision
                         nextLevelBody.onBeginContact.add(this.parent.nextLevel, this.parent);
                         nextLevelBody.debug = debug;
                         this.game.physics.p2.addBody(nextLevelBody);
-                        this.layer.bodies.push(nextLevelBody);
+                        tLayer.bodies.push(nextLevelBody);
                         break;
                     case 1:
                         x = i % mapWidth;

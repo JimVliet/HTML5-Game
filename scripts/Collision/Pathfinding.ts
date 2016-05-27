@@ -8,12 +8,14 @@ module Pathfinding
 {
     import Queue = DataStructures.Queue;
     import CollisionManager = Collision.CollisionManager;
+    import CollisionBlock = Collision.CollisionBlock;
     export class Pathfinding
     {
         nodeList: Array<Node>;
         nodeIDCounter: number;
         graphics: Phaser.Graphics;
         stepRate: number;
+        blocks: Array<CollisionBlock>;
 
         constructor(public game: Phaser.Game, public map: Phaser.Plugin.Tiled.Tilemap,
                     public layer: Phaser.Plugin.Tiled.Tilelayer, public parent: CollisionManager)
@@ -21,10 +23,21 @@ module Pathfinding
             this.nodeIDCounter = 0;
             this.graphics = this.game.add.graphics(0,0);
             this.stepRate = 4;
+            this.blocks = [];
         }
 
         setupPathfinding(x: number, y:number)
         {
+            //Create the block list
+            for(var i = 0; i < this.layer.bodies.length; i++)
+            {
+                var block: CollisionBlock = Collision.CollisionBlock.createFromBody(this.layer.bodies[i]);
+                if(block != null)
+                {
+                    this.blocks.push(block);
+                }
+            }
+
             this.setupNodes(2, 2);
             this.stepRate = 1;
             this.setupConnections(0, 0);
@@ -39,7 +52,8 @@ module Pathfinding
             var layerWidth = this.layer.size['x'],
                 tiles = this.layer.tileIds, coordsOutput: Array<Node> = [],
                 map = Collision.getPropMap(tiles, layerWidth, this.parent.getGidOfTileset("Collision").firstgid),
-                xCoord, yCoord, nodeOptions: Array<boolean>;
+                xCoord, yCoord, nodeOptions: Array<boolean>, newNode: Node,
+                curBlock: CollisionBlock;
 
             //Nodeoptions indexes:
             //01
@@ -50,27 +64,44 @@ module Pathfinding
                 if(tiles[index] != 0) {
                     xCoord = index % layerWidth;
                     yCoord = Math.floor(index / layerWidth);
-                    nodeOptions = Collision.tileCornerWaypoint(xCoord, yCoord, map);
+                    nodeOptions = Collision.tileCornerWaypoint(xCoord, yCoord, map, deltaX, deltaY);
+
+                    curBlock = null;
+                    for(var i = 0; i < this.blocks.length; i++)
+                    {
+                        if(this.blocks[i].AABB(xCoord*16, yCoord*16, xCoord*16 +15, yCoord*16 +15))
+                            curBlock = this.blocks[i];
+                    }
+                    if(curBlock == null)
+                        throw new Error("woops this place shouldn't exist");
 
                     if(nodeOptions[0])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -deltaX,
-                            (yCoord * 16) + map[yCoord][xCoord].upperY -deltaY, this));
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX -deltaX,
+                            (yCoord * 16) + map[yCoord][xCoord].upperY -deltaY, this, curBlock, 0);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes.push(newNode);
                     }
                     if(nodeOptions[1])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX,
-                            (yCoord * 16) + map[yCoord][xCoord].upperY -deltaY, this));
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX,
+                            (yCoord * 16) + map[yCoord][xCoord].upperY -deltaY, this, curBlock, 1);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes.push(newNode);
                     }
                     if(nodeOptions[2])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].rightX +deltaX,
-                            (yCoord * 16) + map[yCoord][xCoord].lowerY +deltaY, this));
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX +deltaX,
+                            (yCoord * 16) + map[yCoord][xCoord].lowerY +deltaY, this, curBlock, 2);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes.push(newNode);
                     }
                     if(nodeOptions[3])
                     {
-                        coordsOutput.push(new Node((xCoord * 16) + map[yCoord][xCoord].leftX -deltaX,
-                            (yCoord * 16) + map[yCoord][xCoord].lowerY +deltaY, this));
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX -deltaX,
+                            (yCoord * 16) + map[yCoord][xCoord].lowerY +deltaY, this, curBlock, 3);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes.push(newNode);
                     }
                 }
             }
@@ -202,21 +233,15 @@ module Pathfinding
 
         raycastLine(line: Phaser.Line, deltaX: number, deltaY: number): boolean
         {
-            var bodies: Array<Phaser.Physics.P2.Body> = this.layer.bodies,
-                currentBody, coords = [];
+            var currentBody: CollisionBlock, coords = [];
 
             line.coordinatesOnLine(4, coords);
             //Get all relevant bodies
-            for (var i = 0; i < bodies.length; i++)
+            for (var i = 0; i < this.blocks.length; i++)
             {
-                currentBody = bodies[i];
-                if(currentBody.data.concavePath == null)
-                    continue;
-
-                var halfWidth = currentBody.data.concavePath[0][0] / 0.05,
-                    halfHeight = currentBody.data.concavePath[0][1] / 0.05,
-                    minX = currentBody.x - halfWidth - deltaX, maxX = currentBody.x + halfWidth + deltaX,
-                    minY = currentBody.y - halfHeight - deltaY, maxY = currentBody.y + halfHeight + deltaY;
+                currentBody = this.blocks[i];
+                var minX = currentBody.minX - deltaX, maxX = currentBody.maxX + deltaX,
+                    minY = currentBody.minY - deltaY, maxY = currentBody.maxY + deltaY;
 
                 if(!(Math.max(line.start.x, line.end.x) < minX || maxX < Math.min(line.start.x, line.end.x)
                     || Math.max(line.start.y, line.end.y) < minY || maxY < Math.min(line.start.y, line.end.y)))
@@ -260,12 +285,16 @@ module Pathfinding
     {
         connections: Array<Node>;
         nodeID: number;
+        block: CollisionBlock;
+        direction: number;
 
-        constructor(public x: number, public y: number, pathFinder: Pathfinding)
+        constructor(public x: number, public y: number, pathFinder: Pathfinding, block: CollisionBlock, direction: number)
         {
             this.connections = [];
             this.nodeID = pathFinder.nodeIDCounter;
             pathFinder.nodeIDCounter++;
+            this.block = block;
+            this.direction = direction;
         }
 
         connectTo(node: Node)
