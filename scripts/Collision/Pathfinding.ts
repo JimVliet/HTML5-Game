@@ -80,28 +80,28 @@ module Pathfinding
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX -deltaX,
                             (yCoord * 16) + map[yCoord][xCoord].upperY -deltaY, this, curBlock, 0);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[0] = newNode;
                     }
                     if(nodeOptions[1])
                     {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX,
                             (yCoord * 16) + map[yCoord][xCoord].upperY -deltaY, this, curBlock, 1);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[1] = newNode;
                     }
                     if(nodeOptions[2])
                     {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX +deltaX,
                             (yCoord * 16) + map[yCoord][xCoord].lowerY +deltaY, this, curBlock, 2);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[2] = newNode;
                     }
                     if(nodeOptions[3])
                     {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX -deltaX,
                             (yCoord * 16) + map[yCoord][xCoord].lowerY +deltaY, this, curBlock, 3);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[3] = newNode;
                     }
                 }
             }
@@ -248,7 +248,7 @@ module Pathfinding
                 {
                     for(var coordIndex = 0; coordIndex < coords.length; coordIndex++)
                     {
-                        if(this.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
+                        if(Pathfinding.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
                             return true;
                     }
                 }
@@ -275,7 +275,7 @@ module Pathfinding
             graphics.endFill();
         }
 
-        private containsPoint(rectangle: [number, number, number, number], x, y): boolean
+        static containsPoint(rectangle: [number, number, number, number], x, y): boolean
         {
             return !(x < rectangle[0] || y < rectangle[1] || x > rectangle[2] || y > rectangle[3]);
         }

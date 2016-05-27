@@ -106,6 +106,14 @@ var UtilFunctions;
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
     }
     UtilFunctions.loadGameLevel = loadGameLevel;
+    function sign(testNumb) {
+        if (testNumb < 0)
+            return -1;
+        if (testNumb > 0)
+            return 1;
+        return 0;
+    }
+    UtilFunctions.sign = sign;
 })(UtilFunctions || (UtilFunctions = {}));
 var Manager;
 (function (Manager) {
@@ -389,22 +397,22 @@ var Pathfinding;
                     if (nodeOptions[0]) {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 0);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[0] = newNode;
                     }
                     if (nodeOptions[1]) {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 1);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[1] = newNode;
                     }
                     if (nodeOptions[2]) {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 2);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[2] = newNode;
                     }
                     if (nodeOptions[3]) {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 3);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[3] = newNode;
                     }
                 }
             }
@@ -496,7 +504,7 @@ var Pathfinding;
                 if (!(Math.max(line.start.x, line.end.x) < minX || maxX < Math.min(line.start.x, line.end.x)
                     || Math.max(line.start.y, line.end.y) < minY || maxY < Math.min(line.start.y, line.end.y))) {
                     for (var coordIndex = 0; coordIndex < coords.length; coordIndex++) {
-                        if (this.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
+                        if (Pathfinding.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
                             return true;
                     }
                 }
@@ -517,7 +525,7 @@ var Pathfinding;
             }
             graphics.endFill();
         };
-        Pathfinding.prototype.containsPoint = function (rectangle, x, y) {
+        Pathfinding.containsPoint = function (rectangle, x, y) {
             return !(x < rectangle[0] || y < rectangle[1] || x > rectangle[2] || y > rectangle[3]);
         };
         return Pathfinding;
@@ -863,23 +871,30 @@ window.onload = function () {
 var Collision;
 (function (Collision) {
     var CollisionBlock = (function () {
-        function CollisionBlock(minX, maxX, minY, maxY, x, y) {
+        function CollisionBlock(minX, maxX, minY, maxY) {
             this.minX = minX;
             this.maxX = maxX;
             this.minY = minY;
             this.maxY = maxY;
-            this.x = x;
-            this.y = y;
-            this.nodes = [];
+            this.nodes = [null, null, null, null];
         }
         CollisionBlock.prototype.AABB = function (xMin, yMin, xMax, yMax) {
             return !(xMax < this.minX || yMax < this.minY || xMin > this.maxX || yMin > this.maxY);
+        };
+        CollisionBlock.prototype.getNeededConnections = function (oBlock) {
+            var position, ownNode, othNode;
+            for (var i = 0; i < 4; i++) {
+                ownNode = this.nodes[i];
+                for (var j = 0; j < 4; j++) {
+                    ownNode = oBlock.nodes[j];
+                }
+            }
         };
         CollisionBlock.createFromBody = function (childBody) {
             if (childBody.data.concavePath == null)
                 return null;
             var halfWidth = childBody.data.concavePath[0][0] / 0.05, halfHeight = childBody.data.concavePath[0][1] / 0.05;
-            return new CollisionBlock(childBody.x - halfWidth, childBody.x + halfWidth, childBody.y - halfHeight, childBody.y + halfHeight, childBody.x, childBody.y);
+            return new CollisionBlock(childBody.x - halfWidth, childBody.x + halfWidth, childBody.y - halfHeight, childBody.y + halfHeight);
         };
         return CollisionBlock;
     })();

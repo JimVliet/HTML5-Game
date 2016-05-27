@@ -22,4 +22,13 @@ module UtilFunctions
     {
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
     }
+
+    export function sign(testNumb: number): number
+    {
+        if(testNumb < 0)
+            return -1;
+        if(testNumb > 0)
+            return 1;
+        return 0;
+    }
 }
