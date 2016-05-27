@@ -839,7 +839,7 @@ var MyGame;
             UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
         };
         Game.getNextLevel = function (name) {
-            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "Level8", "LevelEnd"];
+            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "LevelEnd"];
             if (name == "Start")
                 return levelList[0];
             for (var i = 0; i < levelList.length - 1; i++) {
