@@ -25,6 +25,7 @@ module Collision
 
             return new CollisionBlock(childBody.x - halfWidth, childBody.x + halfWidth, childBody.y - halfHeight,
                 childBody.y + halfHeight, childBody.x, childBody.y);
+
         }
     }
 }
