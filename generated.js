@@ -842,7 +842,7 @@ var MyGame;
             this.game.add.plugin(new Phaser.Plugin.Debug(this.game, this.game.stage));
         };
         Game.prototype.create = function () {
-            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
+            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Level4")));
         };
         Game.getNextLevel = function (name) {
             var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "LevelEnd"];
