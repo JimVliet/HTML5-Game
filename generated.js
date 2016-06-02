@@ -106,6 +106,14 @@ var UtilFunctions;
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
     }
     UtilFunctions.loadGameLevel = loadGameLevel;
+    function sign(testNumb) {
+        if (testNumb < 0)
+            return -1;
+        if (testNumb > 0)
+            return 1;
+        return 0;
+    }
+    UtilFunctions.sign = sign;
 })(UtilFunctions || (UtilFunctions = {}));
 var Manager;
 (function (Manager) {
@@ -389,22 +397,22 @@ var Pathfinding;
                     if (nodeOptions[0]) {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 0);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[0] = newNode;
                     }
                     if (nodeOptions[1]) {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 1);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[1] = newNode;
                     }
                     if (nodeOptions[2]) {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 2);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[2] = newNode;
                     }
                     if (nodeOptions[3]) {
                         newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 3);
                         coordsOutput.push(newNode);
-                        curBlock.nodes.push(newNode);
+                        curBlock.nodes[3] = newNode;
                     }
                 }
             }
@@ -496,7 +504,7 @@ var Pathfinding;
                 if (!(Math.max(line.start.x, line.end.x) < minX || maxX < Math.min(line.start.x, line.end.x)
                     || Math.max(line.start.y, line.end.y) < minY || maxY < Math.min(line.start.y, line.end.y))) {
                     for (var coordIndex = 0; coordIndex < coords.length; coordIndex++) {
-                        if (this.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
+                        if (Pathfinding.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
                             return true;
                     }
                 }
@@ -517,7 +525,7 @@ var Pathfinding;
             }
             graphics.endFill();
         };
-        Pathfinding.prototype.containsPoint = function (rectangle, x, y) {
+        Pathfinding.containsPoint = function (rectangle, x, y) {
             return !(x < rectangle[0] || y < rectangle[1] || x > rectangle[2] || y > rectangle[3]);
         };
         return Pathfinding;
@@ -799,13 +807,13 @@ var GameLevels;
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
             this.colManager = new Collision.CollisionManager(this, this.map, this.map.getTilelayer('Solid'));
-            this.colManager.start(true);
+            this.colManager.start(false);
             this.player = new Entities.Player(this.game, this.colManager.startPos[0], this.colManager.startPos[1], this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
             this.game.camera.scale.set(Math.max(1.5, 6 - (Math.round(3840 / this.game.width) / 2)));
             this.graphics = this.game.add.graphics(0, 0);
-            this.colManager.startPathfinding(true);
+            this.colManager.startPathfinding(false);
         };
         Level.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
             if (!contactShape.sensor) {
@@ -816,8 +824,6 @@ var GameLevels;
             }
         };
         Level.prototype.render = function () {
-            this.graphics.clear();
-            this.colManager.pathFinding.debugVisibleNodes(this.player.x, this.player.y + 16, this.graphics);
         };
         return Level;
     })(Phaser.State);
@@ -839,7 +845,7 @@ var MyGame;
             UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
         };
         Game.getNextLevel = function (name) {
-            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "Level8", "LevelEnd"];
+            var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "LevelEnd"];
             if (name == "Start")
                 return levelList[0];
             for (var i = 0; i < levelList.length - 1; i++) {

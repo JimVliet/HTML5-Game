@@ -46,7 +46,7 @@ module GameLevels
 
             //Setup collision and pathFinding
             this.colManager = new Collision.CollisionManager(this, this.map, this.map.getTilelayer('Solid'));
-            this.colManager.start(true);
+            this.colManager.start(false);
 
             //Add player object and setup camera
             this.player = new Entities.Player(this.game, this.colManager.startPos[0], this.colManager.startPos[1], this, 'PlayerTileset', 0);
@@ -56,7 +56,7 @@ module GameLevels
 
             this.graphics = this.game.add.graphics(0,0);
 
-            this.colManager.startPathfinding(true);
+            this.colManager.startPathfinding(false);
         }
 
         nextLevel(body: any, bodyB: any, collidedShape: p2.Shape, contactShape: p2.Shape)
@@ -72,8 +72,8 @@ module GameLevels
 
         render()
         {
-            this.graphics.clear();
-            this.colManager.pathFinding.debugVisibleNodes(this.player.x, this.player.y +16, this.graphics);
+            //this.graphics.clear();
+            //this.colManager.pathFinding.debugVisibleNodes(this.player.x, this.player.y +16, this.graphics);
         }
     }
 }
