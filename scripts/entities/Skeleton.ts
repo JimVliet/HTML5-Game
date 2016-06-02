@@ -12,7 +12,7 @@ module Entities
     import AnimManager = Manager.AnimManager;
     import AnimType = Manager.AnimType;
     import Level = GameLevels.Level;
-    export class Player extends Phaser.Sprite implements MobEntity
+    export class Skeleton extends Phaser.Sprite implements MobEntity
     
     {
         objectType: GameObjectType;
