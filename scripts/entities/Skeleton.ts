@@ -46,7 +46,7 @@ module Entities
             this.hitBox.sensor = true;
 
             //Setup animationManager
-            this.AnimManager = new AnimManager(this, {'Attack': [30,31,32,33,34,35,36,37,38,39,40]});
+            this.AnimManager = new AnimManager(this, {'Attack': [30,31,32,33,34,35,36,37,38,39,]});
             this.AnimManager.attackSignal.add(function()
             {
                 this.moveSpeedMod += 0.6;
