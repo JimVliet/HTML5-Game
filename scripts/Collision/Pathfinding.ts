@@ -102,8 +102,6 @@ module Pathfinding
                             (yCoord * 16) + map[yCoord][xCoord].lowerY +deltaY, this, curBlock, 3);
                         coordsOutput.push(newNode);
                         curBlock.nodes[3] = newNode;
-
-                        
                     }
                 }
             }

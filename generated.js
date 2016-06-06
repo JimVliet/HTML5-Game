@@ -230,14 +230,15 @@ var GameStates;
             this.mapCacheKey = Phaser.Plugin.Tiled.utils.cacheKey(this.mapName, 'tiledmap');
         }
         TiledMapLoader.prototype.preload = function () {
+            this.snek = this.game.add.sprite(this.game.width / 2, this.game.height / 2, "Snek", 11);
+            this.snek.anchor.set(0.5);
+            this.snek.scale.set(11);
+            this.snek.animations.add("Load", [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 15, true);
+            this.snek.animations.play("Load");
             if (gameVar.songManager == null) {
                 SongManager.SongManager.load(this.game);
             }
             this.game.camera.scale.setTo(1, 1);
-            this.MainText = this.game.add.text(this.game.width / 2, this.game.height / 2 - 80, 'Loading ' + this.mapName + " 0%", { fill: '#ffffff' });
-            this.MainText.anchor.x = 0.5;
-            this.SubText = this.game.add.text(this.game.width / 2, this.game.height / 2 + 80, 'Completed loading: ', { fill: '#ffffff' });
-            this.SubText.anchor.x = 0.5;
             this.game.load.tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
             this.StateToStart.customPreload();
             this.game.load.onFileComplete.add(this.fileCompleted, this);
@@ -249,8 +250,6 @@ var GameStates;
             this.game.state.start(this.StateToStart.mapName, true, false);
         };
         TiledMapLoader.prototype.fileCompleted = function (progress, cacheKey) {
-            this.MainText.setText('Loading ' + this.mapName + ' ' + progress + "%");
-            this.SubText.setText('Completed loading: ' + cacheKey);
             if (cacheKey == this.mapCacheKey) {
                 var cacheKeyFunc = Phaser.Plugin.Tiled.utils.cacheKey;
                 var tileSets = this.game.cache.getTilemapData(this.mapCacheKey).data.tilesets;
@@ -263,6 +262,7 @@ var GameStates;
         TiledMapLoader.prototype.shutdown = function () {
             this.game.load.onFileComplete.remove(this.fileCompleted, this);
             this.game.state.remove('TiledMapLoader');
+            this.snek.destroy(true);
         };
         return TiledMapLoader;
     })(Phaser.State);
@@ -840,9 +840,10 @@ var MyGame;
         Game.prototype.preload = function () {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
             this.game.add.plugin(new Phaser.Plugin.Debug(this.game, this.game.stage));
+            this.game.load.spritesheet("Snek", "images/dungeon/Snaksprite.png", 32, 32);
         };
         Game.prototype.create = function () {
-            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Level4")));
+            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
         };
         Game.getNextLevel = function (name) {
             var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "LevelEnd"];
