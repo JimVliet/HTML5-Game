@@ -12,7 +12,7 @@ module Entities
     import AnimManager = Manager.AnimManager;
     import AnimType = Manager.AnimType;
     import Level = GameLevels.Level;
-    export class Skeleton extends Phaser.Sprite implements MobEntity
+    export class Minotaur extends Phaser.Sprite implements MobEntity
     
     {
         objectType: GameObjectType;
@@ -24,6 +24,8 @@ module Entities
         AnimManager: AnimManager;
         canAttack: boolean;
         attackDelay: number;
+        canRoar: boolean;
+        roarDelay: number;
         hitBox: p2.Rectangle;
         
         constructor(game: Phaser.Game, x: number, y: number, currentLevel: Level, key?: string | Phaser.RenderTexture | Phaser.BitmapData | PIXI.Texture, frame?: string | number)
@@ -31,12 +33,14 @@ module Entities
             super(game, x, y,  key, frame);
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
-            this.baseMoveSpeed = 100;
+            this.baseMoveSpeed = 80;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
+            this.canRoar = true;
+            this.roarDelay = 3000;
 
-            //Setup physics and the Skeleton body
+            //Setup physics and the Minotaur body
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5,0.5);
             this.body.clearShapes();
@@ -50,6 +54,11 @@ module Entities
             this.AnimManager.attackSignal.add(function()
             {
                 this.moveSpeedMod += 0.6;
+            }, this);
+            this.AnimManager = new AnimManager(this, {'Attack': [10,11,12,13,14,15,16,17,18,19,]});
+            this.AnimManager.roarSignal.add(function()
+            {
+                this.moveSpeedMod += 0;
             }, this);
         }
         
@@ -76,7 +85,18 @@ module Entities
             }, this);
             timer.start();
             this.canAttack = false;
-            this.moveSpeedMod -= 0.6;
+            this.moveSpeedMod -= 0.6; 
+        }z
+        roar()
+        {
+            this.AnimManager.roar();
+            var timer = this.game.time.add(new Phaser.Timer(this.game, true));
+            timer.add(this.roarDelay, funtion()
+            {
+                this.canRoar = true;
+            }, this);
+            timer.canRoar = false;
+            this.moveSpeedmod -= 0;
         }
     }
 }
