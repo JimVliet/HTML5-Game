@@ -27,7 +27,7 @@ module MyGame
 
         create()
         {
-            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
+            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Level4")));
         }
 
         static getNextLevel(name: string): string
