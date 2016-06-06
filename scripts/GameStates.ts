@@ -14,8 +14,6 @@ module GameStates
         mapName: string;
         mapURL: string;
         StateToStart: Level;
-        MainText: Phaser.Text;
-        SubText: Phaser.Text;
         mapCacheKey: string;
 
         constructor(game: Phaser.Game, state: Level)
@@ -35,10 +33,8 @@ module GameStates
                 SongManager.SongManager.load(this.game);
             }
             this.game.camera.scale.setTo(1, 1);
-            this.MainText = this.game.add.text(this.game.width/2, this.game.height/2 - 80, 'Loading ' + this.mapName + " 0%", {fill: '#ffffff'});
-            this.MainText.anchor.x = 0.5;
-            this.SubText = this.game.add.text(this.game.width/2, this.game.height/2 + 80, 'Completed loading: ', {fill: '#ffffff'});
-            this.SubText.anchor.x = 0.5;
+            
+            this.game.load.spritesheet('snek', '../images/dungeon/Snaksprite.png', 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
 
             (<any>this.game.load).tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
 
@@ -59,8 +55,6 @@ module GameStates
 
         fileCompleted(progress: number, cacheKey: string)
         {
-            this.MainText.setText('Loading ' + this.mapName + ' ' + progress + "%");
-            this.SubText.setText('Completed loading: ' + cacheKey);
 
             if (cacheKey == this.mapCacheKey)
             {
