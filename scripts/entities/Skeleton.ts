@@ -29,9 +29,9 @@ module Entities
         constructor(game: Phaser.Game, x: number, y: number, currentLevel: Level, key?: string | Phaser.RenderTexture | Phaser.BitmapData | PIXI.Texture, frame?: string | number)
         {
             super(game, x, y,  key, frame);
-            this.objectType = GameObjectType.PLAYER;
+            this.objectType = GameObjectType.SKELETON;
             this.currentLevel = currentLevel;
-            this.baseMoveSpeed = 100;
+            this.baseMoveSpeed = 40;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
@@ -40,13 +40,15 @@ module Entities
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5,0.5);
             this.body.clearShapes();
+            this.body.mass *= 10;
+            this.z
             this.body.fixedRotation = true;
             this.body.addRectangle(14,5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
 
             //Setup animationManager
-            this.AnimManager = new AnimManager(this, {'Attack': [30,31,32,33,34,35,36,37,38,39,]});
+            this.AnimManager = new AnimManager(this, undefined);
             this.AnimManager.attackSignal.add(function()
             {
                 this.moveSpeedMod += 0.6;
@@ -57,6 +59,8 @@ module Entities
         update()
         {
             this.updateMoveSpeed();
+            this.AnimManager.updateAnimation(AnimType.IDLE);
+            this.body.setZeroVelocity();
         }
 
         updateMoveSpeed()
@@ -64,8 +68,7 @@ module Entities
             this.moveSpeed = this.baseMoveSpeed * this.moveSpeedMod;
         }
         
-        // Monster AI 
-        
+        // Monster AI
         attack()
         {
             this.AnimManager.attack();

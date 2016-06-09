@@ -209,6 +209,7 @@ var GameObjects;
 (function (GameObjects) {
     (function (GameObjectType) {
         GameObjectType[GameObjectType["PLAYER"] = 0] = "PLAYER";
+        GameObjectType[GameObjectType["SKELETON"] = 1] = "SKELETON";
     })(GameObjects.GameObjectType || (GameObjects.GameObjectType = {}));
     var GameObjectType = GameObjects.GameObjectType;
 })(GameObjects || (GameObjects = {}));
@@ -765,10 +766,10 @@ var Collision;
                 if (tiles[i] < fGid && tiles[i] > lGid)
                     continue;
                 curID = tiles[i] - fGid;
+                x = i % mapWidth;
+                y = Math.floor(i / mapWidth);
                 switch (curID) {
                     case 0:
-                        x = i % mapWidth;
-                        y = Math.floor(i / mapWidth);
                         var nextLevelBody = this.game.physics.p2.createBody(x * this.map.tileWidth, y * this.map.tileHeight, 0, false);
                         nextLevelBody.addPolygon({}, [[0, 0], [this.map.tileWidth - 1, 0],
                             [this.map.tileWidth - 1, this.map.tileHeight - 1], [0, this.map.tileHeight - 1]]);
@@ -778,9 +779,12 @@ var Collision;
                         tLayer.bodies.push(nextLevelBody);
                         break;
                     case 1:
-                        x = i % mapWidth;
-                        y = Math.floor(i / mapWidth);
                         this.startPos = [x * this.map.tileWidth + 8, y * this.map.tileHeight - 15];
+                        break;
+                    case 5:
+                        var skeleton = new Entities.Skeleton(this.game, x * 16, y * 16, this.parent, "Skeleton", 0);
+                        this.map.getTilelayer("Player").add(skeleton);
+                        this.parent.mobs.push(skeleton);
                         break;
                 }
             }
@@ -798,16 +802,18 @@ var GameLevels;
             this.game = game;
             this.mapName = map;
             this.mapURL = 'maps/' + map + '.json';
+            this.mobs = [];
         }
         Level.prototype.customPreload = function () {
             this.game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+            this.game.load.spritesheet('Skeleton', 'images/dungeon/skeleton.png', 32, 32);
         };
         Level.prototype.create = function () {
             this.game.physics.startSystem(Phaser.Physics.P2JS);
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
             this.colManager = new Collision.CollisionManager(this, this.map, this.map.getTilelayer('Solid'));
-            this.colManager.start(false);
+            this.colManager.start(true);
             this.player = new Entities.Player(this.game, this.colManager.startPos[0], this.colManager.startPos[1], this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
@@ -815,8 +821,11 @@ var GameLevels;
             this.graphics = this.game.add.graphics(0, 0);
             this.colManager.startPathfinding(false);
         };
+        Level.prototype.update = function () {
+            this.map.getTilelayer("Player").sort("y", Phaser.Group.SORT_ASCENDING);
+        };
         Level.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
-            if (!contactShape.sensor) {
+            if (!contactShape.sensor && body.data.id == this.player.body.data.id) {
                 var nextLvl = MyGame.Game.getNextLevel(this.mapName);
                 if (nextLvl == null)
                     return;
@@ -896,30 +905,35 @@ var Entities;
 (function (Entities) {
     var GameObjectType = GameObjects.GameObjectType;
     var AnimManager = Manager.AnimManager;
+    var AnimType = Manager.AnimType;
     var Skeleton = (function (_super) {
         __extends(Skeleton, _super);
         function Skeleton(game, x, y, currentLevel, key, frame) {
             _super.call(this, game, x, y, key, frame);
-            this.objectType = GameObjectType.PLAYER;
+            this.objectType = GameObjectType.SKELETON;
             this.currentLevel = currentLevel;
-            this.baseMoveSpeed = 100;
+            this.baseMoveSpeed = 40;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
             this.body.clearShapes();
+            this.body.mass *= 10;
+            this.z;
             this.body.fixedRotation = true;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
-            this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] });
+            this.AnimManager = new AnimManager(this, undefined);
             this.AnimManager.attackSignal.add(function () {
                 this.moveSpeedMod += 0.6;
             }, this);
         }
         Skeleton.prototype.update = function () {
             this.updateMoveSpeed();
+            this.AnimManager.updateAnimation(AnimType.IDLE);
+            this.body.setZeroVelocity();
         };
         Skeleton.prototype.updateMoveSpeed = function () {
             this.moveSpeed = this.baseMoveSpeed * this.moveSpeedMod;

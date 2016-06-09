@@ -10,7 +10,7 @@ module GameObjects
     import Level = GameLevels.Level;
     export enum GameObjectType
     {
-        PLAYER
+        PLAYER, SKELETON
     }
 
     export interface GameObject

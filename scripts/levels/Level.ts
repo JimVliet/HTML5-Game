@@ -12,6 +12,7 @@ module GameLevels
     import Tiled = Phaser.Plugin.Tiled;
     import GameObject = GameObjects.GameObject;
     import CollisionManager = Collision.CollisionManager;
+    import MobEntity = GameObjects.MobEntity;
     export class Level extends Phaser.State
     {
         game: Phaser.Game;
@@ -21,6 +22,7 @@ module GameLevels
         player: GameObject & Phaser.Sprite;
         colManager: CollisionManager;
         graphics: Phaser.Graphics;
+        mobs: Array<Phaser.Sprite & MobEntity>;
 
         constructor(game: Phaser.Game, map: string)
         {
@@ -28,11 +30,13 @@ module GameLevels
             this.game = game;
             this.mapName = map;
             this.mapURL = 'maps/' + map + '.json';
+            this.mobs = [];
         }
 
         customPreload(): void
         {
             this.game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+            this.game.load.spritesheet('Skeleton', 'images/dungeon/skeleton.png', 32, 32);
         }
 
         create()
@@ -46,7 +50,7 @@ module GameLevels
 
             //Setup collision and pathFinding
             this.colManager = new Collision.CollisionManager(this, this.map, this.map.getTilelayer('Solid'));
-            this.colManager.start(false);
+            this.colManager.start(true);
 
             //Add player object and setup camera
             this.player = new Entities.Player(this.game, this.colManager.startPos[0], this.colManager.startPos[1], this, 'PlayerTileset', 0);
@@ -59,9 +63,14 @@ module GameLevels
             this.colManager.startPathfinding(false);
         }
 
+        update()
+        {
+            this.map.getTilelayer("Player").sort("y", Phaser.Group.SORT_ASCENDING);
+        }
+
         nextLevel(body: any, bodyB: any, collidedShape: p2.Shape, contactShape: p2.Shape)
         {
-            if(!contactShape.sensor)
+            if(!contactShape.sensor && body.data.id == this.player.body.data.id)
             {
                 var nextLvl = MyGame.Game.getNextLevel(this.mapName);
                 if(nextLvl == null)
