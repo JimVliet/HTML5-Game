@@ -281,15 +281,19 @@ module Pathfinding
         }
     }
 
-    export class Node
+    export class Node implements location
     {
         connections: Array<Node>;
         nodeID: number;
         block: CollisionBlock;
         direction: number;
+        x: number;
+        y: number;
 
-        constructor(public x: number, public y: number, pathFinder: Pathfinding, block: CollisionBlock, direction: number)
+        constructor(x: number, y: number, pathFinder: Pathfinding, block: CollisionBlock, direction: number)
         {
+            this.x = x;
+            this.y = y;
             this.connections = [];
             this.nodeID = pathFinder.nodeIDCounter;
             pathFinder.nodeIDCounter++;
@@ -322,5 +326,11 @@ module Pathfinding
                 this.connections[i].disconnect(this);
             }
         }
+    }
+
+    export interface location
+    {
+        x: number;
+        y: number;
     }
 }

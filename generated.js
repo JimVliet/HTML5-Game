@@ -782,7 +782,7 @@ var Collision;
                         this.startPos = [x * this.map.tileWidth + 8, y * this.map.tileHeight - 15];
                         break;
                     case 5:
-                        var skeleton = new Entities.Skeleton(this.game, x * 16, y * 16, this.parent, "Skeleton", 0);
+                        var skeleton = new Entities.Skeleton(this.game, x * 16 + 8, y * 16 - 4, this.parent, "Skeleton", 0);
                         this.map.getTilelayer("Player").add(skeleton);
                         this.parent.mobs.push(skeleton);
                         break;
@@ -813,7 +813,7 @@ var GameLevels;
             this.map = this.game.add.tiledmap(this.mapName);
             this.game.time.advancedTiming = true;
             this.colManager = new Collision.CollisionManager(this, this.map, this.map.getTilelayer('Solid'));
-            this.colManager.start(true);
+            this.colManager.start(false);
             this.player = new Entities.Player(this.game, this.colManager.startPos[0], this.colManager.startPos[1], this, 'PlayerTileset', 0);
             this.map.getTilelayer('Player').add(this.player);
             this.game.camera.follow(this.player);
@@ -920,7 +920,6 @@ var Entities;
             this.anchor.setTo(0.5, 0.5);
             this.body.clearShapes();
             this.body.mass *= 10;
-            this.z;
             this.body.fixedRotation = true;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
@@ -947,6 +946,10 @@ var Entities;
             timer.start();
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
+        };
+        Skeleton.prototype.updateAI = function (pathFinding) {
+            if (!pathFinding.raycastLine(new Phaser.Line(this.x + 16, this.y + 16, this.currentLevel.player.x + 16, this.currentLevel.player.y + 16), 0, 0)) {
+            }
         };
         return Skeleton;
     })(Phaser.Sprite);

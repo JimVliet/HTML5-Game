@@ -26,5 +26,7 @@ module GameObjects
         moveSpeedMod: number;
         AnimManager: AnimManager;
         attackDelay: number;
+
+        updateAI(pathFinding: Pathfinding.Pathfinding): void;
     }
 }

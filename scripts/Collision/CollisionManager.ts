@@ -193,7 +193,7 @@ module Collision
                         this.startPos = [x*this.map.tileWidth +8, y*this.map.tileHeight-15];
                         break;
                     case 5:
-                        var skeleton = new Entities.Skeleton(this.game, x*16, y*16, this.parent, "Skeleton", 0);
+                        var skeleton = new Entities.Skeleton(this.game, x*16 +8, y*16 -4, this.parent, "Skeleton", 0);
                         this.map.getTilelayer("Player").add(skeleton);
                         this.parent.mobs.push(skeleton);
                         break;

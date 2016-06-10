@@ -41,7 +41,6 @@ module Entities
             this.anchor.setTo(0.5,0.5);
             this.body.clearShapes();
             this.body.mass *= 10;
-            this.z
             this.body.fixedRotation = true;
             this.body.addRectangle(14,5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
@@ -80,6 +79,14 @@ module Entities
             timer.start();
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
+        }
+
+        updateAI(pathFinding: Pathfinding.Pathfinding)
+        {
+            if(!pathFinding.raycastLine(new Phaser.Line(this.x +16, this.y+16, this.currentLevel.player.x+16, this.currentLevel.player.y+16), 0, 0))
+            {
+
+            }
         }
     }
 }
