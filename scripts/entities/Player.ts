@@ -7,7 +7,7 @@
 
 module Entities
 {
-    import MobEntity = GameObjects.MobEntity;
+    import MobEntity = GameObjects.Entity;
     import GameObjectType = GameObjects.GameObjectType;
     import AnimManager = Manager.AnimManager;
     import AnimType = Manager.AnimType;
@@ -32,7 +32,7 @@ module Entities
             super(game, x, y,  key, frame);
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
-            this.baseMoveSpeed = 100;
+            this.baseMoveSpeed = 55;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
@@ -46,6 +46,7 @@ module Entities
             this.body.addRectangle(14,5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
+            this.body.mass *= 20;
 
             //Setup animationManager
             this.AnimManager = new AnimManager(this, {'Attack': [30,31,32,33,34,35,35,34,33,32,31]});
@@ -142,7 +143,7 @@ module Entities
 
         attack()
         {
-            this.AnimManager.attack();
+            this.AnimManager.attack(-1);
             var timer = this.game.time.add(new Phaser.Timer(this.game, true));
             timer.add(this.attackDelay, function()
             {

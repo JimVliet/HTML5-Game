@@ -12,6 +12,7 @@ module GameLevels
     import Tiled = Phaser.Plugin.Tiled;
     import GameObject = GameObjects.GameObject;
     import CollisionManager = Collision.CollisionManager;
+    import Mob = GameObjects.Mob;
     export class Level extends Phaser.State
     {
         game: Phaser.Game;
@@ -21,6 +22,7 @@ module GameLevels
         player: GameObject & Phaser.Sprite;
         colManager: CollisionManager;
         graphics: Phaser.Graphics;
+        mobs: Array<Phaser.Sprite & Mob>;
 
         constructor(game: Phaser.Game, map: string)
         {
@@ -28,11 +30,13 @@ module GameLevels
             this.game = game;
             this.mapName = map;
             this.mapURL = 'maps/' + map + '.json';
+            this.mobs = [];
         }
 
         customPreload(): void
         {
             this.game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+            this.game.load.spritesheet('Skeleton', 'images/dungeon/skeleton.png', 32, 32);
         }
 
         create()
@@ -59,9 +63,14 @@ module GameLevels
             this.colManager.startPathfinding(false);
         }
 
+        update()
+        {
+            this.map.getTilelayer("Player").sort("y", Phaser.Group.SORT_ASCENDING);
+        }
+
         nextLevel(body: any, bodyB: any, collidedShape: p2.Shape, contactShape: p2.Shape)
         {
-            if(!contactShape.sensor)
+            if(!contactShape.sensor && body.data.id == this.player.body.data.id)
             {
                 var nextLvl = MyGame.Game.getNextLevel(this.mapName);
                 if(nextLvl == null)
@@ -72,8 +81,20 @@ module GameLevels
 
         render()
         {
-            //this.graphics.clear();
+            this.graphics.clear();
             //this.colManager.pathFinding.debugVisibleNodes(this.player.x, this.player.y +16, this.graphics);
+            this.graphics.beginFill();
+            this.graphics.lineStyle(0.3, 0xFF00FF, 1);
+
+            for(var i = 0; i < this.mobs.length; i++)
+            {
+                if(this.mobs[i].path[0] == null)
+                    continue;
+                this.graphics.moveTo(this.mobs[i].x, this.mobs[i].y+16);
+                this.graphics.lineTo(this.mobs[i].path[0].x, this.mobs[i].path[0].y);
+            }
+
+            this.graphics.endFill();
         }
     }
 }

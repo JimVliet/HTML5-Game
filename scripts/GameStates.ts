@@ -15,6 +15,7 @@ module GameStates
         mapURL: string;
         StateToStart: Level;
         mapCacheKey: string;
+        snek: Phaser.Sprite;
 
         constructor(game: Phaser.Game, state: Level)
         {
@@ -28,13 +29,17 @@ module GameStates
 
         preload()
         {
+            this.snek = this.game.add.sprite(this.game.width/2, this.game.height/2, "Snek", 11);
+            this.snek.anchor.set(0.5);
+            this.snek.scale.set(11);
+            this.snek.animations.add("Load", [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 15, true);
+            this.snek.animations.play("Load");
+
             if(gameVar.songManager == null)
             {
                 SongManager.SongManager.load(this.game);
             }
             this.game.camera.scale.setTo(1, 1);
-            
-            this.game.load.spritesheet('snek', '../images/dungeon/Snaksprite.png', 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
 
             (<any>this.game.load).tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
 
@@ -73,6 +78,7 @@ module GameStates
         {
             this.game.load.onFileComplete.remove(this.fileCompleted, this);
             this.game.state.remove('TiledMapLoader');
+            this.snek.destroy(true);
         }
     }
 }

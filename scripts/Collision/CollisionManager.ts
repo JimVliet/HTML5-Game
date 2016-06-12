@@ -176,11 +176,11 @@ module Collision
                 if(tiles[i] < fGid && tiles[i] > lGid)
                     continue;
                 curID = tiles[i] - fGid;
+                x = i % mapWidth;
+                y = Math.floor(i / mapWidth);
                 switch(curID)
                 {
                     case 0:
-                        x = i % mapWidth;
-                        y = Math.floor(i / mapWidth);
                         var nextLevelBody = this.game.physics.p2.createBody(x*this.map.tileWidth, y*this.map.tileHeight, 0, false);
                         nextLevelBody.addPolygon({}, [[0,0], [this.map.tileWidth-1, 0],
                             [this.map.tileWidth-1, this.map.tileHeight-1], [0, this.map.tileHeight-1]]);
@@ -190,9 +190,12 @@ module Collision
                         tLayer.bodies.push(nextLevelBody);
                         break;
                     case 1:
-                        x = i % mapWidth;
-                        y = Math.floor(i / mapWidth);
                         this.startPos = [x*this.map.tileWidth +8, y*this.map.tileHeight-15];
+                        break;
+                    case 5:
+                        var skeleton = new Entities.Skeleton(this.game, x*16 +8, y*16 -4, this.parent, "Skeleton", 0);
+                        this.map.getTilelayer("Player").add(skeleton);
+                        this.parent.mobs.push(skeleton);
                         break;
                 }
             }

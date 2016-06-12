@@ -23,11 +23,12 @@ module MyGame
         {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
             this.game.add.plugin(new (<any>Phaser.Plugin).Debug(this.game, this.game.stage));
+            this.game.load.spritesheet("Snek", "images/dungeon/Snaksprite.png", 32, 32);
         }
 
         create()
         {
-            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Level4")));
+            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
         }
 
         static getNextLevel(name: string): string

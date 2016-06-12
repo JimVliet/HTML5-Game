@@ -114,6 +114,10 @@ var UtilFunctions;
         return 0;
     }
     UtilFunctions.sign = sign;
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min)) + min;
+    }
+    UtilFunctions.getRandomInt = getRandomInt;
 })(UtilFunctions || (UtilFunctions = {}));
 var Manager;
 (function (Manager) {
@@ -139,8 +143,11 @@ var Manager;
             this.current = AnimType.IDLE;
             this.attackSignal = new Phaser.Signal();
         }
-        AnimManager.prototype.attack = function () {
-            this.gameObject.animations.play('Attack');
+        AnimManager.prototype.attack = function (animSpeed) {
+            if (animSpeed < 0)
+                this.gameObject.animations.play('Attack');
+            else
+                this.gameObject.animations.play('Attack', animSpeed, false);
             this.current = AnimType.ATTACK;
         };
         AnimManager.prototype.attackDone = function () {
@@ -209,6 +216,7 @@ var GameObjects;
 (function (GameObjects) {
     (function (GameObjectType) {
         GameObjectType[GameObjectType["PLAYER"] = 0] = "PLAYER";
+        GameObjectType[GameObjectType["SKELETON"] = 1] = "SKELETON";
     })(GameObjects.GameObjectType || (GameObjects.GameObjectType = {}));
     var GameObjectType = GameObjects.GameObjectType;
 })(GameObjects || (GameObjects = {}));
@@ -230,14 +238,15 @@ var GameStates;
             this.mapCacheKey = Phaser.Plugin.Tiled.utils.cacheKey(this.mapName, 'tiledmap');
         }
         TiledMapLoader.prototype.preload = function () {
+            this.snek = this.game.add.sprite(this.game.width / 2, this.game.height / 2, "Snek", 11);
+            this.snek.anchor.set(0.5);
+            this.snek.scale.set(11);
+            this.snek.animations.add("Load", [11, 12, 13, 14, 15, 16, 17, 18, 19, 20], 15, true);
+            this.snek.animations.play("Load");
             if (gameVar.songManager == null) {
                 SongManager.SongManager.load(this.game);
             }
             this.game.camera.scale.setTo(1, 1);
-            this.MainText = this.game.add.text(this.game.width / 2, this.game.height / 2 - 80, 'Loading ' + this.mapName + " 0%", { fill: '#ffffff' });
-            this.MainText.anchor.x = 0.5;
-            this.SubText = this.game.add.text(this.game.width / 2, this.game.height / 2 + 80, 'Completed loading: ', { fill: '#ffffff' });
-            this.SubText.anchor.x = 0.5;
             this.game.load.tiledmap(this.mapCacheKey, this.StateToStart.mapURL, null, Phaser.Tilemap.TILED_JSON);
             this.StateToStart.customPreload();
             this.game.load.onFileComplete.add(this.fileCompleted, this);
@@ -249,8 +258,6 @@ var GameStates;
             this.game.state.start(this.StateToStart.mapName, true, false);
         };
         TiledMapLoader.prototype.fileCompleted = function (progress, cacheKey) {
-            this.MainText.setText('Loading ' + this.mapName + ' ' + progress + "%");
-            this.SubText.setText('Completed loading: ' + cacheKey);
             if (cacheKey == this.mapCacheKey) {
                 var cacheKeyFunc = Phaser.Plugin.Tiled.utils.cacheKey;
                 var tileSets = this.game.cache.getTilemapData(this.mapCacheKey).data.tilesets;
@@ -263,6 +270,7 @@ var GameStates;
         TiledMapLoader.prototype.shutdown = function () {
             this.game.load.onFileComplete.remove(this.fileCompleted, this);
             this.game.state.remove('TiledMapLoader');
+            this.snek.destroy(true);
         };
         return TiledMapLoader;
     })(Phaser.State);
@@ -573,7 +581,7 @@ var Entities;
             _super.call(this, game, x, y, key, frame);
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
-            this.baseMoveSpeed = 100;
+            this.baseMoveSpeed = 55;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
@@ -585,6 +593,7 @@ var Entities;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
+            this.body.mass *= 20;
             this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 35, 34, 33, 32, 31] });
             this.AnimManager.attackSignal.add(function () {
                 this.moveSpeedMod += 0.6;
@@ -657,7 +666,7 @@ var Entities;
             this.AnimManager.updateAnimation(anim);
         };
         Player.prototype.attack = function () {
-            this.AnimManager.attack();
+            this.AnimManager.attack(-1);
             var timer = this.game.time.add(new Phaser.Timer(this.game, true));
             timer.add(this.attackDelay, function () {
                 this.canAttack = true;
@@ -765,10 +774,10 @@ var Collision;
                 if (tiles[i] < fGid && tiles[i] > lGid)
                     continue;
                 curID = tiles[i] - fGid;
+                x = i % mapWidth;
+                y = Math.floor(i / mapWidth);
                 switch (curID) {
                     case 0:
-                        x = i % mapWidth;
-                        y = Math.floor(i / mapWidth);
                         var nextLevelBody = this.game.physics.p2.createBody(x * this.map.tileWidth, y * this.map.tileHeight, 0, false);
                         nextLevelBody.addPolygon({}, [[0, 0], [this.map.tileWidth - 1, 0],
                             [this.map.tileWidth - 1, this.map.tileHeight - 1], [0, this.map.tileHeight - 1]]);
@@ -778,9 +787,12 @@ var Collision;
                         tLayer.bodies.push(nextLevelBody);
                         break;
                     case 1:
-                        x = i % mapWidth;
-                        y = Math.floor(i / mapWidth);
                         this.startPos = [x * this.map.tileWidth + 8, y * this.map.tileHeight - 15];
+                        break;
+                    case 5:
+                        var skeleton = new Entities.Skeleton(this.game, x * 16 + 8, y * 16 - 4, this.parent, "Skeleton", 0);
+                        this.map.getTilelayer("Player").add(skeleton);
+                        this.parent.mobs.push(skeleton);
                         break;
                 }
             }
@@ -798,9 +810,11 @@ var GameLevels;
             this.game = game;
             this.mapName = map;
             this.mapURL = 'maps/' + map + '.json';
+            this.mobs = [];
         }
         Level.prototype.customPreload = function () {
             this.game.load.spritesheet('PlayerTileset', 'images/dungeon/rogue.png', 32, 32);
+            this.game.load.spritesheet('Skeleton', 'images/dungeon/skeleton.png', 32, 32);
         };
         Level.prototype.create = function () {
             this.game.physics.startSystem(Phaser.Physics.P2JS);
@@ -815,8 +829,11 @@ var GameLevels;
             this.graphics = this.game.add.graphics(0, 0);
             this.colManager.startPathfinding(false);
         };
+        Level.prototype.update = function () {
+            this.map.getTilelayer("Player").sort("y", Phaser.Group.SORT_ASCENDING);
+        };
         Level.prototype.nextLevel = function (body, bodyB, collidedShape, contactShape) {
-            if (!contactShape.sensor) {
+            if (!contactShape.sensor && body.data.id == this.player.body.data.id) {
                 var nextLvl = MyGame.Game.getNextLevel(this.mapName);
                 if (nextLvl == null)
                     return;
@@ -824,6 +841,16 @@ var GameLevels;
             }
         };
         Level.prototype.render = function () {
+            this.graphics.clear();
+            this.graphics.beginFill();
+            this.graphics.lineStyle(0.3, 0xFF00FF, 1);
+            for (var i = 0; i < this.mobs.length; i++) {
+                if (this.mobs[i].path[0] == null)
+                    continue;
+                this.graphics.moveTo(this.mobs[i].x, this.mobs[i].y + 16);
+                this.graphics.lineTo(this.mobs[i].path[0].x, this.mobs[i].path[0].y);
+            }
+            this.graphics.endFill();
         };
         return Level;
     })(Phaser.State);
@@ -840,9 +867,10 @@ var MyGame;
         Game.prototype.preload = function () {
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
             this.game.add.plugin(new Phaser.Plugin.Debug(this.game, this.game.stage));
+            this.game.load.spritesheet("Snek", "images/dungeon/Snaksprite.png", 32, 32);
         };
         Game.prototype.create = function () {
-            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Level4")));
+            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
         };
         Game.getNextLevel = function (name) {
             var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "LevelEnd"];
@@ -891,40 +919,85 @@ var Collision;
     })();
     Collision.CollisionBlock = CollisionBlock;
 })(Collision || (Collision = {}));
+var UtilFunctions;
+(function (UtilFunctions) {
+    var Coords = (function () {
+        function Coords(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+        return Coords;
+    })();
+    UtilFunctions.Coords = Coords;
+})(UtilFunctions || (UtilFunctions = {}));
 var Entities;
 (function (Entities) {
     var GameObjectType = GameObjects.GameObjectType;
     var AnimManager = Manager.AnimManager;
+    var AnimType = Manager.AnimType;
     var Skeleton = (function (_super) {
         __extends(Skeleton, _super);
         function Skeleton(game, x, y, currentLevel, key, frame) {
             _super.call(this, game, x, y, key, frame);
-            this.objectType = GameObjectType.PLAYER;
+            this.objectType = GameObjectType.SKELETON;
             this.currentLevel = currentLevel;
-            this.baseMoveSpeed = 100;
+            this.baseMoveSpeed = 40;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
+            this.path = [];
+            this.isRoaming = false;
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
             this.body.clearShapes();
+            this.body.mass *= 5;
             this.body.fixedRotation = true;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
-            this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40] });
+            this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 38, 39] });
             this.AnimManager.attackSignal.add(function () {
                 this.moveSpeedMod += 0.6;
             }, this);
         }
         Skeleton.prototype.update = function () {
+            this.body.setZeroVelocity();
             this.updateMoveSpeed();
+            this.updateAI(this.currentLevel.colManager.pathFinding);
+            if (this.path[0] != null) {
+                this.followPath();
+                var deltaX = this.x - this.path[0].x, deltaY = (this.y + 16) - this.path[0].y;
+                if (deltaX * deltaX + deltaY * deltaY < 300) {
+                    if (this.canAttack) {
+                        this.AnimManager.updateAnimation(AnimType.ATTACK);
+                        this.attack();
+                    }
+                }
+            }
+            else {
+                this.AnimManager.updateAnimation(AnimType.IDLE);
+            }
+        };
+        Skeleton.prototype.followPath = function () {
+            var angleBetween = Math.atan2(this.path[0].x - this.x, this.path[0].y - (this.y + 16)), deltaY = Math.cos(angleBetween), deltaX = Math.sin(angleBetween);
+            this.body.moveRight(deltaX * this.moveSpeed);
+            this.body.moveDown(deltaY * this.moveSpeed);
+            if (deltaX > 0)
+                this.AnimManager.updateAnimation(AnimType.RIGHT);
+            else if (deltaX < 0)
+                this.AnimManager.updateAnimation(AnimType.LEFT);
+            else {
+                if (deltaY == 0)
+                    this.AnimManager.updateAnimation(AnimType.IDLE);
+                else
+                    this.AnimManager.updateAnimation(AnimType.UPDOWN);
+            }
         };
         Skeleton.prototype.updateMoveSpeed = function () {
             this.moveSpeed = this.baseMoveSpeed * this.moveSpeedMod;
         };
         Skeleton.prototype.attack = function () {
-            this.AnimManager.attack();
+            this.AnimManager.attack(20);
             var timer = this.game.time.add(new Phaser.Timer(this.game, true));
             timer.add(this.attackDelay, function () {
                 this.canAttack = true;
@@ -932,6 +1005,15 @@ var Entities;
             timer.start();
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
+        };
+        Skeleton.prototype.updateAI = function (pathFinding) {
+            var line = new Phaser.Line(this.x, this.y + 16, this.currentLevel.player.x, this.currentLevel.player.y + 16);
+            if (!pathFinding.raycastLine(line, 6.5, 2)) {
+                this.path = [new UtilFunctions.Coords(this.currentLevel.player.x, this.currentLevel.player.y + 16)];
+            }
+            else {
+                this.path = [];
+            }
         };
         return Skeleton;
     })(Phaser.Sprite);
