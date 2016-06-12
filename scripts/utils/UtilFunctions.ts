@@ -31,4 +31,9 @@ module UtilFunctions
             return 1;
         return 0;
     }
+
+    export function getRandomInt(min, max)
+    {
+        return Math.floor(Math.random() * (max - min)) + min;
+    }
 }

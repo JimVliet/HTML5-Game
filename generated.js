@@ -114,6 +114,10 @@ var UtilFunctions;
         return 0;
     }
     UtilFunctions.sign = sign;
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min)) + min;
+    }
+    UtilFunctions.getRandomInt = getRandomInt;
 })(UtilFunctions || (UtilFunctions = {}));
 var Manager;
 (function (Manager) {
@@ -139,8 +143,11 @@ var Manager;
             this.current = AnimType.IDLE;
             this.attackSignal = new Phaser.Signal();
         }
-        AnimManager.prototype.attack = function () {
-            this.gameObject.animations.play('Attack');
+        AnimManager.prototype.attack = function (animSpeed) {
+            if (animSpeed < 0)
+                this.gameObject.animations.play('Attack');
+            else
+                this.gameObject.animations.play('Attack', animSpeed, false);
             this.current = AnimType.ATTACK;
         };
         AnimManager.prototype.attackDone = function () {
@@ -574,7 +581,7 @@ var Entities;
             _super.call(this, game, x, y, key, frame);
             this.objectType = GameObjectType.PLAYER;
             this.currentLevel = currentLevel;
-            this.baseMoveSpeed = 100;
+            this.baseMoveSpeed = 55;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
@@ -586,6 +593,7 @@ var Entities;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
+            this.body.mass *= 20;
             this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 35, 34, 33, 32, 31] });
             this.AnimManager.attackSignal.add(function () {
                 this.moveSpeedMod += 0.6;
@@ -658,7 +666,7 @@ var Entities;
             this.AnimManager.updateAnimation(anim);
         };
         Player.prototype.attack = function () {
-            this.AnimManager.attack();
+            this.AnimManager.attack(-1);
             var timer = this.game.time.add(new Phaser.Timer(this.game, true));
             timer.add(this.attackDelay, function () {
                 this.canAttack = true;
@@ -833,6 +841,16 @@ var GameLevels;
             }
         };
         Level.prototype.render = function () {
+            this.graphics.clear();
+            this.graphics.beginFill();
+            this.graphics.lineStyle(0.3, 0xFF00FF, 1);
+            for (var i = 0; i < this.mobs.length; i++) {
+                if (this.mobs[i].path[0] == null)
+                    continue;
+                this.graphics.moveTo(this.mobs[i].x, this.mobs[i].y + 16);
+                this.graphics.lineTo(this.mobs[i].path[0].x, this.mobs[i].path[0].y);
+            }
+            this.graphics.endFill();
         };
         return Level;
     })(Phaser.State);
@@ -901,6 +919,17 @@ var Collision;
     })();
     Collision.CollisionBlock = CollisionBlock;
 })(Collision || (Collision = {}));
+var UtilFunctions;
+(function (UtilFunctions) {
+    var Coords = (function () {
+        function Coords(x, y) {
+            this.x = x;
+            this.y = y;
+        }
+        return Coords;
+    })();
+    UtilFunctions.Coords = Coords;
+})(UtilFunctions || (UtilFunctions = {}));
 var Entities;
 (function (Entities) {
     var GameObjectType = GameObjects.GameObjectType;
@@ -916,29 +945,59 @@ var Entities;
             this.moveSpeedMod = 1;
             this.canAttack = true;
             this.attackDelay = 800;
+            this.path = [];
+            this.isRoaming = false;
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
             this.body.clearShapes();
-            this.body.mass *= 10;
+            this.body.mass *= 5;
             this.body.fixedRotation = true;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
-            this.AnimManager = new AnimManager(this, undefined);
+            this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 38, 39] });
             this.AnimManager.attackSignal.add(function () {
                 this.moveSpeedMod += 0.6;
             }, this);
         }
         Skeleton.prototype.update = function () {
-            this.updateMoveSpeed();
-            this.AnimManager.updateAnimation(AnimType.IDLE);
             this.body.setZeroVelocity();
+            this.updateMoveSpeed();
+            this.updateAI(this.currentLevel.colManager.pathFinding);
+            if (this.path[0] != null) {
+                this.followPath();
+                var deltaX = this.x - this.path[0].x, deltaY = (this.y + 16) - this.path[0].y;
+                if (deltaX * deltaX + deltaY * deltaY < 300) {
+                    if (this.canAttack) {
+                        this.AnimManager.updateAnimation(AnimType.ATTACK);
+                        this.attack();
+                    }
+                }
+            }
+            else {
+                this.AnimManager.updateAnimation(AnimType.IDLE);
+            }
+        };
+        Skeleton.prototype.followPath = function () {
+            var angleBetween = Math.atan2(this.path[0].x - this.x, this.path[0].y - (this.y + 16)), deltaY = Math.cos(angleBetween), deltaX = Math.sin(angleBetween);
+            this.body.moveRight(deltaX * this.moveSpeed);
+            this.body.moveDown(deltaY * this.moveSpeed);
+            if (deltaX > 0)
+                this.AnimManager.updateAnimation(AnimType.RIGHT);
+            else if (deltaX < 0)
+                this.AnimManager.updateAnimation(AnimType.LEFT);
+            else {
+                if (deltaY == 0)
+                    this.AnimManager.updateAnimation(AnimType.IDLE);
+                else
+                    this.AnimManager.updateAnimation(AnimType.UPDOWN);
+            }
         };
         Skeleton.prototype.updateMoveSpeed = function () {
             this.moveSpeed = this.baseMoveSpeed * this.moveSpeedMod;
         };
         Skeleton.prototype.attack = function () {
-            this.AnimManager.attack();
+            this.AnimManager.attack(20);
             var timer = this.game.time.add(new Phaser.Timer(this.game, true));
             timer.add(this.attackDelay, function () {
                 this.canAttack = true;
@@ -948,7 +1007,12 @@ var Entities;
             this.moveSpeedMod -= 0.6;
         };
         Skeleton.prototype.updateAI = function (pathFinding) {
-            if (!pathFinding.raycastLine(new Phaser.Line(this.x + 16, this.y + 16, this.currentLevel.player.x + 16, this.currentLevel.player.y + 16), 0, 0)) {
+            var line = new Phaser.Line(this.x, this.y + 16, this.currentLevel.player.x, this.currentLevel.player.y + 16);
+            if (!pathFinding.raycastLine(line, 6.5, 2)) {
+                this.path = [new UtilFunctions.Coords(this.currentLevel.player.x, this.currentLevel.player.y + 16)];
+            }
+            else {
+                this.path = [];
             }
         };
         return Skeleton;

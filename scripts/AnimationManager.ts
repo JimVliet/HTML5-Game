@@ -11,11 +11,11 @@ module Manager
 
     export class AnimManager
     {
-        gameObject: Phaser.Sprite & GameObjects.MobEntity;
+        gameObject: Phaser.Sprite & GameObjects.Entity;
         current: AnimType;
         attackSignal: Phaser.Signal;
 
-        constructor(GameObject:  Phaser.Sprite & GameObjects.MobEntity, options: {} = {'Attack': [30,31,32,33,34,35,36,37,38,39]})
+        constructor(GameObject:  Phaser.Sprite & GameObjects.Entity, options: {} = {'Attack': [30,31,32,33,34,35,36,37,38,39]})
         {
             this.gameObject = GameObject;
             this.gameObject.smoothed = false;
@@ -29,9 +29,12 @@ module Manager
             this.attackSignal = new Phaser.Signal();
         }
 
-        attack()
+        attack(animSpeed: number)
         {
-            this.gameObject.animations.play('Attack');
+            if(animSpeed < 0)
+                this.gameObject.animations.play('Attack');
+            else
+                this.gameObject.animations.play('Attack', animSpeed, false);
             this.current = AnimType.ATTACK;
         }
 

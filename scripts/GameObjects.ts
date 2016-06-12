@@ -8,6 +8,7 @@ module GameObjects
 {
     import AnimManager = Manager.AnimManager;
     import Level = GameLevels.Level;
+    import location = Pathfinding.location;
     export enum GameObjectType
     {
         PLAYER, SKELETON
@@ -19,13 +20,18 @@ module GameObjects
         hitBox: p2.Rectangle;
     }
 
-    export interface MobEntity extends GameObject
+    export interface Entity extends GameObject
     {
         moveSpeed: number;
         baseMoveSpeed: number;
         moveSpeedMod: number;
         AnimManager: AnimManager;
         attackDelay: number;
+    }
+
+    export interface Mob extends Entity
+    {
+        path: Array<location>;
 
         updateAI(pathFinding: Pathfinding.Pathfinding): void;
     }
