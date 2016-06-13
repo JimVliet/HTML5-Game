@@ -1,3 +1,415 @@
+var DataStructures;
+(function (DataStructures) {
+    var Queue = (function () {
+        function Queue() {
+            this.head = null;
+        }
+        Queue.prototype.add = function (item) {
+            var newNode = new Node(item);
+            if (this.head == null) {
+                this.head = newNode;
+                this.tail = newNode;
+                return;
+            }
+            this.tail.next = newNode;
+            this.tail = newNode;
+        };
+        Queue.prototype.addMultiple = function (itemArray) {
+            for (var index in itemArray) {
+                this.add(itemArray[index]);
+            }
+        };
+        Queue.prototype.pop = function () {
+            if (this.head == null)
+                return null;
+            var tempHead = this.head;
+            this.head = this.head.next;
+            if (this.head == null)
+                this.tail = null;
+            return tempHead.element;
+        };
+        Queue.prototype.size = function () {
+            if (this.head == null) {
+                return 0;
+            }
+            var currentNode = this.head, counter = 1;
+            while (currentNode.next != null) {
+                currentNode = currentNode.next;
+                counter++;
+            }
+            return counter;
+        };
+        Queue.prototype.isEmpty = function () {
+            return this.head == null;
+        };
+        return Queue;
+    })();
+    DataStructures.Queue = Queue;
+    var Node = (function () {
+        function Node(item) {
+            this.element = item;
+            this.next = null;
+        }
+        return Node;
+    })();
+    DataStructures.Node = Node;
+})(DataStructures || (DataStructures = {}));
+var Pathfinding;
+(function (Pathfinding_1) {
+    var Queue = DataStructures.Queue;
+    var Pathfinding = (function () {
+        function Pathfinding(game, map, layer, parent) {
+            this.game = game;
+            this.map = map;
+            this.layer = layer;
+            this.parent = parent;
+            this.nodeIDCounter = 0;
+            this.graphics = this.game.add.graphics(0, 0);
+            this.stepRate = 4;
+            this.blocks = [];
+        }
+        Pathfinding.prototype.setupPathfinding = function (x, y) {
+            for (var i = 0; i < this.layer.bodies.length; i++) {
+                var block = Collision.CollisionBlock.createFromBody(this.layer.bodies[i]);
+                if (block != null) {
+                    this.blocks.push(block);
+                }
+            }
+            this.setupNodes(2, 2);
+            this.stepRate = 1;
+            this.setupConnections(0, 0);
+            this.stepRate = 4;
+            this.removeUnnecessaryNodes(x, y);
+        };
+        Pathfinding.prototype.setupNodes = function (deltaX, deltaY) {
+            var layerWidth = this.layer.size['x'], tiles = this.layer.tileIds, coordsOutput = [], map = Collision.getPropMap(tiles, layerWidth, this.parent.getGidOfTileset("Collision").firstgid), xCoord, yCoord, nodeOptions, newNode, curBlock;
+            for (var index = 0; index < tiles.length; index++) {
+                if (tiles[index] != 0) {
+                    xCoord = index % layerWidth;
+                    yCoord = Math.floor(index / layerWidth);
+                    nodeOptions = Collision.tileCornerWaypoint(xCoord, yCoord, map, deltaX, deltaY);
+                    curBlock = null;
+                    for (var i = 0; i < this.blocks.length; i++) {
+                        if (this.blocks[i].AABB(xCoord * 16, yCoord * 16, xCoord * 16 + 15, yCoord * 16 + 15))
+                            curBlock = this.blocks[i];
+                    }
+                    if (curBlock == null)
+                        throw new Error("woops this place shouldn't exist");
+                    if (nodeOptions[0]) {
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 0);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes[0] = newNode;
+                    }
+                    if (nodeOptions[1]) {
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 1);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes[1] = newNode;
+                    }
+                    if (nodeOptions[2]) {
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 2);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes[2] = newNode;
+                    }
+                    if (nodeOptions[3]) {
+                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 3);
+                        coordsOutput.push(newNode);
+                        curBlock.nodes[3] = newNode;
+                    }
+                }
+            }
+            this.nodeList = coordsOutput;
+        };
+        Pathfinding.prototype.setupConnections = function (deltaX, deltaY) {
+            for (var i = 0; i < this.nodeList.length; i++) {
+                for (var j = i + 1; j < this.nodeList.length; j++) {
+                    if (!this.raycastLine(new Phaser.Line(this.nodeList[i].x, this.nodeList[i].y, this.nodeList[j].x, this.nodeList[j].y), deltaX, deltaY)) {
+                        this.nodeList[i].connectTo(this.nodeList[j]);
+                    }
+                }
+            }
+        };
+        Pathfinding.prototype.drawNodes = function (graphics) {
+            graphics.lineStyle(0);
+            graphics.beginFill(0xAB482C, 0.8);
+            for (var i = 0; i < this.nodeList.length; i++) {
+                graphics.drawCircle(this.nodeList[i].x, this.nodeList[i].y, 3);
+            }
+            graphics.endFill();
+        };
+        Pathfinding.prototype.removeNode = function (node) {
+            for (var index = 0; index < this.nodeList.length; index++) {
+                if (node.nodeID == this.nodeList[index].nodeID) {
+                    this.nodeList.splice(index, 1);
+                    node.disconnectAll();
+                    return true;
+                }
+            }
+            return false;
+        };
+        Pathfinding.prototype.removeMultipleNodes = function (list) {
+            for (var index = 0; index < list.length; index++) {
+                this.removeNode(list[index]);
+            }
+        };
+        Pathfinding.prototype.removeUnnecessaryNodes = function (x, y) {
+            var startingNode = null;
+            for (var startNodeIndex = 0; startNodeIndex < this.nodeList.length; startNodeIndex++) {
+                if (!this.raycastLine(new Phaser.Line(x, y, this.nodeList[startNodeIndex].x, this.nodeList[startNodeIndex].y), 0, 0)) {
+                    startingNode = this.nodeList[startNodeIndex];
+                    break;
+                }
+            }
+            if (startingNode == null)
+                return;
+            var visitedNodes = {}, nodeQueue = new Queue(), currentNode;
+            nodeQueue.add(startingNode);
+            while (!nodeQueue.isEmpty()) {
+                currentNode = nodeQueue.pop();
+                for (var index = 0; index < currentNode.connections.length; index++) {
+                    if (!(currentNode.connections[index].nodeID in visitedNodes)) {
+                        nodeQueue.add(currentNode.connections[index]);
+                    }
+                }
+                visitedNodes[currentNode.nodeID] = true;
+            }
+            var nodesToRemove = [];
+            for (var nodeIndex = 0; nodeIndex < this.nodeList.length; nodeIndex++) {
+                if (!(this.nodeList[nodeIndex].nodeID in visitedNodes)) {
+                    nodesToRemove.push(this.nodeList[nodeIndex]);
+                }
+            }
+            this.removeMultipleNodes(nodesToRemove);
+        };
+        Pathfinding.prototype.drawConnections = function (graphics) {
+            var usedConnections = {}, currentNode;
+            graphics.beginFill();
+            graphics.lineStyle(0.3, 0xFF00FF, 1);
+            for (var i = 0; i < this.nodeList.length; i++) {
+                for (var j = 0; j < this.nodeList[i].connections.length; j++) {
+                    currentNode = this.nodeList[i].connections[j];
+                    if (!(currentNode.nodeID in usedConnections)) {
+                        graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
+                        graphics.lineTo(currentNode.x, currentNode.y);
+                    }
+                }
+                usedConnections[this.nodeList[i].nodeID] = true;
+            }
+            graphics.endFill();
+        };
+        Pathfinding.prototype.raycastLine = function (line, deltaX, deltaY) {
+            var currentBody, coords = [];
+            line.coordinatesOnLine(4, coords);
+            for (var i = 0; i < this.blocks.length; i++) {
+                currentBody = this.blocks[i];
+                var minX = currentBody.minX - deltaX, maxX = currentBody.maxX + deltaX, minY = currentBody.minY - deltaY, maxY = currentBody.maxY + deltaY;
+                if (!(Math.max(line.start.x, line.end.x) < minX || maxX < Math.min(line.start.x, line.end.x)
+                    || Math.max(line.start.y, line.end.y) < minY || maxY < Math.min(line.start.y, line.end.y))) {
+                    for (var coordIndex = 0; coordIndex < coords.length; coordIndex++) {
+                        if (Pathfinding.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
+                            return true;
+                    }
+                }
+            }
+            return false;
+        };
+        Pathfinding.prototype.debugVisibleNodes = function (x, y, graphics) {
+            graphics.beginFill();
+            graphics.lineStyle(0.3, 0x287994);
+            var line = new Phaser.Line();
+            for (var i = 0; i < this.nodeList.length; i++) {
+                line.start.setTo(this.nodeList[i].x, this.nodeList[i].y);
+                line.end.setTo(x, y);
+                if (!this.raycastLine(line, 0, 0)) {
+                    graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
+                    graphics.lineTo(x, y);
+                }
+            }
+            graphics.endFill();
+        };
+        Pathfinding.containsPoint = function (rectangle, x, y) {
+            return !(x < rectangle[0] || y < rectangle[1] || x > rectangle[2] || y > rectangle[3]);
+        };
+        return Pathfinding;
+    })();
+    Pathfinding_1.Pathfinding = Pathfinding;
+    var Node = (function () {
+        function Node(x, y, pathFinder, block, direction) {
+            this.x = x;
+            this.y = y;
+            this.connections = [];
+            this.nodeID = pathFinder.nodeIDCounter;
+            pathFinder.nodeIDCounter++;
+            this.block = block;
+            this.direction = direction;
+        }
+        Node.prototype.connectTo = function (node) {
+            this.connections.push(node);
+            node.connections.push(this);
+        };
+        Node.prototype.disconnect = function (node) {
+            for (var index = 0; index < this.connections.length; index++) {
+                if (this.connections[index].nodeID == node.nodeID) {
+                    this.connections.splice(index, 1);
+                    return;
+                }
+            }
+        };
+        Node.prototype.disconnectAll = function () {
+            for (var i = 0; i < this.connections.length; i++) {
+                this.connections[i].disconnect(this);
+            }
+        };
+        return Node;
+    })();
+    Pathfinding_1.Node = Node;
+})(Pathfinding || (Pathfinding = {}));
+var Collision;
+(function (Collision) {
+    var CollisionManager = (function () {
+        function CollisionManager(parent, map, layer) {
+            this.parent = parent;
+            this.map = map;
+            this.layer = layer;
+            this.game = parent.game;
+            this.startPos = [0, 0];
+        }
+        CollisionManager.prototype.start = function (debug) {
+            this.setupSolidLayer(debug);
+            this.triggerSetup(debug);
+        };
+        CollisionManager.prototype.startPathfinding = function (debug) {
+            this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.layer, this);
+            this.pathFinding.setupPathfinding(this.parent.player.x, this.parent.player.y + 16);
+            if (debug) {
+                this.pathFinding.drawNodes(this.pathFinding.graphics);
+                this.pathFinding.drawConnections(this.pathFinding.graphics);
+            }
+        };
+        CollisionManager.prototype.setupSolidLayer = function (debug) {
+            if (this.layer == null)
+                return;
+            this.layer.visible = false;
+            var layerTiles = this.layer.tileIds, layerlength = layerTiles.length, mapWidth = this.layer.size['x'], mapHeight = this.layer.size['y'], solidTileset = this.getGidOfTileset("Collision"), usedTiles = {}, x, y;
+            if (solidTileset == null)
+                return console.log('There is no collision tileset');
+            var solidFirstGid = solidTileset.firstgid, solidLastGid = solidTileset.lastgid, propsMap = Collision.getPropMap(layerTiles, mapWidth, solidFirstGid);
+            for (var index = 0; index < layerlength; index++) {
+                if (layerTiles[index] == solidFirstGid && !(index in usedTiles)) {
+                    x = index % mapWidth;
+                    y = Math.floor(index / mapWidth);
+                    var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
+                    while (curY < mapHeight && layerTiles[curY * mapWidth + x] == solidFirstGid && !(curY * mapWidth + x in usedTiles)) {
+                        var curX = x, curYIndex = curY * mapWidth, surface;
+                        while (curX < maxWidth && layerTiles[curYIndex + curX + 1] == solidFirstGid && !(curYIndex + curX + 1 in usedTiles)) {
+                            curX++;
+                        }
+                        maxWidth = curX;
+                        surface = (curX - x + 1) * (curY - y + 1);
+                        if (surface > curBestRect[0]) {
+                            curBestRect = [surface, x, y, curX, curY];
+                        }
+                        curY++;
+                    }
+                    var xPixel = curBestRect[1] * this.map.tileWidth, yPixel = curBestRect[2] * this.map.tileHeight, xEndPixel = (curBestRect[3] + 1) * this.map.tileWidth, yEndPixel = (curBestRect[4] + 1) * this.map.tileHeight, body = this.game.physics.p2.createBody(xPixel, yPixel, 0, false);
+                    body.addPolygon({}, [[0, 0], [xEndPixel - xPixel, 0], [xEndPixel - xPixel, yEndPixel - yPixel], [0, yEndPixel - yPixel]]);
+                    body.debug = debug;
+                    this.game.physics.p2.addBody(body);
+                    this.layer.bodies.push(body);
+                    for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
+                        var yIndex = mapWidth * usedY;
+                        for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
+                            usedTiles[yIndex + usedX] = null;
+                        }
+                    }
+                }
+                else if (layerTiles[index] >= solidFirstGid && layerTiles[index] <= solidLastGid && !(index in usedTiles)) {
+                    x = index % mapWidth;
+                    y = Math.floor(index / mapWidth);
+                    this.customBody(debug, x, y, propsMap);
+                }
+            }
+        };
+        CollisionManager.prototype.customBody = function (debug, x, y, propMap) {
+            var xPixel = x * this.map.tileWidth, yPixel = y * this.map.tileHeight, props = propMap[y][x], body = this.game.physics.p2.createBody(xPixel + props.leftX, yPixel + props.upperY, 0, false);
+            body.addPolygon({}, [[0, 0], [props.rightX - props.leftX, 0],
+                [props.rightX - props.leftX, props.lowerY - props.upperY], [0, props.lowerY - props.upperY]]);
+            body.debug = debug;
+            this.game.physics.p2.addBody(body);
+            this.layer.bodies.push(body);
+        };
+        CollisionManager.prototype.getGidOfTileset = function (name) {
+            for (var tilesetId = 0; tilesetId < this.map.tilesets.length; tilesetId++) {
+                if (this.map.tilesets[tilesetId].name == name) {
+                    return this.map.tilesets[tilesetId];
+                }
+            }
+            return null;
+        };
+        CollisionManager.prototype.triggerSetup = function (debug) {
+            var tLayer = this.map.getTilelayer("Trigger");
+            if (tLayer == null)
+                return;
+            tLayer.visible = false;
+            var tiles = tLayer.tileIds, layerlength = tiles.length, mapWidth = tLayer.size['x'], tTileSet = this.getGidOfTileset("Trigger"), curID, x, y;
+            if (tTileSet == null)
+                return;
+            var fGid = tTileSet.firstgid, lGid = tTileSet.lastgid;
+            for (var i = 0; i < layerlength; i++) {
+                if (tiles[i] < fGid && tiles[i] > lGid)
+                    continue;
+                curID = tiles[i] - fGid;
+                x = i % mapWidth;
+                y = Math.floor(i / mapWidth);
+                switch (curID) {
+                    case 0:
+                        var nextLevelBody = this.game.physics.p2.createBody(x * this.map.tileWidth, y * this.map.tileHeight, 0, false);
+                        nextLevelBody.addPolygon({}, [[0, 0], [this.map.tileWidth - 1, 0],
+                            [this.map.tileWidth - 1, this.map.tileHeight - 1], [0, this.map.tileHeight - 1]]);
+                        nextLevelBody.onBeginContact.add(this.parent.nextLevel, this.parent);
+                        nextLevelBody.debug = debug;
+                        this.game.physics.p2.addBody(nextLevelBody);
+                        tLayer.bodies.push(nextLevelBody);
+                        break;
+                    case 1:
+                        this.startPos = [x * this.map.tileWidth + 8, y * this.map.tileHeight - 15];
+                        break;
+                    case 5:
+                        var skeleton = new Entities.Skeleton(this.game, x * 16 + 8, y * 16 - 4, this.parent, "Skeleton", 0);
+                        this.map.getTilelayer("Player").add(skeleton);
+                        this.parent.mobs.push(skeleton);
+                        break;
+                }
+            }
+        };
+        return CollisionManager;
+    })();
+    Collision.CollisionManager = CollisionManager;
+})(Collision || (Collision = {}));
+var Collision;
+(function (Collision) {
+    var CollisionBlock = (function () {
+        function CollisionBlock(minX, maxX, minY, maxY, x, y) {
+            this.minX = minX;
+            this.maxX = maxX;
+            this.minY = minY;
+            this.maxY = maxY;
+            this.x = x;
+            this.y = y;
+            this.nodes = [];
+        }
+        CollisionBlock.prototype.AABB = function (xMin, yMin, xMax, yMax) {
+            return !(xMax < this.minX || yMax < this.minY || xMin > this.maxX || yMin > this.maxY);
+        };
+        CollisionBlock.createFromBody = function (childBody) {
+            if (childBody.data.concavePath == null)
+                return null;
+            var halfWidth = childBody.data.concavePath[0][0] / 0.05, halfHeight = childBody.data.concavePath[0][1] / 0.05;
+            return new CollisionBlock(childBody.x - halfWidth, childBody.x + halfWidth, childBody.y - halfHeight, childBody.y + halfHeight, childBody.x, childBody.y);
+        };
+        return CollisionBlock;
+    })();
+    Collision.CollisionBlock = CollisionBlock;
+})(Collision || (Collision = {}));
 var Collision;
 (function (Collision) {
     var ColTileProps = (function () {
@@ -305,271 +717,6 @@ var SongManager;
     })();
     SongManager_1.SongManager = SongManager;
 })(SongManager || (SongManager = {}));
-var DataStructures;
-(function (DataStructures) {
-    var Queue = (function () {
-        function Queue() {
-            this.head = null;
-        }
-        Queue.prototype.add = function (item) {
-            var newNode = new Node(item);
-            if (this.head == null) {
-                this.head = newNode;
-                this.tail = newNode;
-                return;
-            }
-            this.tail.next = newNode;
-            this.tail = newNode;
-        };
-        Queue.prototype.addMultiple = function (itemArray) {
-            for (var index in itemArray) {
-                this.add(itemArray[index]);
-            }
-        };
-        Queue.prototype.pop = function () {
-            if (this.head == null)
-                return null;
-            var tempHead = this.head;
-            this.head = this.head.next;
-            if (this.head == null)
-                this.tail = null;
-            return tempHead.element;
-        };
-        Queue.prototype.size = function () {
-            if (this.head == null) {
-                return 0;
-            }
-            var currentNode = this.head, counter = 1;
-            while (currentNode.next != null) {
-                currentNode = currentNode.next;
-                counter++;
-            }
-            return counter;
-        };
-        Queue.prototype.isEmpty = function () {
-            return this.head == null;
-        };
-        return Queue;
-    })();
-    DataStructures.Queue = Queue;
-    var Node = (function () {
-        function Node(item) {
-            this.element = item;
-            this.next = null;
-        }
-        return Node;
-    })();
-    DataStructures.Node = Node;
-})(DataStructures || (DataStructures = {}));
-var Pathfinding;
-(function (Pathfinding_1) {
-    var Queue = DataStructures.Queue;
-    var Pathfinding = (function () {
-        function Pathfinding(game, map, layer, parent) {
-            this.game = game;
-            this.map = map;
-            this.layer = layer;
-            this.parent = parent;
-            this.nodeIDCounter = 0;
-            this.graphics = this.game.add.graphics(0, 0);
-            this.stepRate = 4;
-            this.blocks = [];
-        }
-        Pathfinding.prototype.setupPathfinding = function (x, y) {
-            for (var i = 0; i < this.layer.bodies.length; i++) {
-                var block = Collision.CollisionBlock.createFromBody(this.layer.bodies[i]);
-                if (block != null) {
-                    this.blocks.push(block);
-                }
-            }
-            this.setupNodes(2, 2);
-            this.stepRate = 1;
-            this.setupConnections(0, 0);
-            this.stepRate = 4;
-            this.removeUnnecessaryNodes(x, y);
-        };
-        Pathfinding.prototype.setupNodes = function (deltaX, deltaY) {
-            var layerWidth = this.layer.size['x'], tiles = this.layer.tileIds, coordsOutput = [], map = Collision.getPropMap(tiles, layerWidth, this.parent.getGidOfTileset("Collision").firstgid), xCoord, yCoord, nodeOptions, newNode, curBlock;
-            for (var index = 0; index < tiles.length; index++) {
-                if (tiles[index] != 0) {
-                    xCoord = index % layerWidth;
-                    yCoord = Math.floor(index / layerWidth);
-                    nodeOptions = Collision.tileCornerWaypoint(xCoord, yCoord, map, deltaX, deltaY);
-                    curBlock = null;
-                    for (var i = 0; i < this.blocks.length; i++) {
-                        if (this.blocks[i].AABB(xCoord * 16, yCoord * 16, xCoord * 16 + 15, yCoord * 16 + 15))
-                            curBlock = this.blocks[i];
-                    }
-                    if (curBlock == null)
-                        throw new Error("woops this place shouldn't exist");
-                    if (nodeOptions[0]) {
-                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 0);
-                        coordsOutput.push(newNode);
-                        curBlock.nodes[0] = newNode;
-                    }
-                    if (nodeOptions[1]) {
-                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].upperY - deltaY, this, curBlock, 1);
-                        coordsOutput.push(newNode);
-                        curBlock.nodes[1] = newNode;
-                    }
-                    if (nodeOptions[2]) {
-                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].rightX + deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 2);
-                        coordsOutput.push(newNode);
-                        curBlock.nodes[2] = newNode;
-                    }
-                    if (nodeOptions[3]) {
-                        newNode = new Node((xCoord * 16) + map[yCoord][xCoord].leftX - deltaX, (yCoord * 16) + map[yCoord][xCoord].lowerY + deltaY, this, curBlock, 3);
-                        coordsOutput.push(newNode);
-                        curBlock.nodes[3] = newNode;
-                    }
-                }
-            }
-            this.nodeList = coordsOutput;
-        };
-        Pathfinding.prototype.setupConnections = function (deltaX, deltaY) {
-            for (var i = 0; i < this.nodeList.length; i++) {
-                for (var j = i + 1; j < this.nodeList.length; j++) {
-                    if (!this.raycastLine(new Phaser.Line(this.nodeList[i].x, this.nodeList[i].y, this.nodeList[j].x, this.nodeList[j].y), deltaX, deltaY)) {
-                        this.nodeList[i].connectTo(this.nodeList[j]);
-                    }
-                }
-            }
-        };
-        Pathfinding.prototype.drawNodes = function (graphics) {
-            graphics.lineStyle(0);
-            graphics.beginFill(0xAB482C, 0.8);
-            for (var i = 0; i < this.nodeList.length; i++) {
-                graphics.drawCircle(this.nodeList[i].x, this.nodeList[i].y, 3);
-            }
-            graphics.endFill();
-        };
-        Pathfinding.prototype.removeNode = function (node) {
-            for (var index = 0; index < this.nodeList.length; index++) {
-                if (node.nodeID == this.nodeList[index].nodeID) {
-                    this.nodeList.splice(index, 1);
-                    node.disconnectAll();
-                    return true;
-                }
-            }
-            return false;
-        };
-        Pathfinding.prototype.removeMultipleNodes = function (list) {
-            for (var index = 0; index < list.length; index++) {
-                this.removeNode(list[index]);
-            }
-        };
-        Pathfinding.prototype.removeUnnecessaryNodes = function (x, y) {
-            var startingNode = null;
-            for (var startNodeIndex = 0; startNodeIndex < this.nodeList.length; startNodeIndex++) {
-                if (!this.raycastLine(new Phaser.Line(x, y, this.nodeList[startNodeIndex].x, this.nodeList[startNodeIndex].y), 0, 0)) {
-                    startingNode = this.nodeList[startNodeIndex];
-                    break;
-                }
-            }
-            if (startingNode == null)
-                return;
-            var visitedNodes = {}, nodeQueue = new Queue(), currentNode;
-            nodeQueue.add(startingNode);
-            while (!nodeQueue.isEmpty()) {
-                currentNode = nodeQueue.pop();
-                for (var index = 0; index < currentNode.connections.length; index++) {
-                    if (!(currentNode.connections[index].nodeID in visitedNodes)) {
-                        nodeQueue.add(currentNode.connections[index]);
-                    }
-                }
-                visitedNodes[currentNode.nodeID] = true;
-            }
-            var nodesToRemove = [];
-            for (var nodeIndex = 0; nodeIndex < this.nodeList.length; nodeIndex++) {
-                if (!(this.nodeList[nodeIndex].nodeID in visitedNodes)) {
-                    nodesToRemove.push(this.nodeList[nodeIndex]);
-                }
-            }
-            this.removeMultipleNodes(nodesToRemove);
-        };
-        Pathfinding.prototype.drawConnections = function (graphics) {
-            var usedConnections = {}, currentNode;
-            graphics.beginFill();
-            graphics.lineStyle(0.3, 0xFF00FF, 1);
-            for (var i = 0; i < this.nodeList.length; i++) {
-                for (var j = 0; j < this.nodeList[i].connections.length; j++) {
-                    currentNode = this.nodeList[i].connections[j];
-                    if (!(currentNode.nodeID in usedConnections)) {
-                        graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
-                        graphics.lineTo(currentNode.x, currentNode.y);
-                    }
-                }
-                usedConnections[this.nodeList[i].nodeID] = true;
-            }
-            graphics.endFill();
-        };
-        Pathfinding.prototype.raycastLine = function (line, deltaX, deltaY) {
-            var currentBody, coords = [];
-            line.coordinatesOnLine(4, coords);
-            for (var i = 0; i < this.blocks.length; i++) {
-                currentBody = this.blocks[i];
-                var minX = currentBody.minX - deltaX, maxX = currentBody.maxX + deltaX, minY = currentBody.minY - deltaY, maxY = currentBody.maxY + deltaY;
-                if (!(Math.max(line.start.x, line.end.x) < minX || maxX < Math.min(line.start.x, line.end.x)
-                    || Math.max(line.start.y, line.end.y) < minY || maxY < Math.min(line.start.y, line.end.y))) {
-                    for (var coordIndex = 0; coordIndex < coords.length; coordIndex++) {
-                        if (Pathfinding.containsPoint([minX, minY, maxX, maxY], coords[coordIndex][0], coords[coordIndex][1]))
-                            return true;
-                    }
-                }
-            }
-            return false;
-        };
-        Pathfinding.prototype.debugVisibleNodes = function (x, y, graphics) {
-            graphics.beginFill();
-            graphics.lineStyle(0.3, 0x287994);
-            var line = new Phaser.Line();
-            for (var i = 0; i < this.nodeList.length; i++) {
-                line.start.setTo(this.nodeList[i].x, this.nodeList[i].y);
-                line.end.setTo(x, y);
-                if (!this.raycastLine(line, 0, 0)) {
-                    graphics.moveTo(this.nodeList[i].x, this.nodeList[i].y);
-                    graphics.lineTo(x, y);
-                }
-            }
-            graphics.endFill();
-        };
-        Pathfinding.containsPoint = function (rectangle, x, y) {
-            return !(x < rectangle[0] || y < rectangle[1] || x > rectangle[2] || y > rectangle[3]);
-        };
-        return Pathfinding;
-    })();
-    Pathfinding_1.Pathfinding = Pathfinding;
-    var Node = (function () {
-        function Node(x, y, pathFinder, block, direction) {
-            this.x = x;
-            this.y = y;
-            this.connections = [];
-            this.nodeID = pathFinder.nodeIDCounter;
-            pathFinder.nodeIDCounter++;
-            this.block = block;
-            this.direction = direction;
-        }
-        Node.prototype.connectTo = function (node) {
-            this.connections.push(node);
-            node.connections.push(this);
-        };
-        Node.prototype.disconnect = function (node) {
-            for (var index = 0; index < this.connections.length; index++) {
-                if (this.connections[index].nodeID == node.nodeID) {
-                    this.connections.splice(index, 1);
-                    return;
-                }
-            }
-        };
-        Node.prototype.disconnectAll = function () {
-            for (var i = 0; i < this.connections.length; i++) {
-                this.connections[i].disconnect(this);
-            }
-        };
-        return Node;
-    })();
-    Pathfinding_1.Node = Node;
-})(Pathfinding || (Pathfinding = {}));
 var Entities;
 (function (Entities) {
     var GameObjectType = GameObjects.GameObjectType;
@@ -679,128 +826,6 @@ var Entities;
     })(Phaser.Sprite);
     Entities.Player = Player;
 })(Entities || (Entities = {}));
-var Collision;
-(function (Collision) {
-    var CollisionManager = (function () {
-        function CollisionManager(parent, map, layer) {
-            this.parent = parent;
-            this.map = map;
-            this.layer = layer;
-            this.game = parent.game;
-            this.startPos = [0, 0];
-        }
-        CollisionManager.prototype.start = function (debug) {
-            this.setupSolidLayer(debug);
-            this.triggerSetup(debug);
-        };
-        CollisionManager.prototype.startPathfinding = function (debug) {
-            this.pathFinding = new Pathfinding.Pathfinding(this.game, this.map, this.layer, this);
-            this.pathFinding.setupPathfinding(this.parent.player.x, this.parent.player.y + 16);
-            if (debug) {
-                this.pathFinding.drawNodes(this.pathFinding.graphics);
-                this.pathFinding.drawConnections(this.pathFinding.graphics);
-            }
-        };
-        CollisionManager.prototype.setupSolidLayer = function (debug) {
-            if (this.layer == null)
-                return;
-            this.layer.visible = false;
-            var layerTiles = this.layer.tileIds, layerlength = layerTiles.length, mapWidth = this.layer.size['x'], mapHeight = this.layer.size['y'], solidTileset = this.getGidOfTileset("Collision"), usedTiles = {}, x, y;
-            if (solidTileset == null)
-                return console.log('There is no collision tileset');
-            var solidFirstGid = solidTileset.firstgid, solidLastGid = solidTileset.lastgid, propsMap = Collision.getPropMap(layerTiles, mapWidth, solidFirstGid);
-            for (var index = 0; index < layerlength; index++) {
-                if (layerTiles[index] == solidFirstGid && !(index in usedTiles)) {
-                    x = index % mapWidth;
-                    y = Math.floor(index / mapWidth);
-                    var curY = y, maxWidth = mapWidth - 1, curBestRect = [1, x, y, x, y];
-                    while (curY < mapHeight && layerTiles[curY * mapWidth + x] == solidFirstGid && !(curY * mapWidth + x in usedTiles)) {
-                        var curX = x, curYIndex = curY * mapWidth, surface;
-                        while (curX < maxWidth && layerTiles[curYIndex + curX + 1] == solidFirstGid && !(curYIndex + curX + 1 in usedTiles)) {
-                            curX++;
-                        }
-                        maxWidth = curX;
-                        surface = (curX - x + 1) * (curY - y + 1);
-                        if (surface > curBestRect[0]) {
-                            curBestRect = [surface, x, y, curX, curY];
-                        }
-                        curY++;
-                    }
-                    var xPixel = curBestRect[1] * this.map.tileWidth, yPixel = curBestRect[2] * this.map.tileHeight, xEndPixel = (curBestRect[3] + 1) * this.map.tileWidth, yEndPixel = (curBestRect[4] + 1) * this.map.tileHeight, body = this.game.physics.p2.createBody(xPixel, yPixel, 0, false);
-                    body.addPolygon({}, [[0, 0], [xEndPixel - xPixel, 0], [xEndPixel - xPixel, yEndPixel - yPixel], [0, yEndPixel - yPixel]]);
-                    body.debug = debug;
-                    this.game.physics.p2.addBody(body);
-                    this.layer.bodies.push(body);
-                    for (var usedY = y; usedY <= curBestRect[4]; usedY++) {
-                        var yIndex = mapWidth * usedY;
-                        for (var usedX = x; usedX <= curBestRect[3]; usedX++) {
-                            usedTiles[yIndex + usedX] = null;
-                        }
-                    }
-                }
-                else if (layerTiles[index] >= solidFirstGid && layerTiles[index] <= solidLastGid && !(index in usedTiles)) {
-                    x = index % mapWidth;
-                    y = Math.floor(index / mapWidth);
-                    this.customBody(debug, x, y, propsMap);
-                }
-            }
-        };
-        CollisionManager.prototype.customBody = function (debug, x, y, propMap) {
-            var xPixel = x * this.map.tileWidth, yPixel = y * this.map.tileHeight, props = propMap[y][x], body = this.game.physics.p2.createBody(xPixel + props.leftX, yPixel + props.upperY, 0, false);
-            body.addPolygon({}, [[0, 0], [props.rightX - props.leftX, 0],
-                [props.rightX - props.leftX, props.lowerY - props.upperY], [0, props.lowerY - props.upperY]]);
-            body.debug = debug;
-            this.game.physics.p2.addBody(body);
-            this.layer.bodies.push(body);
-        };
-        CollisionManager.prototype.getGidOfTileset = function (name) {
-            for (var tilesetId = 0; tilesetId < this.map.tilesets.length; tilesetId++) {
-                if (this.map.tilesets[tilesetId].name == name) {
-                    return this.map.tilesets[tilesetId];
-                }
-            }
-            return null;
-        };
-        CollisionManager.prototype.triggerSetup = function (debug) {
-            var tLayer = this.map.getTilelayer("Trigger");
-            if (tLayer == null)
-                return;
-            tLayer.visible = false;
-            var tiles = tLayer.tileIds, layerlength = tiles.length, mapWidth = tLayer.size['x'], tTileSet = this.getGidOfTileset("Trigger"), curID, x, y;
-            if (tTileSet == null)
-                return;
-            var fGid = tTileSet.firstgid, lGid = tTileSet.lastgid;
-            for (var i = 0; i < layerlength; i++) {
-                if (tiles[i] < fGid && tiles[i] > lGid)
-                    continue;
-                curID = tiles[i] - fGid;
-                x = i % mapWidth;
-                y = Math.floor(i / mapWidth);
-                switch (curID) {
-                    case 0:
-                        var nextLevelBody = this.game.physics.p2.createBody(x * this.map.tileWidth, y * this.map.tileHeight, 0, false);
-                        nextLevelBody.addPolygon({}, [[0, 0], [this.map.tileWidth - 1, 0],
-                            [this.map.tileWidth - 1, this.map.tileHeight - 1], [0, this.map.tileHeight - 1]]);
-                        nextLevelBody.onBeginContact.add(this.parent.nextLevel, this.parent);
-                        nextLevelBody.debug = debug;
-                        this.game.physics.p2.addBody(nextLevelBody);
-                        tLayer.bodies.push(nextLevelBody);
-                        break;
-                    case 1:
-                        this.startPos = [x * this.map.tileWidth + 8, y * this.map.tileHeight - 15];
-                        break;
-                    case 5:
-                        var skeleton = new Entities.Skeleton(this.game, x * 16 + 8, y * 16 - 4, this.parent, "Skeleton", 0);
-                        this.map.getTilelayer("Player").add(skeleton);
-                        this.parent.mobs.push(skeleton);
-                        break;
-                }
-            }
-        };
-        return CollisionManager;
-    })();
-    Collision.CollisionManager = CollisionManager;
-})(Collision || (Collision = {}));
 var GameLevels;
 (function (GameLevels) {
     var Level = (function (_super) {
@@ -894,31 +919,6 @@ window.onload = function () {
     var aspectMultiplier = Math.min(winW / widthAspectRatio, winH / heightAspectRatio);
     gameVar = new MyGame.Game(aspectMultiplier * widthAspectRatio, aspectMultiplier * heightAspectRatio);
 };
-var Collision;
-(function (Collision) {
-    var CollisionBlock = (function () {
-        function CollisionBlock(minX, maxX, minY, maxY, x, y) {
-            this.minX = minX;
-            this.maxX = maxX;
-            this.minY = minY;
-            this.maxY = maxY;
-            this.x = x;
-            this.y = y;
-            this.nodes = [];
-        }
-        CollisionBlock.prototype.AABB = function (xMin, yMin, xMax, yMax) {
-            return !(xMax < this.minX || yMax < this.minY || xMin > this.maxX || yMin > this.maxY);
-        };
-        CollisionBlock.createFromBody = function (childBody) {
-            if (childBody.data.concavePath == null)
-                return null;
-            var halfWidth = childBody.data.concavePath[0][0] / 0.05, halfHeight = childBody.data.concavePath[0][1] / 0.05;
-            return new CollisionBlock(childBody.x - halfWidth, childBody.x + halfWidth, childBody.y - halfHeight, childBody.y + halfHeight, childBody.x, childBody.y);
-        };
-        return CollisionBlock;
-    })();
-    Collision.CollisionBlock = CollisionBlock;
-})(Collision || (Collision = {}));
 var UtilFunctions;
 (function (UtilFunctions) {
     var Coords = (function () {
@@ -944,7 +944,7 @@ var Entities;
             this.baseMoveSpeed = 40;
             this.moveSpeedMod = 1;
             this.canAttack = true;
-            this.attackDelay = 800;
+            this.attackDelay = 1000;
             this.path = [];
             this.isRoaming = false;
             this.game.physics.p2.enable(this);
@@ -966,7 +966,7 @@ var Entities;
             this.updateAI(this.currentLevel.colManager.pathFinding);
             if (this.path[0] != null) {
                 this.followPath();
-                var deltaX = this.x - this.path[0].x, deltaY = (this.y + 16) - this.path[0].y;
+                var deltaX = this.x - this.currentLevel.player.x, deltaY = this.y - this.currentLevel.player.y;
                 if (deltaX * deltaX + deltaY * deltaY < 300) {
                     if (this.canAttack) {
                         this.AnimManager.updateAnimation(AnimType.ATTACK);
@@ -979,7 +979,11 @@ var Entities;
             }
         };
         Skeleton.prototype.followPath = function () {
-            var angleBetween = Math.atan2(this.path[0].x - this.x, this.path[0].y - (this.y + 16)), deltaY = Math.cos(angleBetween), deltaX = Math.sin(angleBetween);
+            var xDif = this.path[0].x - this.x, yDif = this.path[0].y - (this.y + 16);
+            if (xDif * xDif + yDif * yDif < 1) {
+                this.path.shift();
+            }
+            var angleBetween = Math.atan2(xDif, yDif), deltaY = Math.cos(angleBetween), deltaX = Math.sin(angleBetween);
             this.body.moveRight(deltaX * this.moveSpeed);
             this.body.moveDown(deltaY * this.moveSpeed);
             if (deltaX > 0)
@@ -1010,9 +1014,6 @@ var Entities;
             var line = new Phaser.Line(this.x, this.y + 16, this.currentLevel.player.x, this.currentLevel.player.y + 16);
             if (!pathFinding.raycastLine(line, 6.5, 2)) {
                 this.path = [new UtilFunctions.Coords(this.currentLevel.player.x, this.currentLevel.player.y + 16)];
-            }
-            else {
-                this.path = [];
             }
         };
         return Skeleton;

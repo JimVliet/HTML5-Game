@@ -38,7 +38,7 @@ module Entities
             this.baseMoveSpeed = 40;
             this.moveSpeedMod = 1;
             this.canAttack = true;
-            this.attackDelay = 800;
+            this.attackDelay = 1000;
             this.path = [];
             this.isRoaming = false;
 
@@ -69,8 +69,8 @@ module Entities
             if(this.path[0] != null)
             {
                 this.followPath();
-                var deltaX = this.x - this.path[0].x,
-                    deltaY = (this.y + 16) - this.path[0].y;
+                var deltaX = this.x - this.currentLevel.player.x,
+                    deltaY = this.y - this.currentLevel.player.y;
                 if(deltaX*deltaX + deltaY*deltaY < 300)
                 {
                     if(this.canAttack)
@@ -99,7 +99,14 @@ module Entities
 
         followPath()
         {
-            var angleBetween = Math.atan2(this.path[0].x - this.x, this.path[0].y - (this.y + 16)),
+            var xDif = this.path[0].x - this.x,
+                yDif = this.path[0].y - (this.y + 16);
+            if(xDif*xDif + yDif*yDif < 1)
+            {
+                this.path.shift();
+            }
+
+            var angleBetween = Math.atan2(xDif, yDif),
                 deltaY = Math.cos(angleBetween),
                 deltaX = Math.sin(angleBetween);
 
@@ -144,10 +151,6 @@ module Entities
             if(!pathFinding.raycastLine(line, 6.5, 2))
             {
                 this.path = [new UtilFunctions.Coords(this.currentLevel.player.x, this.currentLevel.player.y+16)];
-            }
-            else
-            {
-                this.path = [];
             }
         }
     }
