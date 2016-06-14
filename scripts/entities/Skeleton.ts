@@ -66,7 +66,7 @@ module Entities
             this.body.setZeroVelocity();
             this.updateMoveSpeed();
             this.updateAI(this.currentLevel.colManager.pathFinding);
-            if(this.path[0] != null)
+            if(this.path.length > 0 && this.path[0] != null)
             {
                 this.followPath();
                 var deltaX = this.x - this.currentLevel.player.x,
@@ -105,6 +105,8 @@ module Entities
             {
                 this.path.shift();
             }
+            if(this.path.length == 0)
+                return;
 
             var angleBetween = Math.atan2(xDif, yDif),
                 deltaY = Math.cos(angleBetween),
@@ -148,7 +150,7 @@ module Entities
         updateAI(pathFinding: Pathfinding.Pathfinding)
         {
             var line = new Phaser.Line(this.x, this.y+16, this.currentLevel.player.x, this.currentLevel.player.y+16);
-            if(!pathFinding.raycastLine(line, 6.5, 2))
+            if(!pathFinding.raycastLine(line, 6.5, 2.1))
             {
                 this.path = [new UtilFunctions.Coords(this.currentLevel.player.x, this.currentLevel.player.y+16)];
             }

@@ -964,7 +964,7 @@ var Entities;
             this.body.setZeroVelocity();
             this.updateMoveSpeed();
             this.updateAI(this.currentLevel.colManager.pathFinding);
-            if (this.path[0] != null) {
+            if (this.path.length > 0 && this.path[0] != null) {
                 this.followPath();
                 var deltaX = this.x - this.currentLevel.player.x, deltaY = this.y - this.currentLevel.player.y;
                 if (deltaX * deltaX + deltaY * deltaY < 300) {
@@ -983,6 +983,8 @@ var Entities;
             if (xDif * xDif + yDif * yDif < 1) {
                 this.path.shift();
             }
+            if (this.path.length == 0)
+                return;
             var angleBetween = Math.atan2(xDif, yDif), deltaY = Math.cos(angleBetween), deltaX = Math.sin(angleBetween);
             this.body.moveRight(deltaX * this.moveSpeed);
             this.body.moveDown(deltaY * this.moveSpeed);
@@ -1012,7 +1014,7 @@ var Entities;
         };
         Skeleton.prototype.updateAI = function (pathFinding) {
             var line = new Phaser.Line(this.x, this.y + 16, this.currentLevel.player.x, this.currentLevel.player.y + 16);
-            if (!pathFinding.raycastLine(line, 6.5, 2)) {
+            if (!pathFinding.raycastLine(line, 6.5, 2.1)) {
                 this.path = [new UtilFunctions.Coords(this.currentLevel.player.x, this.currentLevel.player.y + 16)];
             }
         };
