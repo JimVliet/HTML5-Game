@@ -9,6 +9,7 @@ module Collision
     import Level = GameLevels.Level;
     export class CollisionManager
     {
+
         game: Phaser.Game;
         pathFinding: Pathfinding.Pathfinding;
         startPos: [number, number];
@@ -17,6 +18,7 @@ module Collision
         {
             this.game = parent.game;
             this.startPos = [0, 0];
+
         }
 
         start(debug: boolean)

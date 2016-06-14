@@ -35,6 +35,7 @@ module Pathfinding
                 if(block != null)
                 {
                     this.blocks.push(block);
+
                 }
             }
 

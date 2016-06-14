@@ -1,5 +1,8 @@
 /// <reference path="../../lib/phaser.d.ts"/>
 /// <reference path="../../lib/phaser-tiled.d.ts"/>
+/// <reference path="Pathfinding.ts"/>
+/// <reference path="CollisionManager.ts"/>
+/// <reference path="CollisionBlock.ts"/>
 
 module Collision
 {
@@ -16,6 +19,8 @@ module Collision
             this.upperY = 0;
             this.rightX = 15;
             this.lowerY = 15;
+
+
         }
 
         collideXAxis(x: number)
