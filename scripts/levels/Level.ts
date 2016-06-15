@@ -13,16 +13,18 @@ module GameLevels
     import GameObject = GameObjects.GameObject;
     import CollisionManager = Collision.CollisionManager;
     import Mob = GameObjects.Mob;
+    import Player = Entities.Player;
+    import Skeleton = Entities.Skeleton;
     export class Level extends Phaser.State
     {
         game: Phaser.Game;
         mapName: string;
         mapURL: string;
         map: Tiled.Tilemap;
-        player: GameObject & Phaser.Sprite;
+        player: Player;
         colManager: CollisionManager;
         graphics: Phaser.Graphics;
-        mobs: Array<Phaser.Sprite & Mob>;
+        mobs: Array<Skeleton>;
 
         constructor(game: Phaser.Game, map: string)
         {
@@ -75,26 +77,18 @@ module GameLevels
                 var nextLvl = MyGame.Game.getNextLevel(this.mapName);
                 if(nextLvl == null)
                     return;
-                UtilFunctions.loadGameLevel(this.game, new Level(this.game, nextLvl));
+                if(nextLvl == "End")
+                {
+                    this.game.state.add('End', new GameStates.End(this.game), true);
+                }
+                else
+                    UtilFunctions.loadGameLevel(this.game, new Level(this.game, nextLvl));
             }
         }
 
         render()
         {
-            this.graphics.clear();
-            //this.colManager.pathFinding.debugVisibleNodes(this.player.x, this.player.y +16, this.graphics);
-            this.graphics.beginFill();
-            this.graphics.lineStyle(0.3, 0xFF00FF, 1);
-
-            for(var i = 0; i < this.mobs.length; i++)
-            {
-                if(this.mobs[i].path[0] == null)
-                    continue;
-                this.graphics.moveTo(this.mobs[i].x, this.mobs[i].y+16);
-                this.graphics.lineTo(this.mobs[i].path[0].x, this.mobs[i].path[0].y);
-            }
-
-            this.graphics.endFill();
+            this.game.debug.text("Health: " + this.player.health, 10, 20);
         }
     }
 }

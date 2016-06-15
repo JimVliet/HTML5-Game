@@ -29,6 +29,9 @@ module Entities
         hitBox: p2.Rectangle;
         path: Array<location>;
         isRoaming: boolean;
+        maxHealth: number;
+        isDying: boolean;
+        attackDamage: number;
         
         constructor(game: Phaser.Game, x: number, y: number, currentLevel: Level, key?: string | Phaser.RenderTexture | Phaser.BitmapData | PIXI.Texture, frame?: string | number)
         {
@@ -41,12 +44,15 @@ module Entities
             this.attackDelay = 1000;
             this.path = [];
             this.isRoaming = false;
+            this.maxHealth = 100;
+            this.health = this.maxHealth;
+            this.isDying = false;
+            this.attackDamage = 20;
 
             //Setup physics and the Skeleton body
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5,0.5);
             this.body.clearShapes();
-            this.body.mass *= 5;
             this.body.fixedRotation = true;
             this.body.addRectangle(14,5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
@@ -64,6 +70,9 @@ module Entities
         update()
         {
             this.body.setZeroVelocity();
+            if(this.isDying)
+                return;
+
             this.updateMoveSpeed();
             this.updateAI(this.currentLevel.colManager.pathFinding);
             if(this.path.length > 0 && this.path[0] != null)
@@ -71,7 +80,7 @@ module Entities
                 this.followPath();
                 var deltaX = this.x - this.currentLevel.player.x,
                     deltaY = this.y - this.currentLevel.player.y;
-                if(deltaX*deltaX + deltaY*deltaY < 300)
+                if(deltaX*deltaX + deltaY*deltaY < 200)
                 {
                     if(this.canAttack)
                     {
@@ -81,19 +90,33 @@ module Entities
                 }
             }
             else
-            {
                 this.AnimManager.updateAnimation(AnimType.IDLE);
-                /*if(!this.isRoaming)
-                {
-                    if(UtilFunctions.getRandomInt(0, 99) == 0)
-                    {
-                        this.isRoaming = true;
+        }
 
-                    }
-                    else
-                        this.AnimManager.updateAnimation(AnimType.IDLE);
+        damageEntity(amount: number)
+        {
+            this.health -= amount;
+            if(this.health <= 0)
+            {
+                this.death();
+            }
+        }
+
+        death()
+        {
+            this.AnimManager.die().onComplete.add(function()
+            {
+                this.destroy(true);
+            }, this);
+            this.isDying = true;
+            this.body.static = true;
+            for(var index = 0; index < this.currentLevel.mobs.length; index++)
+            {
+                if(this.currentLevel.mobs[index] == this)
+                {
+                    this.currentLevel.mobs.splice(index, 1);
+                    return;
                 }
-                */
             }
         }
 
@@ -143,6 +166,7 @@ module Entities
                 this.canAttack = true;
             }, this);
             timer.start();
+            this.currentLevel.player.damagePlayer(this.attackDamage);
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
         }
@@ -150,10 +174,15 @@ module Entities
         updateAI(pathFinding: Pathfinding.Pathfinding)
         {
             var line = new Phaser.Line(this.x, this.y+16, this.currentLevel.player.x, this.currentLevel.player.y+16);
-            if(!pathFinding.raycastLine(line, 6.5, 2.1))
+            if(!pathFinding.raycastLine(line, 6.5, 2))
             {
                 this.path = [new UtilFunctions.Coords(this.currentLevel.player.x, this.currentLevel.player.y+16)];
             }
+        }
+
+        isHit(xMin: number, xMax: number, yMin: number, yMax: number): boolean
+        {
+            return !(xMax < this.x-7 || yMax < this.y -15 || xMin > this.x +7 || yMin > this.y +15);
         }
     }
 }
