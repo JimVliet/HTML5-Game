@@ -540,6 +540,7 @@ var Manager;
         AnimType[AnimType["UPDOWN"] = 3] = "UPDOWN";
         AnimType[AnimType["ATTACK"] = 4] = "ATTACK";
         AnimType[AnimType["NONE"] = 5] = "NONE";
+        AnimType[AnimType["DIE"] = 6] = "DIE";
     })(Manager.AnimType || (Manager.AnimType = {}));
     var AnimType = Manager.AnimType;
     var AnimManager = (function () {
@@ -550,7 +551,7 @@ var Manager;
             this.gameObject.animations.add('Idle', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 5, true);
             this.gameObject.animations.add('Walk', [20, 21, 22, 23, 24, 25, 26, 27, 28, 29], 10, true);
             this.gameObject.animations.add('Attack', options['Attack'], 50, false).onComplete.add(this.attackDone, this);
-            this.gameObject.animations.add('Die', [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 10, false);
+            this.gameObject.animations.add('Die', [40, 41, 42, 43, 44, 45, 46, 47, 48, 49], 5, false);
             this.gameObject.animations.play('Idle');
             this.current = AnimType.IDLE;
             this.attackSignal = new Phaser.Signal();
@@ -566,8 +567,12 @@ var Manager;
             this.current = AnimType.NONE;
             this.attackSignal.dispatch();
         };
+        AnimManager.prototype.die = function () {
+            this.current = AnimType.DIE;
+            return this.gameObject.animations.play('Die');
+        };
         AnimManager.prototype.updateAnimation = function (type) {
-            if (this.current == AnimType.ATTACK)
+            if (this.current == AnimType.ATTACK || this.current == AnimType.DIE)
                 return;
             if (this.current == AnimType.NONE) {
                 switch (type) {
@@ -733,6 +738,9 @@ var Entities;
             this.canAttack = true;
             this.attackDelay = 800;
             this.keyListener = UtilFunctions.setupPlayerKeys(this.game);
+            this.health = this.maxHealth;
+            this.isDying = false;
+            this.attackDamage = 50;
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
             this.body.clearShapes();
@@ -740,12 +748,30 @@ var Entities;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
-            this.body.mass *= 20;
+            this.body.mass *= 4;
             this.AnimManager = new AnimManager(this, { 'Attack': [30, 31, 32, 33, 34, 35, 35, 34, 33, 32, 31] });
             this.AnimManager.attackSignal.add(function () {
                 this.moveSpeedMod += 0.6;
             }, this);
+            var timer = this.game.time.create(false);
+            timer.loop(1000, function () {
+                this.health = Math.min(this.maxHealth, this.health + 2);
+            }, this);
+            timer.start();
         }
+        Player.prototype.damagePlayer = function (amount) {
+            this.health -= amount;
+            if (this.health <= 0) {
+                this.death();
+            }
+        };
+        Player.prototype.death = function () {
+            this.AnimManager.die().onComplete.add(function () {
+                this.game.state.add('Death', new GameStates.GameOver(this.game), true);
+            }, this);
+            this.isDying = true;
+            this.body.static = true;
+        };
         Player.prototype.update = function () {
             this.updateMoveSpeed();
             this.updateMovementControl();
@@ -821,6 +847,12 @@ var Entities;
             timer.start();
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
+            var endX = this.x + (this.scale.x * 16);
+            for (var i = 0; i < this.currentLevel.mobs.length; i++) {
+                if (this.currentLevel.mobs[i].isHit(Math.min(this.x, endX), Math.max(this.x, endX), this.y - 1, this.y + 1)) {
+                    this.currentLevel.mobs[i].damageEntity(this.attackDamage);
+                }
+            }
         };
         return Player;
     })(Phaser.Sprite);
@@ -862,20 +894,15 @@ var GameLevels;
                 var nextLvl = MyGame.Game.getNextLevel(this.mapName);
                 if (nextLvl == null)
                     return;
-                UtilFunctions.loadGameLevel(this.game, new Level(this.game, nextLvl));
+                if (nextLvl == "End") {
+                    this.game.state.add('End', new GameStates.End(this.game), true);
+                }
+                else
+                    UtilFunctions.loadGameLevel(this.game, new Level(this.game, nextLvl));
             }
         };
         Level.prototype.render = function () {
-            this.graphics.clear();
-            this.graphics.beginFill();
-            this.graphics.lineStyle(0.3, 0xFF00FF, 1);
-            for (var i = 0; i < this.mobs.length; i++) {
-                if (this.mobs[i].path[0] == null)
-                    continue;
-                this.graphics.moveTo(this.mobs[i].x, this.mobs[i].y + 16);
-                this.graphics.lineTo(this.mobs[i].path[0].x, this.mobs[i].path[0].y);
-            }
-            this.graphics.endFill();
+            this.game.debug.text("Health: " + this.player.health, 10, 20);
         };
         return Level;
     })(Phaser.State);
@@ -893,6 +920,9 @@ var MyGame;
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
             this.game.add.plugin(new Phaser.Plugin.Debug(this.game, this.game.stage));
             this.game.load.spritesheet("Snek", "images/dungeon/Snaksprite.png", 32, 32);
+            this.game.load.image("DeathScreen", "images/dungeon/DeathScreen.png");
+            this.game.load.image("EndScreen", "images/dungeon/EndScreen.png");
+            this.game.load.image("StartScreen", "images/dungeon/BeginScherm.png");
         };
         Game.prototype.create = function () {
             UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
@@ -905,6 +935,8 @@ var MyGame;
                 if (levelList[i] == name)
                     return levelList[i + 1];
             }
+            if (name == levelList[levelList.length - 1])
+                return "End";
             return null;
         };
         return Game;
@@ -947,10 +979,13 @@ var Entities;
             this.attackDelay = 1000;
             this.path = [];
             this.isRoaming = false;
+            this.maxHealth = 100;
+            this.health = this.maxHealth;
+            this.isDying = false;
+            this.attackDamage = 20;
             this.game.physics.p2.enable(this);
             this.anchor.setTo(0.5, 0.5);
             this.body.clearShapes();
-            this.body.mass *= 5;
             this.body.fixedRotation = true;
             this.body.addRectangle(14, 5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
@@ -962,20 +997,40 @@ var Entities;
         }
         Skeleton.prototype.update = function () {
             this.body.setZeroVelocity();
+            if (this.isDying)
+                return;
             this.updateMoveSpeed();
             this.updateAI(this.currentLevel.colManager.pathFinding);
-            if (this.path[0] != null) {
+            if (this.path.length > 0 && this.path[0] != null) {
                 this.followPath();
                 var deltaX = this.x - this.currentLevel.player.x, deltaY = this.y - this.currentLevel.player.y;
-                if (deltaX * deltaX + deltaY * deltaY < 300) {
+                if (deltaX * deltaX + deltaY * deltaY < 200) {
                     if (this.canAttack) {
                         this.AnimManager.updateAnimation(AnimType.ATTACK);
                         this.attack();
                     }
                 }
             }
-            else {
+            else
                 this.AnimManager.updateAnimation(AnimType.IDLE);
+        };
+        Skeleton.prototype.damageEntity = function (amount) {
+            this.health -= amount;
+            if (this.health <= 0) {
+                this.death();
+            }
+        };
+        Skeleton.prototype.death = function () {
+            this.AnimManager.die().onComplete.add(function () {
+                this.destroy(true);
+            }, this);
+            this.isDying = true;
+            this.body.static = true;
+            for (var index = 0; index < this.currentLevel.mobs.length; index++) {
+                if (this.currentLevel.mobs[index] == this) {
+                    this.currentLevel.mobs.splice(index, 1);
+                    return;
+                }
             }
         };
         Skeleton.prototype.followPath = function () {
@@ -983,6 +1038,8 @@ var Entities;
             if (xDif * xDif + yDif * yDif < 1) {
                 this.path.shift();
             }
+            if (this.path.length == 0)
+                return;
             var angleBetween = Math.atan2(xDif, yDif), deltaY = Math.cos(angleBetween), deltaX = Math.sin(angleBetween);
             this.body.moveRight(deltaX * this.moveSpeed);
             this.body.moveDown(deltaY * this.moveSpeed);
@@ -1007,6 +1064,7 @@ var Entities;
                 this.canAttack = true;
             }, this);
             timer.start();
+            this.currentLevel.player.damagePlayer(this.attackDamage);
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
         };
@@ -1016,8 +1074,49 @@ var Entities;
                 this.path = [new UtilFunctions.Coords(this.currentLevel.player.x, this.currentLevel.player.y + 16)];
             }
         };
+        Skeleton.prototype.isHit = function (xMin, xMax, yMin, yMax) {
+            return !(xMax < this.x - 7 || yMax < this.y - 15 || xMin > this.x + 7 || yMin > this.y + 15);
+        };
         return Skeleton;
     })(Phaser.Sprite);
     Entities.Skeleton = Skeleton;
 })(Entities || (Entities = {}));
+var GameStates;
+(function (GameStates) {
+    var GameOver = (function (_super) {
+        __extends(GameOver, _super);
+        function GameOver(game) {
+            _super.call(this);
+            this.game = game;
+        }
+        GameOver.prototype.preload = function () {
+            this.image = this.game.add.sprite(0, 0, 'DeathScreen');
+            this.game.camera.scale.setTo(1, 1);
+            this.image.width = this.game.width;
+            this.image.height = this.game.height;
+            this.button = this.game.add.button(0.41 * this.image.width, 0.69 * this.game.height, undefined, function () {
+                UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, MyGame.Game.getNextLevel("Start")));
+            });
+            this.button.width = 0.55 * this.image.width - this.button.x;
+            this.button.height = 0.75 * this.image.height - this.button.y;
+        };
+        return GameOver;
+    })(Phaser.State);
+    GameStates.GameOver = GameOver;
+    var End = (function (_super) {
+        __extends(End, _super);
+        function End(game) {
+            _super.call(this);
+            this.game = game;
+        }
+        End.prototype.preload = function () {
+            this.image = this.game.add.sprite(0, 0, 'EndScreen');
+            this.game.camera.scale.setTo(1, 1);
+            this.image.width = this.game.width;
+            this.image.height = this.game.height;
+        };
+        return End;
+    })(Phaser.State);
+    GameStates.End = End;
+})(GameStates || (GameStates = {}));
 //# sourceMappingURL=generated.js.map

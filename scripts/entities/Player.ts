@@ -26,6 +26,9 @@ module Entities
         canAttack: boolean;
         attackDelay: number;
         hitBox: p2.Rectangle;
+        maxHealth: number;
+        isDying: boolean;
+        attackDamage: number;
 
         constructor(game: Phaser.Game, x: number, y: number, currentLevel: Level, key?: string | Phaser.RenderTexture | Phaser.BitmapData | PIXI.Texture, frame?: string | number)
         {
@@ -37,6 +40,9 @@ module Entities
             this.canAttack = true;
             this.attackDelay = 800;
             this.keyListener = UtilFunctions.setupPlayerKeys(this.game);
+            this.health = this.maxHealth;
+            this.isDying = false;
+            this.attackDamage = 50;
 
             //Setup physics and the player body
             this.game.physics.p2.enable(this);
@@ -46,7 +52,7 @@ module Entities
             this.body.addRectangle(14,5, 0, 16, 0);
             this.hitBox = this.body.addRectangle(14, 30, 0, 0, 0);
             this.hitBox.sensor = true;
-            this.body.mass *= 20;
+            this.body.mass *= 4;
 
             //Setup animationManager
             this.AnimManager = new AnimManager(this, {'Attack': [30,31,32,33,34,35,35,34,33,32,31]});
@@ -54,6 +60,32 @@ module Entities
             {
                 this.moveSpeedMod += 0.6;
             }, this);
+
+            var timer = this.game.time.create(false);
+            timer.loop(1000, function()
+            {
+                this.health = Math.min(this.maxHealth, this.health + 2);
+            }, this);
+            timer.start();
+        }
+
+        damagePlayer(amount: number)
+        {
+            this.health -= amount;
+            if(this.health <= 0)
+            {
+                this.death();
+            }
+        }
+
+        death()
+        {
+            this.AnimManager.die().onComplete.add(function()
+            {
+                this.game.state.add('Death', new GameStates.GameOver(this.game), true);
+            }, this);
+            this.isDying = true;
+            this.body.static = true;
         }
 
         //Main update loop
@@ -152,6 +184,16 @@ module Entities
             timer.start();
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
+
+            var endX = this.x + (this.scale.x * 16);
+
+            for(var i = 0; i < this.currentLevel.mobs.length; i++)
+            {
+                if(this.currentLevel.mobs[i].isHit(Math.min(this.x, endX), Math.max(this.x, endX), this.y -1, this.y+1))
+                {
+                    this.currentLevel.mobs[i].damageEntity(this.attackDamage);
+                }
+            }
         }
     }
 }

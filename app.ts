@@ -1,6 +1,6 @@
 /// <reference path="lib/phaser.d.ts"/>
 /// <reference path="lib/phaser-tiled.d.ts"/>
-/// <reference path="scripts/GameStates.ts"/>
+/// <reference path="scripts/LevelLoader.ts"/>
 /// <reference path="scripts/GameObjects.ts"/>
 /// <reference path="scripts/utils/UtilFunctions.ts"/>
 /// <reference path="scripts/SongManager.ts"/>
@@ -24,6 +24,9 @@ module MyGame
             this.game.add.plugin(new Phaser.Plugin.Tiled(this.game, this.game.stage));
             this.game.add.plugin(new (<any>Phaser.Plugin).Debug(this.game, this.game.stage));
             this.game.load.spritesheet("Snek", "images/dungeon/Snaksprite.png", 32, 32);
+            this.game.load.image("DeathScreen", "images/dungeon/DeathScreen.png");
+            this.game.load.image("EndScreen", "images/dungeon/EndScreen.png");
+            this.game.load.image("StartScreen", "images/dungeon/BeginScherm.png");
         }
 
         create()
@@ -42,6 +45,8 @@ module MyGame
                 if(levelList[i] == name)
                     return levelList[i+1];
             }
+            if(name == levelList[levelList.length-1])
+                return "End";
             return null;
         }
     }

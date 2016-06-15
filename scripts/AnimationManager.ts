@@ -6,7 +6,7 @@ module Manager
 {
     export enum AnimType
     {
-        LEFT, RIGHT, IDLE, UPDOWN, ATTACK, NONE
+        LEFT, RIGHT, IDLE, UPDOWN, ATTACK, NONE, DIE
     }
 
     export class AnimManager
@@ -22,7 +22,7 @@ module Manager
             this.gameObject.animations.add('Idle', [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19], 5, true);
             this.gameObject.animations.add('Walk', [20,21,22,23,24,25,26,27,28,29], 10, true);
             this.gameObject.animations.add('Attack', options['Attack'], 50, false).onComplete.add(this.attackDone, this);
-            this.gameObject.animations.add('Die', [40,41,42,43,44,45,46,47,48,49], 10, false);
+            this.gameObject.animations.add('Die', [40,41,42,43,44,45,46,47,48,49], 5, false);
             this.gameObject.animations.play('Idle');
             this.current = AnimType.IDLE;
 
@@ -44,9 +44,15 @@ module Manager
             this.attackSignal.dispatch();
         }
 
+        die(): Phaser.Animation
+        {
+            this.current = AnimType.DIE;
+            return this.gameObject.animations.play('Die');
+        }
+
         updateAnimation(type: AnimType)
         {
-            if(this.current == AnimType.ATTACK) return;
+            if(this.current == AnimType.ATTACK || this.current == AnimType.DIE) return;
             if(this.current == AnimType.NONE)
             {
                 switch (type)
