@@ -1,5 +1,6 @@
 module GameStates
 {
+    //Deze gamestates zorgen voor het beginscherm, eindscherm en deathscreen.
     export class GameOver extends Phaser.State
     {
         image: Phaser.Sprite;
@@ -39,6 +40,31 @@ module GameStates
             this.game.camera.scale.setTo(1, 1);
             this.image.width = this.game.width;
             this.image.height = this.game.height;
+        }
+    }
+
+    export class StartScreen extends Phaser.State
+    {
+        image: Phaser.Sprite;
+        button: Phaser.Button;
+
+        constructor(public game: Phaser.Game)
+        {
+            super();
+        }
+
+        preload()
+        {
+            this.image = this.game.add.sprite(0, 0, 'StartScreen');
+            this.game.camera.scale.setTo(1, 1);
+            this.image.width = this.game.width;
+            this.image.height = this.game.height;
+            this.button = this.game.add.button(0.05*this.image.width, 0.70*this.game.height, undefined, function()
+            {
+                UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, MyGame.Game.getNextLevel("Start")));
+            });
+            this.button.width = 0.26 * this.image.width - this.button.x;
+            this.button.height = 0.78 * this.image.height - this.button.y;
         }
     }
 }

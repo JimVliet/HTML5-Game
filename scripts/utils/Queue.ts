@@ -1,5 +1,7 @@
 module DataStructures
 {
+    //Dit is een queue die ik zelf heb geprogrammeerd.
+    //Deze had ik namelijk nodig in een andere functie.
     export class Queue<T>
     {
         head: Node<T>;

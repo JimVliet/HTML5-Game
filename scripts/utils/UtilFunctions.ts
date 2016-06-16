@@ -9,6 +9,7 @@ module UtilFunctions
     import Level = GameLevels.Level;
     export function setupPlayerKeys(game: Phaser.Game): {[name: string]: Phaser.Key}
     {
+        //Deze functie zorgt ervoor dat als je een toets indrukt dat er dan ook wat gebeurt.
         var keyLib: {[name: string]: Phaser.Key} = {};
         keyLib['w'] = game.input.keyboard.addKey(Phaser.Keyboard.W);
         keyLib['a'] = game.input.keyboard.addKey(Phaser.Keyboard.A);
@@ -20,6 +21,7 @@ module UtilFunctions
 
     export function loadGameLevel(game: Phaser.Game, levelToLoad: Level)
     {
+        //Deze functie laat levels
         game.state.add('TiledMapLoader', new GameStates.TiledMapLoader(game, levelToLoad), true);
     }
 

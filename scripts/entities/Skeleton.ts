@@ -95,6 +95,7 @@ module Entities
 
         damageEntity(amount: number)
         {
+            //Deze functie wordt aangeroepen als de skeleton wordt aangevallen.
             this.health -= amount;
             if(this.health <= 0)
             {
@@ -122,6 +123,7 @@ module Entities
 
         followPath()
         {
+            //Deze functie zorgt ervoor dat de skeleton naar de player toegaat.
             var xDif = this.path[0].x - this.x,
                 yDif = this.path[0].y - (this.y + 16);
             if(xDif*xDif + yDif*yDif < 1)
@@ -159,6 +161,9 @@ module Entities
         // Monster AI
         attack()
         {
+            if(this.currentLevel.player.isDying)
+                return;
+
             this.AnimManager.attack(20);
             var timer = this.game.time.add(new Phaser.Timer(this.game, true));
             timer.add(this.attackDelay, function()
@@ -182,6 +187,7 @@ module Entities
 
         isHit(xMin: number, xMax: number, yMin: number, yMax: number): boolean
         {
+            //Deze functie checkt of het zwaard van de player door de skeleton is heengegaan.
             return !(xMax < this.x-7 || yMax < this.y -15 || xMin > this.x +7 || yMin > this.y +15);
         }
     }

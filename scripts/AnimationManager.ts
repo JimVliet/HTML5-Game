@@ -9,6 +9,7 @@ module Manager
         LEFT, RIGHT, IDLE, UPDOWN, ATTACK, NONE, DIE
     }
 
+    //Deze class zorgt ervoor dat je makkelijk animaties kan maken voor de player en de enemies.
     export class AnimManager
     {
         gameObject: Phaser.Sprite & GameObjects.Entity;
@@ -31,6 +32,9 @@ module Manager
 
         attack(animSpeed: number)
         {
+            //Deze zorgt voor de attack animatie.
+            if(this.current == AnimType.DIE)
+                return;
             if(animSpeed < 0)
                 this.gameObject.animations.play('Attack');
             else
@@ -52,6 +56,7 @@ module Manager
 
         updateAnimation(type: AnimType)
         {
+            //Hierin kan je een animatietype opgeven en die wordt dan afgespeeld
             if(this.current == AnimType.ATTACK || this.current == AnimType.DIE) return;
             if(this.current == AnimType.NONE)
             {

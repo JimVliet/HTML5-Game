@@ -10,6 +10,7 @@
 var gameVar: MyGame.Game;
 module MyGame
 {
+    //Dit is de hoofdclass waarin de basis staat.
     export class Game {
         songManager: SongManager.SongManager;
         game: Phaser.Game;
@@ -31,11 +32,16 @@ module MyGame
 
         create()
         {
-            UtilFunctions.loadGameLevel(this.game, new GameLevels.Level(this.game, Game.getNextLevel("Start")));
+            this.game.state.add('Start', new GameStates.StartScreen(this.game), true);
         }
 
         static getNextLevel(name: string): string
         {
+            //Deze functie geeft de naam van het volgende level weer.
+            //Je kan heel makkelijk een level toevoegen door het aan deze lijst van namen toe te voegen.
+            //Het moet dan wel aan enkele voorwaarden voldoen.
+            //Zoals een collision laag en een trigger laag. Zodat er triggers enemies kunnen worden ingezet
+            //en het einde van het level kan dan worden aangegeven.
             var levelList = ["Level1", "Level2", "Level3", "Level4", "Level5", "Level6", "LevelEnd"];
             if(name == "Start")
                 return levelList[0];

@@ -6,6 +6,8 @@
 
 module Collision
 {
+    //Deze class zorgt ervoor dat er collision in het spel is.
+    //Dit is namelijk standaard niet in Phaser.
     import Level = GameLevels.Level;
     export class CollisionManager
     {
@@ -156,6 +158,7 @@ module Collision
 
         triggerSetup(debug: boolean)
         {
+            //Deze functie haalt alle triggers uit de TiledMap en zorgt ervoor dat ze werken.
             var tLayer = this.map.getTilelayer("Trigger");
             if(tLayer == null)
                 return;
