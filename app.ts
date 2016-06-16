@@ -27,7 +27,7 @@ module MyGame
             this.game.load.spritesheet("Snek", "images/dungeon/Snaksprite.png", 32, 32);
             this.game.load.image("DeathScreen", "images/dungeon/DeathScreen.png");
             this.game.load.image("EndScreen", "images/dungeon/EndScreen.png");
-            this.game.load.image("StartScreen", "images/dungeon/BeginScherm.png");
+            this.game.load.image("StartScreen", "images/dungeon/Beginscherm.png");
         }
 
         create()
