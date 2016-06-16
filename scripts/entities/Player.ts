@@ -64,7 +64,9 @@ module Entities
             var timer = this.game.time.create(false);
             timer.loop(1000, function()
             {
-                this.health = Math.min(this.maxHealth, this.health + 2);
+                if(this.isDying)
+                    return;
+                this.health = Math.min(this.maxHealth, this.health + 1);
             }, this);
             timer.start();
         }
@@ -75,6 +77,7 @@ module Entities
             if(this.health <= 0)
             {
                 this.death();
+                this.health = 0;
             }
         }
 
@@ -91,6 +94,9 @@ module Entities
         //Main update loop
         update()
         {
+            if(this.isDying)
+                return;
+
             this.updateMoveSpeed();
             this.updateMovementControl();
         }
@@ -102,6 +108,7 @@ module Entities
 
         updateMovementControl()
         {
+            //Deze functie zorgt ervoor dat de player loopt en dat de juiste animaties worden gebruikt.
             this.body.setZeroVelocity();
             var ang = 0;
 
@@ -176,24 +183,31 @@ module Entities
         attack()
         {
             this.AnimManager.attack(-1);
+
+            //Voeg hier een delay toe voordat je weer kan aanvallen
             var timer = this.game.time.add(new Phaser.Timer(this.game, true));
             timer.add(this.attackDelay, function()
             {
                 this.canAttack = true;
             }, this);
             timer.start();
+
+            //Deze timer checkt of het zwaard ook een enemy raakt.
+            var attackTimer = this.game.time.add(new Phaser.Timer(this.game, true));
+            attackTimer.add(this.attackDelay/2, function()
+            {
+                var endX = this.x + (this.scale.x * 16);
+                for(var i = 0; i < this.currentLevel.mobs.length; i++)
+                {
+                    if(this.currentLevel.mobs[i].isHit(Math.min(this.x, endX), Math.max(this.x, endX), this.y -1, this.y+1))
+                    {
+                        this.currentLevel.mobs[i].damageEntity(this.attackDamage);
+                    }
+                }
+            }, this);
+            attackTimer.start();
             this.canAttack = false;
             this.moveSpeedMod -= 0.6;
-
-            var endX = this.x + (this.scale.x * 16);
-
-            for(var i = 0; i < this.currentLevel.mobs.length; i++)
-            {
-                if(this.currentLevel.mobs[i].isHit(Math.min(this.x, endX), Math.max(this.x, endX), this.y -1, this.y+1))
-                {
-                    this.currentLevel.mobs[i].damageEntity(this.attackDamage);
-                }
-            }
         }
     }
 }

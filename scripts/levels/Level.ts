@@ -9,6 +9,7 @@
 
 module GameLevels
 {
+    //Uit deze class worden alle levels gemaakt. Ik heb maar 1 class, zodat je makkelijk een nieuwe level kan maken.
     import Tiled = Phaser.Plugin.Tiled;
     import GameObject = GameObjects.GameObject;
     import CollisionManager = Collision.CollisionManager;
@@ -52,6 +53,7 @@ module GameLevels
 
             //Setup collision and pathFinding
             this.colManager = new Collision.CollisionManager(this, this.map, this.map.getTilelayer('Solid'));
+            //---------- Verander de variabele hieronder in true om de collision debug te weergeven --------------
             this.colManager.start(false);
 
             //Add player object and setup camera
@@ -62,6 +64,7 @@ module GameLevels
 
             this.graphics = this.game.add.graphics(0,0);
 
+            //---------- Verander de variabele hieronder in true om de pathfinding debug te weergeven --------------
             this.colManager.startPathfinding(false);
         }
 
@@ -72,6 +75,7 @@ module GameLevels
 
         nextLevel(body: any, bodyB: any, collidedShape: p2.Shape, contactShape: p2.Shape)
         {
+            //Deze functie wordt gebruikt om te kijken of de player het einde van het level heeft bereikt.
             if(!contactShape.sensor && body.data.id == this.player.body.data.id)
             {
                 var nextLvl = MyGame.Game.getNextLevel(this.mapName);
@@ -88,7 +92,8 @@ module GameLevels
 
         render()
         {
-            this.game.debug.text("Health: " + this.player.health, 10, 20);
+            this.game.debug.text("Health: " + this.player.health, 10, 40);
+            this.game.debug.text("Controls: WASD to move and spacebar to attack", 10, 20);
         }
     }
 }

@@ -8,6 +8,8 @@ module GameStates
     import Tiled = Phaser.Plugin.Tiled;
     import Level = GameLevels.Level;
 
+    //Deze gamestate zorgt ervoor dat alle sprites en data wordt geladen voor levels.
+    //Deze heb ikzelf geprogrammeerd, omdat dit nog niet mogelijk was in Phaser.
     export class TiledMapLoader extends Phaser.State
     {
         game: Phaser.Game;
@@ -60,7 +62,8 @@ module GameStates
 
         fileCompleted(progress: number, cacheKey: string)
         {
-
+            //Deze functie zorgt ervoor dat alle images worden geladen.
+            //Dit door middel van de json file te lezen.
             if (cacheKey == this.mapCacheKey)
             {
                 var cacheKeyFunc = Phaser.Plugin.Tiled.utils.cacheKey;

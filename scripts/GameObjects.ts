@@ -9,6 +9,8 @@ module GameObjects
     import AnimManager = Manager.AnimManager;
     import Level = GameLevels.Level;
     import location = Pathfinding.location;
+
+    //Deze interfaces zorgen ervoor dat mobs dezelfde eigenschappen hebben.
     export enum GameObjectType
     {
         PLAYER, SKELETON

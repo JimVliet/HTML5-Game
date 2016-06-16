@@ -19,8 +19,6 @@ module Collision
             this.upperY = 0;
             this.rightX = 15;
             this.lowerY = 15;
-
-
         }
 
         collideXAxis(x: number)
@@ -36,6 +34,7 @@ module Collision
 
     export function getPropMap(tiles: number[], width: number, firstGid: number): Array<Array<ColTileProps>>
     {
+        //Deze functie geeft een 2d array met daarin informatie over elke collisiontile.
         var map: Array<Array<ColTileProps>> = [],
             y: number, x: number;
 
@@ -55,6 +54,7 @@ module Collision
 
     export function getTileCollisionProperties(tileIndex: number): ColTileProps
     {
+        //Deze functie geeft informatie over de eigenschappen van een collisionTile.
         if(tileIndex < 0 || tileIndex >= 65)
             return null;
 
@@ -86,6 +86,7 @@ module Collision
         //| |
         //3-2
 
+        //Deze functie kijkt of er in een hoek van een tile een punt moet komen voor pathfinding.
         var tileProps = map[y][x],
             xDif = 16 - deltaX, yDif = 16-deltaY,
             minX = x == 0,

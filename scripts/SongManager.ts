@@ -2,6 +2,7 @@
 /// <reference path="../lib/phaser-tiled.d.ts"/>
 module SongManager
 {
+    //Deze class zorgt ervoor dat er steeds nieuwe liedjes worden afgespeeld.
     export class SongManager
     {
         playList: Array<Phaser.Sound>;
@@ -23,6 +24,7 @@ module SongManager
 
         next()
         {
+            //Deze functie wordt aangeroepen als het vorige liedje klaar is.
             this.playList[this.currentSongNumb].play().onStop.add(this.next, this);
             this.currentSongNumb = (this.currentSongNumb + 1) % this.playList.length;
         }

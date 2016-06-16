@@ -50,6 +50,7 @@ module Pathfinding
 
         setupNodes(deltaX: number, deltaY: number)
         {
+            //Deze functie genereert de punten op de map.
             var layerWidth = this.layer.size['x'],
                 tiles = this.layer.tileIds, coordsOutput: Array<Node> = [],
                 map = Collision.getPropMap(tiles, layerWidth, this.parent.getGidOfTileset("Collision").firstgid),
@@ -111,6 +112,7 @@ module Pathfinding
 
         setupConnections(deltaX: number, deltaY: number)
         {
+            //Deze functie zorgt voor de connecties tussen punten.
             for(var i = 0; i < this.nodeList.length; i++)
             {
                 //Start at the next node that isn't checked
@@ -232,6 +234,7 @@ module Pathfinding
             graphics.endFill();
         }
 
+        //Deze functie kijkt of er collision is tussen twee punten.
         raycastLine(line: Phaser.Line, deltaX: number, deltaY: number): boolean
         {
             var currentBody: CollisionBlock, coords = [];
