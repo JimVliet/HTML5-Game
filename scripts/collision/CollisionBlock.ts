@@ -1,5 +1,8 @@
 module Collision
 {
+    //In deze class wordt informatie over de collisionstukken opgeslagen, zodat makkelijk
+    //gekeken kan worden of er collision is bij een raycast.
+
     import Node = Pathfinding.Node;
     export class CollisionBlock
     {

@@ -934,7 +934,7 @@ var MyGame;
             this.game.load.spritesheet("Snek", "images/dungeon/Snaksprite.png", 32, 32);
             this.game.load.image("DeathScreen", "images/dungeon/DeathScreen.png");
             this.game.load.image("EndScreen", "images/dungeon/EndScreen.png");
-            this.game.load.image("StartScreen", "images/dungeon/BeginScherm.png");
+            this.game.load.image("StartScreen", "images/dungeon/Beginscherm.png");
         };
         Game.prototype.create = function () {
             this.game.state.add('Start', new GameStates.StartScreen(this.game), true);
